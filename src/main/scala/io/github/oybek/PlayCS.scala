@@ -3,11 +3,14 @@ package io.github.oybek
 import java.io.PrintWriter
 import java.util.concurrent.ConcurrentLinkedQueue
 
+import cats.instances.list._
 import cats.syntax.all._
 import cats.effect._
 
 import scala.io.Source
 import scala.sys.process.{Process, ProcessIO}
+
+import scala.concurrent.duration._
 
 object PlayCS extends IOApp {
 
@@ -16,18 +19,18 @@ object PlayCS extends IOApp {
   def run(args: List[String]): IO[ExitCode] = {
     val process = Process("calc")
     val octopus = new ProcessIO(
-      os => {
-        val pw = new PrintWriter(os)
-        while (true) {
-          Thread.sleep(2000)
-          pw.println("2+2")
-          pw.flush()
-        }
-      },
+      InputPuller.puller,
       stdout => Source.fromInputStream(stdout).getLines.foreach(println),
       stderr => Source.fromInputStream(stderr).getLines.foreach(println)
     )
-    Sync[F].delay(process.run(octopus)).as(ExitCode.Success)
+
+    for {
+      _ <- Sync[F].delay(process.run(octopus))
+      _ <- (1 to 100).toList.traverse { x =>
+        Sync[F].delay(InputPuller.pull(s"$x + $x")) *>
+          Timer[F].sleep(1 second)
+      }.start.void
+    } yield ExitCode.Success
   }
 
 }
