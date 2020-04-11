@@ -1,5 +1,8 @@
-name := "playcs"
+ThisBuild / version := "0.1"
+ThisBuild / organization := "io.github.oybek"
 
-version := "0.1"
+val settings = Compiler.settings ++ Seq()
 
-scalaVersion := "2.13.1"
+lazy val playcs = (project in file("."))
+  .settings(name := "playcs")
+  .settings(libraryDependencies ++= Dependencies.common)
