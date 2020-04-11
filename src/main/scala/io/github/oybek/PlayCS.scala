@@ -26,7 +26,10 @@ object PlayCS extends IOApp {
     } yield ()
 
   def run(args: List[String]): IO[ExitCode] = {
-    val process = Process("calc")
+    val process = Process(
+      "./hlds_run -game cstrike +ip 0.0.0.0 +maxplayers 12 +map cs_mansion",
+      new java.io.File("/home/oybek/Garage/SteamCMD/hlds")
+    )
     val inputPusher = new InputPusher
     val outputPuller = new OutputPuller[F]
     val octopus = new ProcessIO(
@@ -37,10 +40,10 @@ object PlayCS extends IOApp {
 
     for {
       _ <- Sync[F].delay(process.run(octopus))
-      _ <- (1 to 100).toList.traverse { x =>
-        Sync[F].delay(inputPusher.push(s"$x + $x")) *>
-          Timer[F].sleep(1 second)
-      }.start.void
+      _ <- (
+        Timer[F].sleep(1 second) *>
+          Sync[F].delay(inputPusher.push("sv_gravity 100"))
+      ).start.void
       _ <- pull(outputPuller).start
     } yield ExitCode.Success
   }
