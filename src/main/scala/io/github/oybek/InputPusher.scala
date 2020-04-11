@@ -3,11 +3,11 @@ package io.github.oybek
 import java.io.{OutputStream, PrintWriter}
 import java.util.concurrent.ConcurrentLinkedQueue
 
-object InputPuller {
+class InputPusher {
 
   private val queue = new ConcurrentLinkedQueue[String]()
 
-  def puller(os: OutputStream): Unit = synchronized {
+  def pusher(os: OutputStream): Unit = synchronized {
     val pw = new PrintWriter(os)
     while (true) {
       wait()
@@ -18,7 +18,7 @@ object InputPuller {
     }
   }
 
-  def pull(s: String): Unit = synchronized {
+  def push(s: String): Unit = synchronized {
     queue.add(s)
     notify()
   }
