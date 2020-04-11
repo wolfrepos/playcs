@@ -1,6 +1,7 @@
 package io.github.oybek
 
 import java.io.PrintWriter
+import java.util.concurrent.ConcurrentLinkedQueue
 
 import cats.syntax.all._
 import cats.effect._
@@ -17,8 +18,11 @@ object PlayCS extends IOApp {
     val octopus = new ProcessIO(
       os => {
         val pw = new PrintWriter(os)
-        pw.println("2+2")
-        pw.flush()
+        while (true) {
+          Thread.sleep(2000)
+          pw.println("2+2")
+          pw.flush()
+        }
       },
       stdout => Source.fromInputStream(stdout).getLines.foreach(println),
       stderr => Source.fromInputStream(stderr).getLines.foreach(println)
