@@ -8,30 +8,39 @@ import io.github.oybek.service.Octopus
 
 import scala.concurrent.duration._
 import java.io.File
+import java.util.concurrent.TimeUnit
+
+import org.http4s.client.Client
+import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s.client.middleware.Logger
+import org.slf4j.LoggerFactory
+import telegramium.bots.client.{Api, ApiHttp4sImp}
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object PlayCS extends IOApp {
 
   type F[+T] = IO[T]
 
-  def pull(octo: Octopus[F]): F[Unit] =
-    for {
-      so <- octo.pull
-      _ <- so.traverse(x => Sync[F].delay { println(x) })
-      _ <- Timer[F].sleep(1 second)
-      _ <- pull(octo)
-    } yield ()
+  private val tgBotApiToken = "1215497177:AAFmxBAXCG71dE2eIh22YoMKDQ3eSoiaPg8"
+  private val log = LoggerFactory.getLogger("Main")
 
   def run(args: List[String]): IO[ExitCode] = {
     for {
-      octopus <- Octopus.run[F](
-        CmdStartCSDS(new File("/home/oybek/Garage/SteamCMD/hlds"))("cs_mansion", 27014)
-      )
-      _ <- (
-        Timer[F].sleep(20 second) *>
-          octopus.push("sv_gravity 100")
-      ).start.void
-      _ <- pull(octopus).start
+      _ <- Sync[F].delay { log.info(s"starting service...") }
+      _ <- resources
+        .use { httpClient =>
+          implicit val client   : Client[F] = Logger(logHeaders = false, logBody = false)(httpClient)
+          implicit val tgBotApi : Api[F]    = new ApiHttp4sImp[F](client, s"https://api.telegram.org/bot$tgBotApiToken")
+          val tgBot = new TgBot[F]
+          tgBot.start
+        }
     } yield ExitCode.Success
   }
 
+  private def resources: Resource[F, Client[F]] =
+    BlazeClientBuilder[F](global)
+      .withResponseHeaderTimeout(FiniteDuration(60, TimeUnit.SECONDS))
+      .resource
 }
+
