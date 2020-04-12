@@ -17,34 +17,25 @@ object PlayCS extends IOApp {
 
   type F[+T] = IO[T]
 
-  def pull(outputPuller: OutputPuller[F]): F[Unit] =
+  def pull(octo: Octopus[F]): F[Unit] =
     for {
-      so <- outputPuller.pull
+      so <- octo.pull
       _ <- so.traverse(x => Sync[F].delay { println(x) })
       _ <- Timer[F].sleep(1 second)
-      _ <- pull(outputPuller)
+      _ <- pull(octo)
     } yield ()
 
   def run(args: List[String]): IO[ExitCode] = {
-    val process = Process(
-      "./hlds_run -game cstrike +ip 0.0.0.0 +maxplayers 12 +map cs_mansion",
-      new java.io.File("/home/oybek/Garage/SteamCMD/hlds")
-    )
-    val inputPusher = new InputPusher
-    val outputPuller = new OutputPuller[F]
-    val octopus = new ProcessIO(
-      inputPusher.pusher,
-      outputPuller.puller,
-      _ => ()
-    )
-
     for {
-      _ <- Sync[F].delay(process.run(octopus))
+      octopus <- Octopus.run[F](
+        "./hlds_run -game cstrike +ip 0.0.0.0 +maxplayers 12 +map cs_mansion",
+        new java.io.File("/home/oybek/Garage/SteamCMD/hlds")
+      )
       _ <- (
-        Timer[F].sleep(1 second) *>
-          Sync[F].delay(inputPusher.push("sv_gravity 100"))
+        Timer[F].sleep(20 second) *>
+          octopus.push("sv_gravity 100")
       ).start.void
-      _ <- pull(outputPuller).start
+      _ <- pull(octopus).start
     } yield ExitCode.Success
   }
 
