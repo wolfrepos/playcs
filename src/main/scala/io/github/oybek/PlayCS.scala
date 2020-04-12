@@ -38,7 +38,7 @@ object PlayCS extends IOApp {
         .use { httpClient =>
           implicit val client   : Client[F] = Logger(logHeaders = false, logBody = false)(httpClient)
           implicit val tgBotApi : Api[F]    = new ApiHttp4sImp[F](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
-          val tgBot = new TgBot[F](config)
+          val tgBot = new TgBot[F](config, ref)
           tgBot.start
         }
     } yield ExitCode.Success
