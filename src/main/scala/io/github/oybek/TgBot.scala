@@ -61,7 +61,7 @@ class TgBot[F[_]: Async: Timer: Concurrent](config: Config, ref: Ref[F, Option[O
     })
 
   private def sendMessage(chatId: Int, text: String): F[Unit] = {
-    val sendMessageReq = SendMessageReq(chatId = ChatIntId(chatId), text = text, Some("Markdown"))
+    val sendMessageReq = SendMessageReq(chatId = ChatIntId(chatId), text = text)
     bot.sendMessage(sendMessageReq).void *>
       Sync[F].delay { log.info(s"send message: $sendMessageReq") }
   }
