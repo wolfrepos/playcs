@@ -12,7 +12,7 @@ sealed trait Cmd {
 }
 
 case class CmdStartCSDS(workDir: File)(map: String, port: Int) extends Cmd {
-  def cmd: String = "./hlds"
+  def cmd: String = "./hlds_run"
 
   def args: Seq[(String, String)] =
     Seq(
