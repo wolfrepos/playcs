@@ -9,7 +9,7 @@ import pureconfig.error.ConfigReaderException
 
 package object config {
 
-  case class Config(tgBotApiToken: String, hldsDir: String)
+  case class Config(serverIp: String, tgBotApiToken: String, hldsDir: String)
 
   object Config {
     import pureconfig.generic.auto._
