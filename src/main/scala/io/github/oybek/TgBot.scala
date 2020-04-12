@@ -43,10 +43,8 @@ class TgBot[F[_]: Async: Timer: Concurrent](config: Config, ref: Ref[F, Option[O
           }
           _ <- sendMessage(message.chat.id,
             s"""
-               |Server created
-               |- $map
-               |
-               |connect ${config.serverIp}:27015
+               |😎 Server created on $map, have fun!
+               |`connect ${config.serverIp}:27015`
                |""".stripMargin)
         } yield ()
 
@@ -63,7 +61,7 @@ class TgBot[F[_]: Async: Timer: Concurrent](config: Config, ref: Ref[F, Option[O
     })
 
   private def sendMessage(chatId: Int, text: String): F[Unit] = {
-    val sendMessageReq = SendMessageReq(chatId = ChatIntId(chatId), text = text)
+    val sendMessageReq = SendMessageReq(chatId = ChatIntId(chatId), text = text, Some("Markdown"))
     bot.sendMessage(sendMessageReq).void *>
       Sync[F].delay { log.info(s"send message: $sendMessageReq") }
   }
