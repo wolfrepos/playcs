@@ -3,9 +3,11 @@ package io.github.oybek
 import cats.instances.option._
 import cats.syntax.all._
 import cats.effect._
+import io.github.oybek.domain.CmdStartCSDS
 import io.github.oybek.service.Octopus
 
 import scala.concurrent.duration._
+import java.io.File
 
 object PlayCS extends IOApp {
 
@@ -22,8 +24,7 @@ object PlayCS extends IOApp {
   def run(args: List[String]): IO[ExitCode] = {
     for {
       octopus <- Octopus.run[F](
-        "./hlds_run -game cstrike +ip 0.0.0.0 +maxplayers 12 +map cs_mansion",
-        new java.io.File("/home/oybek/Garage/SteamCMD/hlds")
+        CmdStartCSDS(new File("/home/oybek/Garage/SteamCMD/hlds"))("cs_mansion", 27014)
       )
       _ <- (
         Timer[F].sleep(20 second) *>

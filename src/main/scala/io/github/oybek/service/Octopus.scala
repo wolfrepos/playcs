@@ -4,6 +4,7 @@ import java.io.File
 
 import cats.effect.Sync
 import cats.syntax.all._
+import io.github.oybek.domain.Cmd
 
 import scala.sys.process.{Process, ProcessIO}
 
@@ -18,10 +19,8 @@ class Octopus[F[_]: Sync](process: Process,
 }
 
 object Octopus {
-  def run[F[_]: Sync](cmd: String, cwd: File): F[Octopus[F]] = {
-    val processDesc = Process(
-      "./hlds_run -console -game cstrike +ip 0.0.0.0 +maxplayers 12 +map cs_mansion",
-      new java.io.File("/home/oybek/Garage/SteamCMD/hlds"))
+  def run[F[_]: Sync](cmd: Cmd): F[Octopus[F]] = {
+    val processDesc = Process(cmd.expr, cmd.workDir)
     val inputPusher = new InputPusher
     val outputPuller = new OutputPuller[F]
     for {
