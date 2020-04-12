@@ -44,7 +44,7 @@ class TgBot[F[_]: Async: Timer: Concurrent](config: Config, ref: Ref[F, Option[O
           _ <- sendMessage(message.chat.id,
             s"""
                |Server created
-               |- map: $map
+               |- $map
                |
                |connect ${config.serverIp}:27015
                |""".stripMargin)
