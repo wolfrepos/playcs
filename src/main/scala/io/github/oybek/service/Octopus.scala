@@ -10,7 +10,8 @@ import scala.sys.process.{Process, ProcessIO}
 
 class Octopus[F[_]: Sync](process: Process,
                           inputPusher: InputPusher,
-                          outputPuller: OutputPuller[F]) {
+                          outputPuller: OutputPuller[F],
+                          val mapp: String) {
 
   def isAlive: F[Boolean] = Sync[F].delay(process.isAlive())
   def destroy: F[Unit] = Sync[F].delay(process.destroy())
@@ -26,6 +27,12 @@ object Octopus {
     for {
       processIO <- Sync[F].delay { new ProcessIO(inputPusher.pusher, outputPuller.puller, _ => ()) }
       process <- Sync[F].delay { processDesc.run(processIO) }
-    } yield new Octopus[F](process, inputPusher, outputPuller)
+    } yield
+      new Octopus[F](
+        process,
+        inputPusher,
+        outputPuller,
+        cmd.args.find(_._1 == "+cmd").map(_._2).getOrElse("unknown")
+      )
   }
 }

@@ -43,13 +43,22 @@ class TgBot[F[_]: Async: Timer: Concurrent](config: Config, ref: Ref[F, Option[O
           }
           _ <- sendMessage(message.chat.id,
             s"""
-               |😎 Server created on $map, have fun!
-               |`connect ${config.serverIp}:27015`
+               |Server created on $map, have fun! 😎
+               |connect ${config.serverIp}:27015
                |""".stripMargin)
         } yield ()
 
       case Text(`/do`(cmd)) =>
         ref.get.flatMap(_.traverse(_.push(cmd)).void)
+
+      case Text("/status") =>
+        ref.get.flatMap(_.traverse { octopus =>
+          sendMessage(message.chat.id,
+            s"""
+               |Server is on ${octopus.mapp}
+               |connect ${config.serverIp}:27015
+               |""".stripMargin)
+        }).void
 
       case Text(text) =>
         Sync[F].delay {
