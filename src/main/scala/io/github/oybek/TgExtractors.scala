@@ -14,5 +14,6 @@ trait TgExtractors {
       msg.text
   }
 
-  val `/new`: Regex = "/new ([0-9a-z_]+) ([0-9]+[hm])".r
+  val `/new`: Regex = "/new(?:@playcs_bot)? ([0-9a-z_]+) ([0-9]+[hm])".r
+  val `/do`: Regex = "/do(?:@playcs_bot)? (.*)".r
 }
