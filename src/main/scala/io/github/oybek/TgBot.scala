@@ -5,11 +5,13 @@ import java.sql.Timestamp
 import cats.effect.syntax.all._
 import cats.effect.{Async, Concurrent, Sync, Timer}
 import cats.syntax.all._
+import io.github.oybek.config.Config
 import org.slf4j.{Logger, LoggerFactory}
 import telegramium.bots.client.Api
 import telegramium.bots.high.LongPollBot
 
-class TgBot[F[_]: Async: Timer: Concurrent](implicit bot: Api[F]) extends LongPollBot[F](bot) with TgExtractors {
+class TgBot[F[_]: Async: Timer: Concurrent](config: Config)(implicit bot: Api[F])
+  extends LongPollBot[F](bot) with TgExtractors {
 
   val log: Logger = LoggerFactory.getLogger("TgGate")
 

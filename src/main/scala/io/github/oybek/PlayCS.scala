@@ -10,6 +10,7 @@ import scala.concurrent.duration._
 import java.io.File
 import java.util.concurrent.TimeUnit
 
+import io.github.oybek.config.Config
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.middleware.Logger
@@ -27,12 +28,15 @@ object PlayCS extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
     for {
+      configFile <- Sync[F].delay(Option(System.getProperty("application.conf")))
+      config <- Config.load[F](configFile)
+      _ <- Sync[F].delay { log.info(s"loaded config: $config") }
       _ <- Sync[F].delay { log.info(s"starting service...") }
       _ <- resources
         .use { httpClient =>
           implicit val client   : Client[F] = Logger(logHeaders = false, logBody = false)(httpClient)
-          implicit val tgBotApi : Api[F]    = new ApiHttp4sImp[F](client, s"https://api.telegram.org/bot$tgBotApiToken")
-          val tgBot = new TgBot[F]
+          implicit val tgBotApi : Api[F]    = new ApiHttp4sImp[F](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
+          val tgBot = new TgBot[F](config)
           tgBot.start
         }
     } yield ExitCode.Success

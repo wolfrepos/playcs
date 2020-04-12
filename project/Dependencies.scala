@@ -9,11 +9,13 @@ object Dependencies {
     val telegramium = "1.0.0-RC1"
     val slf4j = "1.7.26"
     val logback = "1.2.3"
+    val pureConfig = "0.10.2"
   }
 
   val catsCore = "org.typelevel" %% "cats-core" % V.catsCore
   val catsEffect = "org.typelevel" %% "cats-effect" % V.catsEffect
   val scalaTest = "org.scalatest" %% "scalatest" % V.scalaTest % "test"
+  val pureConfig = "com.github.pureconfig" %% "pureconfig" % V.pureConfig
 
   val telegramium = Seq(
     "io.github.apimorphism" %% "telegramium-core" % V.telegramium,
@@ -25,7 +27,13 @@ object Dependencies {
     "ch.qos.logback" % "logback-classic" % V.logback
   )
 
-  val common = Seq(catsCore, catsEffect, scalaTest) ++
-    telegramium ++
-    logger
+  val common =
+    Seq(
+      catsCore,
+      catsEffect,
+      scalaTest,
+      pureConfig
+    ) ++
+      telegramium ++
+      logger
 }
