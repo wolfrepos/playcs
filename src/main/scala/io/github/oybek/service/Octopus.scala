@@ -32,7 +32,7 @@ object Octopus {
         process,
         inputPusher,
         outputPuller,
-        cmd.args.find(_._1 == "+cmd").map(_._2).getOrElse("unknown")
+        cmd.args.find(_._1 == "+map").map(_._2).getOrElse("unknown")
       )
   }
 }
