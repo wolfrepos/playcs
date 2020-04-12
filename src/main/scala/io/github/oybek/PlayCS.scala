@@ -25,7 +25,7 @@ object PlayCS extends IOApp {
   private val tgBotApiToken = "1215497177:AAFmxBAXCG71dE2eIh22YoMKDQ3eSoiaPg8"
   private val log = LoggerFactory.getLogger("Main")
 
-  def run(args: List[String]): IO[ExitCode] = {
+  def run(args: List[String]): IO[ExitCode] =
     for {
       _ <- Sync[F].delay { log.info(s"starting service...") }
       _ <- resources
@@ -36,7 +36,6 @@ object PlayCS extends IOApp {
           tgBot.start
         }
     } yield ExitCode.Success
-  }
 
   private def resources: Resource[F, Client[F]] =
     BlazeClientBuilder[F](global)
