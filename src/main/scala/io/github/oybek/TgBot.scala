@@ -21,6 +21,8 @@ class TgBot[F[_]: Async: Timer: Concurrent](config: Config, ref: Ref[F, Option[O
   import telegramium.bots._
   import telegramium.bots.client._
 
+  private val hldsDir = new java.io.File(config.hldsDir)
+
   override def onMessage(message: Message): F[Unit] =
     Sync[F].delay { log.info(s"got message: $message") } *> (message match {
       case Location(location) =>
@@ -31,10 +33,14 @@ class TgBot[F[_]: Async: Timer: Concurrent](config: Config, ref: Ref[F, Option[O
       case Text(`/new`(map, _)) =>
         for {
           octopusOpt <- ref.get
-          hldsDir = new java.io.File(config.hldsDir)
-          _ <- octopusOpt.traverse(_.destroy)
-          octopus <- Octopus.run(CmdStartCSDS(hldsDir)(map, 27015))
-          _ <- ref.update(_ => Some(octopus))
+          _ <- octopusOpt match {
+            case Some(octopus) =>
+              octopus.push(s"map $map")
+            case None =>
+              Octopus.run(CmdStartCSDS(hldsDir)(map, 27015)).flatMap { octopus =>
+                ref.update(_ => Some(octopus))
+              }
+          }
           _ <- sendMessage(message.chat.id,
             s"""
                |Server created
@@ -43,9 +49,6 @@ class TgBot[F[_]: Async: Timer: Concurrent](config: Config, ref: Ref[F, Option[O
                |connect ${config.serverIp}:27015
                |""".stripMargin)
         } yield ()
-
-      case Text("/kill") =>
-        ref.get.flatMap(_.traverse(_.destroy)) *> ref.update(_ => None)
 
       case Text(text) =>
         Sync[F].delay {
