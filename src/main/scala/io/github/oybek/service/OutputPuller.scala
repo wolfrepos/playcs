@@ -1,13 +1,13 @@
-package io.github.oybek
+package io.github.oybek.service
 
-import java.io.{InputStream, PrintWriter}
+import java.io.InputStream
 import java.util.concurrent.ConcurrentLinkedQueue
 
 import cats.effect.Sync
 
 import scala.io.Source
 
-class OutputPuller[F[_]: Sync] {
+private class OutputPuller[F[_]: Sync] {
 
   private val queue = new ConcurrentLinkedQueue[String]()
 

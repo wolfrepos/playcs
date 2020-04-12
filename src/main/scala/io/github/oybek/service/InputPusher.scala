@@ -1,9 +1,9 @@
-package io.github.oybek
+package io.github.oybek.service
 
 import java.io.{OutputStream, PrintWriter}
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class InputPusher {
+private class InputPusher {
 
   private val queue = new ConcurrentLinkedQueue[String]()
 

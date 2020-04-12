@@ -1,9 +1,9 @@
-package io.github.oybek
+package io.github.oybek.service
 
 import java.io.File
 
-import cats.syntax.all._
 import cats.effect.Sync
+import cats.syntax.all._
 
 import scala.sys.process.{Process, ProcessIO}
 

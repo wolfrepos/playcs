@@ -1,15 +1,9 @@
 package io.github.oybek
 
-import java.io.PrintWriter
-import java.util.concurrent.ConcurrentLinkedQueue
-
-import cats.instances.list._
 import cats.instances.option._
 import cats.syntax.all._
 import cats.effect._
-
-import scala.io.Source
-import scala.sys.process.{Process, ProcessIO}
+import io.github.oybek.service.Octopus
 
 import scala.concurrent.duration._
 
