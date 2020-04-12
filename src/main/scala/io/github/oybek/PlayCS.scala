@@ -10,6 +10,7 @@ import scala.concurrent.duration._
 import java.io.File
 import java.util.concurrent.TimeUnit
 
+import cats.effect.concurrent.Ref
 import io.github.oybek.config.Config
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -28,6 +29,7 @@ object PlayCS extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
     for {
+      ref <- Ref[F].of(Option.empty[Octopus[F]])
       configFile <- Sync[F].delay(Option(System.getProperty("application.conf")))
       config <- Config.load[F](configFile)
       _ <- Sync[F].delay { log.info(s"loaded config: $config") }
