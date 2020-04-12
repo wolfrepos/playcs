@@ -51,7 +51,7 @@ class TgBot[F[_]: Async: Timer: Concurrent](config: Config, ref: Ref[F, Option[O
         } yield ()
 
       case Text(`/do`(cmd)) =>
-        ref.get.flatMap(_.traverse(_.push(cmd)))
+        ref.get.flatMap(_.traverse(_.push(cmd)).void)
 
       case Text(text) =>
         Sync[F].delay {
