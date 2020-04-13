@@ -11,7 +11,7 @@ sealed trait Cmd {
     (Seq(cmd) ++ args.flatMap(x => Seq(x._1, x._2))).mkString(" ")
 }
 
-case class CmdStartCSDS(workDir: File)(map: String, port: Int) extends Cmd {
+case class CmdStartCSDS(workDir: File, port: Int) extends Cmd {
   def cmd: String = "./hlds_run"
 
   def args: Seq[(String, String)] =
@@ -20,6 +20,6 @@ case class CmdStartCSDS(workDir: File)(map: String, port: Int) extends Cmd {
       "+ip" -> "0.0.0.0",
       "+port" -> port.toString,
       "+maxplayers" -> "12",
-      "+map" -> map
+      "+map" -> "de_dust2"
     )
 }

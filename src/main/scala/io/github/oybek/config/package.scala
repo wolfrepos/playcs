@@ -9,7 +9,10 @@ import pureconfig.error.ConfigReaderException
 
 package object config {
 
-  case class Config(serverIp: String, tgBotApiToken: String, hldsDir: String)
+  case class Config(serverIp: String,
+                    tgBotApiToken: String,
+                    hldsDir: String,
+                    serverPoolSize: Int)
 
   object Config {
     import pureconfig.generic.auto._
@@ -20,7 +23,9 @@ package object config {
         .delay {
           configFileName
             .map(x => loadConfig[Config](ConfigFactory.parseFile(new File(x))))
-            .getOrElse(loadConfig[Config](ConfigFactory.load("application.conf")))
+            .getOrElse(
+              loadConfig[Config](ConfigFactory.load("application.conf"))
+            )
         }
         .flatMap {
           case Left(e) =>

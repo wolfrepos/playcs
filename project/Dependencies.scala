@@ -6,20 +6,19 @@ object Dependencies {
     val catsCore = "2.0.0"
     val catsEffect = "2.0.0"
     val scalaTest = "3.1.1"
-    val telegramium = "1.0.0-RC1"
     val slf4j = "1.7.26"
     val logback = "1.2.3"
-    val pureConfig = "0.10.2"
+    val pureConfig = "0.12.3"
+    val fs2        = "2.0.0"
   }
 
   val catsCore = "org.typelevel" %% "cats-core" % V.catsCore
   val catsEffect = "org.typelevel" %% "cats-effect" % V.catsEffect
   val scalaTest = "org.scalatest" %% "scalatest" % V.scalaTest % "test"
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % V.pureConfig
-
-  val telegramium = Seq(
-    "io.github.apimorphism" %% "telegramium-core" % V.telegramium,
-    "io.github.apimorphism" %% "telegramium-high" % V.telegramium
+  val fs2 = Seq(
+    "co.fs2" %% "fs2-core" % V.fs2,
+    "co.fs2" %% "fs2-io" % V.fs2,
   )
 
   val logger = Seq(
@@ -28,12 +27,5 @@ object Dependencies {
   )
 
   val common =
-    Seq(
-      catsCore,
-      catsEffect,
-      scalaTest,
-      pureConfig
-    ) ++
-      telegramium ++
-      logger
+    Seq(catsCore, catsEffect, scalaTest, pureConfig) ++ logger ++ fs2
 }

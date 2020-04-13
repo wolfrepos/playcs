@@ -6,6 +6,7 @@
     </appender>
     <logger name="Main" level="DEBUG"/>
     <logger name="TgGate" level="DEBUG"/>
+    <logger name="ServerPool" level="DEBUG"/>
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
