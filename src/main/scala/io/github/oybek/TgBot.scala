@@ -88,8 +88,8 @@ class Bot[F[_]: Async: Timer: Concurrent](serverPool: ServerPoolAlg[F],
             messageId = msgId.some,
             caption =
               s"""
-                 |Карта: $map
-                 |Время: ${time.length} минут
+                 |Карта: $map, Время: ${time.length} минут
+                 |Для подключения скопируйте в консоль игры:
                  |connect ${server.ip}:${server.port}; password ${server.password}
                  |""".stripMargin.some
           ).some.widen[Req])
