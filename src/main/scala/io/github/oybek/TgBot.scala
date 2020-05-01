@@ -9,8 +9,8 @@ import fs2.Stream
 import io.github.oybek.service.pool.ServerPoolAlg
 import io.github.oybek.util.FileTools
 import org.slf4j.{Logger, LoggerFactory}
-import telegramium.bots.Update
-import telegramium.bots.client.{Api, Req}
+import telegramium.bots.{Update, client}
+import telegramium.bots.client.{Api, EditMessageMediaReq, Req}
 
 import scala.concurrent.duration._
 
@@ -39,7 +39,7 @@ class Bot[F[_]: Async: Timer: Concurrent](serverPool: ServerPoolAlg[F],
         case Message(chat, Text(x)) if x.matches("/(start|help).*") =>
           val text =
             """
-              |Напиши мне /go и я создам сервер CS 1.6
+              |Напишите /go и я создам сервер CS 1.6
               |Еще меня можно добавлять в беседы
               |""".stripMargin
           sendMessageReq(chat, text)
@@ -57,7 +57,7 @@ class Bot[F[_]: Async: Timer: Concurrent](serverPool: ServerPoolAlg[F],
           }
 
         case CallbackQuery(chat, "GO!", msg) =>
-          `GO!`(chat, msg.caption.getOrElse("de_dust2"), "30")
+          `GO!`(chat, msg.caption.getOrElse("de_dust2"), "30", msg.messageId)
 
         case CallbackQuery(chat, x, msg) if x.startsWith("<< ") || x.startsWith(">> ") =>
           val map = x.drop(3).some
@@ -67,28 +67,33 @@ class Bot[F[_]: Async: Timer: Concurrent](serverPool: ServerPoolAlg[F],
           menu(chat)
 
         case Message(chat, _) =>
-          sendMessageReq(chat, "Не знаю такую команду")
+          sendMessageReq(chat, "Напишите /go и я создам сервер CS 1.6")
 
         case _ => F.pure(Option.empty[Req])
       }
 
-  private def `GO!`(chat: Chat, map: String, requiredTime: String) = {
+  private def `GO!`(chat: Chat, map: String, requiredTime: String, msgId: Int) = {
     val time = requiredTime.toInt.min(30).minutes
     serverPool.poll(chat.id, nowAnd(time), map).flatMap { resp =>
-      val text =
-        resp.fold(
-          _ =>
+      resp.fold(
+        _ =>
+          sendMessageReq(chat,
             s"""
-               |Не могу создать сервер - кончилась оперативка на серваке
-               |Подожди пока освободится место или напиши @wolfodav
-               |""".stripMargin,
-          server =>
-            s"""
-               |Создан сервер на $map на ${time.length} минут
-               |connect ${server.ip}:${server.port}; password ${server.password}
-               |""".stripMargin
-        )
-      sendMessageReq(chat, text)
+               |Закончилось ОЗУ на машине
+               |Напишите @wolfodav
+               |""".stripMargin),
+        server =>
+          F.pure(EditMessageCaptionReq(
+            chatId = ChatLongId(chat.id).some,
+            messageId = msgId.some,
+            caption =
+              s"""
+                 |Карта: $map
+                 |Время: ${time.length} минут
+                 |connect ${server.ip}:${server.port}; password ${server.password}
+                 |""".stripMargin.some
+          ).some.widen[Req])
+      )
     }
   }
 

@@ -52,10 +52,11 @@ object PlayCS extends IOApp {
                 .process(LongPollBot.getUpdates(tgBotApi))
                 .collect { case Some(x) => x }
                 .evalMap {
-                  case x: SendMessageReq      => tgBotApi.sendMessage(x)
-                  case x: EditMessageTextReq  => tgBotApi.editMessageText(x)
-                  case x: SendPhotoReq        => tgBotApi.sendPhoto(x)
-                  case x: EditMessageMediaReq => tgBotApi.editMessageMedia(x)
+                  case x: SendMessageReq        => tgBotApi.sendMessage(x)
+                  case x: EditMessageTextReq    => tgBotApi.editMessageText(x)
+                  case x: SendPhotoReq          => tgBotApi.sendPhoto(x)
+                  case x: EditMessageMediaReq   => tgBotApi.editMessageMedia(x)
+                  case x: EditMessageCaptionReq => tgBotApi.editMessageCaption(x)
                 }
           }
           .metered(100 millis)
