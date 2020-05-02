@@ -51,12 +51,17 @@ object PlayCS extends IOApp {
               new Bot[F](serverPool, config.hldsDir)
                 .process(LongPollBot.getUpdates(tgBotApi))
                 .collect { case Some(x) => x }
+                .evalTap { x => Sync[F].delay(log.info(s"doing request: $x")) }
                 .evalMap {
-                  case x: SendMessageReq        => tgBotApi.sendMessage(x)
-                  case x: EditMessageTextReq    => tgBotApi.editMessageText(x)
-                  case x: SendPhotoReq          => tgBotApi.sendPhoto(x)
-                  case x: EditMessageMediaReq   => tgBotApi.editMessageMedia(x)
-                  case x: EditMessageCaptionReq => tgBotApi.editMessageCaption(x)
+                  case x: SendMessageReq        => tgBotApi.sendMessage(x).attempt
+                  case x: EditMessageTextReq    => tgBotApi.editMessageText(x).attempt
+                  case x: SendPhotoReq          => tgBotApi.sendPhoto(x).attempt
+                  case x: EditMessageMediaReq   => tgBotApi.editMessageMedia(x).attempt
+                  case x: EditMessageCaptionReq => tgBotApi.editMessageCaption(x).attempt
+                }
+                .evalMap {
+                  case Left(e) => Sync[F].delay(log.error(s"got error while request telegram ${e.getMessage}"))
+                  case Right(res) => Sync[F].delay(log.error(s"request response: $res"))
                 }
           }
           .metered(100 millis)
