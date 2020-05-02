@@ -7,30 +7,40 @@ on:
 
 jobs:
   job:
-    #
+
     runs-on: ubuntu-latest
-    #
+
     steps:
-      # action to clone repo to workspace of workflow
+
     - uses: actions/checkout@v1
-      #
-    - name: Cache ivy
+
+    - name: cache ivy
       uses: actions/cache@v1
       env:
         cache-name: cache-ivy
       with:
         path: ~/.ivy2/cache
         key: ${{ runner.os }}-build-${{ env.cache-name }}
-      # setup jdk 1.8
-    - name: Set up JDK 1.8
+
+    - name: set up JDK 1.8
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-      #
-    - name: Compile/Test/Assembly
-      run: sbt "compile; test; set test in assembly := {}; assembly"
-      # copy assembled jar over ssh to vps
-    - name: Deploy
+
+    - name: test
+      run: |
+        sbt clean coverage test
+        sbt coverageReport
+
+    - name: sonar
+      env:
+        SONAR_TOKEN: ${{ SONAR_TOKEN }}
+      run: sbt -Dsonar.login=$SONAR_TOKEN sonarScan
+
+    - name: assembly
+      run: sbt "clean; set test in assembly := {}; assembly"
+
+    - name: deploy
       uses: garygrossgarten/github-action-scp@release
       with:
         local: target/scala-2.12/playcs-assembly-0.1.jar
@@ -38,8 +48,8 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         password: ${{ secrets.SSH_PASS }}
-      # update remote app
-    - name: Update app
+
+    - name: update app
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.SSH_HOST }}
@@ -48,8 +58,8 @@ jobs:
         script: |
           cp /tmp/app.jar ~/playcs/app.jar
           sudo systemctl restart playcs
-      # report that job is done
-    - name: Inform command
+
+    - name: inform command
       uses: appleboy/telegram-action@master
       with:
         to: ${{ secrets.INFORM_CHAT_ID }}

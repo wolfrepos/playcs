@@ -14,4 +14,5 @@ lazy val high = ProjectRef(
 lazy val playcs = (project in file("."))
   .settings(name := "playcs")
   .settings(libraryDependencies ++= Dependencies.common)
+  .settings(sonarProperties := Sonar.properties)
   .dependsOn(api, high)
