@@ -2,7 +2,7 @@ package io.github.oybek.domain
 
 import java.sql.Timestamp
 
-import io.github.oybek.service.console.Console
+import io.github.oybek.component.console.Console
 
 case class Server[F[_]](ip: String,
                         port: Int,
@@ -10,4 +10,4 @@ case class Server[F[_]](ip: String,
                         password: String,
                         rentedBy: Option[Long],
                         rentedUntil: Option[Timestamp],
-                        interactor: Console[F])
+                        console: Console[F])

@@ -1,4 +1,4 @@
-package io.github.oybek.service.pool
+package io.github.oybek.component.pool
 
 sealed trait ServerPoolError
 case object NoFreeServerInPoolError extends ServerPoolError

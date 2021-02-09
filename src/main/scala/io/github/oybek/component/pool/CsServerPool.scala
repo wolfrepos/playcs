@@ -1,17 +1,17 @@
-package io.github.oybek.service.pool
+package io.github.oybek.component.pool
 
 import java.io.File
 import java.sql.Timestamp
 
-import cats.effect.concurrent.Ref
 import cats.effect.syntax.all._
+import cats.effect.concurrent.Ref
 import cats.effect.{Async, Concurrent, Sync, Timer}
 import cats.instances.list._
 import cats.instances.option._
 import cats.syntax.all._
 import io.github.oybek.config.Config
 import io.github.oybek.domain.{CmdStartCSDS, Server}
-import io.github.oybek.service.console.Console
+import io.github.oybek.component.console.Console
 import io.github.oybek.util.TimeTools._
 import org.slf4j.LoggerFactory
 
@@ -20,7 +20,7 @@ import scala.util.Random
 
 class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F]]], config: Config) extends ServerPoolAlg[F] {
 
-  private val log = LoggerFactory.getLogger("ServerPool")
+  private val log = LoggerFactory.getLogger("server-pool")
 
   def init: F[Unit] =
     for {
@@ -33,10 +33,10 @@ class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F
   def info: F[List[String]] =
     poolRef.get.map {
       _.zipWithIndex.map {
-        case (Server(_, _, map, _, _, Some(rentUntil), _), ind) =>
-          s"$ind: $map for ${(rentUntil.getTime - System.currentTimeMillis)/60000} minutes"
+        case (Server(_, _, map, _, _, _, _), ind) =>
+          s"Сервер $ind - На $map чилят пацаны"
         case (_, ind) =>
-          s"$ind: free"
+          s"Сервер $ind - свободен для чила"
       }
     }
 
@@ -59,13 +59,16 @@ class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F
   def find(id: Long): F[Option[Server[F]]] =
     poolRef.get.map(_.find(_.rentedBy.contains(id)))
 
-  def poll(chatId: Long, rentUntil: Timestamp, map: String): F[Either[ServerPoolError, Server[F]]] =
-    poolRef.get.flatMap { pool =>
-      split(
-        pool,
-        (srv: Server[F]) => srv.rentedBy.contains(chatId),
-        (srv: Server[F]) => srv.rentedBy.isEmpty,
-      ) match {
+  def rent(chatId: Long, rentUntil: Timestamp, map: String): F[Either[ServerPoolError, Server[F]]] =
+    poolRef.get.flatMap { servers =>
+      Stream(
+        (x: Server[F]) => x.rentedBy.contains(chatId),
+        (x: Server[F]) => x.rentedBy.isEmpty
+      )
+        .map(p => servers.partition(p))
+        .collectFirst {
+          case (x::xs, ys) => (x, xs ++ ys)
+        } match {
         case None =>
           Sync[F].delay(log.info(s"no server left in pool")) *>
             Sync[F].pure(Left(NoFreeServerInPoolError))
@@ -79,12 +82,13 @@ class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F
       }
     }
 
-  private def split[T](l: List[T], ps: (T => Boolean)*): Option[(T, List[T])] =
+  private def split[T](l: List[T], ps: (T => Boolean)*): Option[(T, List[T])] = {
     ps
       .map(p => l.span(!p(_)))
       .collectFirst {
         case (xs, y::ys) => (y, xs ++ ys)
       }
+  }
 
   private def check: F[Unit] = {
     for {
@@ -116,9 +120,10 @@ class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F
         password = password
       ))
       _ <- Sync[F].delay(log.info(s"$srv -> $srv2"))
-      _ <- srv2.interactor.println(s"sv_password ${srv2.password}")
+      _ <- srv2.console.execute(s"sv_password ${srv2.password}")
       _ <- Timer[F].sleep(200 millis)
-      _ <- srv2.interactor.println(s"$cmd ${srv2.theMap}")
+      _ <- srv2.console.execute(s"$cmd ${srv2.theMap}")
+      _ <- srv2.console.execute(s"hostname baldezh_admin")
     } yield srv2
 
   private def createPool: F[List[Server[F]]] =
@@ -131,5 +136,5 @@ class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F
         .flatMap(refresh(_))
     }
 
-  private def randomPassword: String = (Random.nextInt(90000) + 10000).toString
+  private def randomPassword: String = (Random.nextInt(9000) + 1000).toString
 }

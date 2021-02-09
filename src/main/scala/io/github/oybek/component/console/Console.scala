@@ -1,4 +1,4 @@
-package io.github.oybek.service.console
+package io.github.oybek.component.console
 
 import java.io.{InputStream, OutputStream, PrintWriter}
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -15,7 +15,7 @@ class Console[F[_]: Sync](process: Process,
                           outputPuller: OutputPuller[F],
                           val mapp: String) extends ConsoleAlg[F] {
 
-  def println(s: String): F[Unit] = Sync[F].delay(inputPusher.push(s))
+  def execute(s: String): F[Unit] = Sync[F].delay(inputPusher.push(s))
   def readln: F[Option[String]] = outputPuller.pull
 }
 
