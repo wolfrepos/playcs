@@ -33,7 +33,7 @@ class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F
   def info: F[List[String]] =
     poolRef.get.map {
       _.zipWithIndex.map {
-        case (Server(_, _, map, _, _, _, _), ind) =>
+        case (Server(_, _, map, _, Some(_), _, _), ind) =>
           s"Сервер $ind - На $map чилят пацаны"
         case (_, ind) =>
           s"Сервер $ind - свободен для чила"
