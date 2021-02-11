@@ -46,7 +46,7 @@ class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F
       splitRes = split(pool, (srv: Server[F]) => srv.rentedBy.contains(chatId))
       _ <- splitRes.traverse { case (x, xs) =>
         for {
-          newPool <- refresh(x).map(_::xs)
+          newPool <- refresh(x, randomPassword).map(_::xs)
           _ <- poolRef.update(_ => newPool)
         } yield ()
       }
@@ -74,7 +74,7 @@ class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F
             Sync[F].pure(Left(NoFreeServerInPoolError))
 
         case Some((x, xs)) =>
-          refresh(x, map, Some(chatId), Some(rentUntil), cmd="changelevel").flatMap { srv =>
+          refresh(x, randomPassword, map, Some(chatId), Some(rentUntil), cmd="changelevel").flatMap { srv =>
             Sync[F].delay(log.info(s"polled $srv")) *>
               poolRef.update(_ => srv::xs) *>
               Sync[F].pure(Right(srv))
@@ -98,7 +98,7 @@ class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F
       poolC <- pool.foldLeftM(List.empty[Server[F]]) {
         case (acc, cur) =>
           Sync[F].delay(log.info(s"time $now, checking $cur...")) *> (
-            if (cur.rentedUntil.exists(_.before(now))) refresh(cur).map(_ :: acc)
+            if (cur.rentedUntil.exists(_.before(now))) refresh(cur, randomPassword).map(_ :: acc)
             else Sync[F].pure(cur :: acc)
           )
       }
@@ -107,10 +107,10 @@ class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F
   }
 
   private def refresh(srv: Server[F],
+                      password: String,
                       map: String = "de_dust2",
                       rentedBy: Option[Long] = None,
                       rentUntil: Option[Timestamp] = None,
-                      password: String = randomPassword,
                       cmd: String = "map") =
     for {
       srv2 <- Sync[F].delay(srv.copy(
@@ -123,6 +123,7 @@ class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F
       _ <- srv2.console.execute(s"sv_password ${srv2.password}")
       _ <- Timer[F].sleep(200 millis)
       _ <- srv2.console.execute(s"$cmd ${srv2.theMap}")
+      _ <- Timer[F].sleep(200 millis)
       _ <- srv2.console.execute(s"hostname baldezh_admin")
     } yield srv2
 
@@ -133,7 +134,7 @@ class CsServerPool[F[_]: Async: Timer: Concurrent](poolRef: Ref[F, List[Server[F
       Console
         .runProcess(CmdStartCSDS(new File(config.hldsDir), port))
         .map(Server(ip, port, "", "", None, None, _))
-        .flatMap(refresh(_))
+        .flatMap(refresh(_, randomPassword))
     }
 
   private def randomPassword: String = (Random.nextInt(9000) + 1000).toString
