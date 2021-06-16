@@ -2,7 +2,7 @@ package io.github.oybek
 
 import org.scalatest.FunSuite
 
-class SetSuite extends FunSuite {
+class Test extends FunSuite {
 
   test("An empty Set should have size 0") {
     assert(Set.empty.size == 0)

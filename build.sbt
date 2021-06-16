@@ -7,8 +7,9 @@ lazy val playcs = (project in file("."))
   .settings(name := "playcs")
   .settings(libraryDependencies ++= Dependencies.common)
   .settings(sonarProperties := Sonar.properties)
+  .settings(Compiler.settings)
 
 assemblyMergeStrategy in assembly := {
- case PathList("META-INF", xs @ _*) => MergeStrategy.discard
- case x => MergeStrategy.first
+ case PathList("META-INF", _ @ _*) => MergeStrategy.discard
+ case _ => MergeStrategy.first
 }

@@ -1,12 +1,9 @@
-package io.github.oybek.util
-
-import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
+package io.github.oybek.common
 
 import cats.effect.{Sync, Timer}
 import cats.syntax.all._
 
-import scala.concurrent.duration.{FiniteDuration, _}
+import scala.concurrent.duration.FiniteDuration
 
 object TimeTools {
   implicit class PF[F[_]: Sync: Timer](ff: F[Unit]) {

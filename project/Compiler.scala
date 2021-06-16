@@ -4,9 +4,10 @@ import sbt._
 object Compiler {
 
   val settings = Seq(
-    crossScalaVersions := Seq("2.12.10"),
+    crossScalaVersions := Seq("2.13.5"),
     scalacOptions ++= options,
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8")
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8"),
+    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
   )
 
   val options = Seq(
