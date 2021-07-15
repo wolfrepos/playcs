@@ -24,21 +24,14 @@ trait Manager[F[_]] {
 }
 
 object Manager {
-  def create[F[_]: Sync: Timer: Concurrent](config: Config): F[Manager[F]] = {
-    val ip = config.serverIp
-    val hldsDir = new File(config.hldsDir)
+  def create[F[_]: Sync: Timer: Concurrent](consoles: List[ConsoleHigh[F]]): F[Manager[F]] = {
     for {
-      consoles <-
-        (0 until config.serverPoolSize).toList.traverse(i =>
-          ConsoleHigh.create(ip, 27015 + i, hldsDir)
+      consolePool <- Ref.of[F, ConsolePool[F]](
+        ConsolePool[F](
+          free = consoles,
+          busy = List.empty[ConsoleHigh[F] WithMeta ConsoleMeta]
         )
-      consolePool <-
-        Ref.of[F, ConsolePool[F]](
-          ConsolePool[F](
-            free = consoles,
-            busy = List.empty[ConsoleHigh[F] WithMeta ConsoleMeta]
-          )
-        )
+      )
     } yield new ManagerImpl[F](consolePool)
   }
 }

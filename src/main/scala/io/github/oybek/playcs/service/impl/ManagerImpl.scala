@@ -99,5 +99,5 @@ class ManagerImpl[F[_]: Sync: Timer: Clock](consolePoolRef: Ref[F, ConsolePool[F
 
   private def randomPassword: String = (Random.nextInt(9000) + 1000).toString
 
-  private val log = Slf4jLogger.getLoggerFromClass[F](this.getClass)
+  private val log = Slf4jLogger.getLoggerFromName[F]("Manager")
 }

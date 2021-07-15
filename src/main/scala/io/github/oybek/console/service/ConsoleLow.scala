@@ -1,6 +1,6 @@
 package io.github.oybek.console.service
 
-import cats.effect.Sync
+import cats.effect.{Resource, Sync}
 import cats.syntax.all._
 import io.github.oybek.console.service.impl.ConsoleLowImpl
 import io.github.oybek.console.service.impl.ConsoleLowImpl.{InputPusher, OutputPuller}
@@ -14,21 +14,18 @@ trait ConsoleLow[F[_]] {
 }
 
 object ConsoleLow {
-  def create[F[_]: Sync](port: Int, hldsDir: File): F[ConsoleLowImpl[F]] = {
+  def create[F[_]: Sync](port: Int, hldsDir: File): Resource[F, ConsoleLowImpl[F]] = {
     val processDesc = Process(
       s"./hlds_run -game cstrike +ip 0.0.0.0 +port $port +maxplayers 12 +map de_dust2",
       hldsDir
     )
     val inputPusher = new InputPusher
     val outputPuller = new OutputPuller[F]
-    for {
-      processIO <- Sync[F].delay { new ProcessIO(inputPusher.pusher, outputPuller.puller, _ => ()) }
-      process <- Sync[F].delay { processDesc.run(processIO) }
-    } yield
-      new ConsoleLowImpl[F](
-        process,
-        inputPusher,
-        outputPuller
+    val processIO = new ProcessIO(inputPusher.pusher, outputPuller.puller, _ => ())
+    Resource.make(
+      Sync[F].delay(processDesc.run(processIO)).map(
+        new ConsoleLowImpl[F](_, inputPusher, outputPuller)
       )
+    )(consoleLow => Sync[F].delay(consoleLow.process.destroy()))
   }
 }

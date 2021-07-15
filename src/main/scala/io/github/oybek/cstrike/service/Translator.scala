@@ -7,7 +7,4 @@ trait Translator {
   def translate(text: String): Either[String, Command]
 }
 
-object Translator {
-  def create: Translator =
-    new TranslatorImpl
-}
+object Translator extends TranslatorImpl

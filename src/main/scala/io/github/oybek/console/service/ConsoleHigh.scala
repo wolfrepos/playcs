@@ -1,7 +1,6 @@
 package io.github.oybek.console.service
 
-import cats.syntax.functor._
-import cats.effect.{Concurrent, Sync, Timer}
+import cats.effect.{Concurrent, Resource, Sync, Timer}
 import io.github.oybek.console.service.impl.ConsoleHighImpl
 
 import java.io.File
@@ -17,8 +16,9 @@ trait ConsoleHigh[F[_]] {
 }
 
 object ConsoleHigh {
-  def create[F[_]: Sync: Timer: Concurrent](ip: String, port: Int, hldsDir: File): F[ConsoleHighImpl[F]] =
-    ConsoleLow.create(port, hldsDir).map {
-      consoleLow => new ConsoleHighImpl[F](ip, port, consoleLow)
-    }
+  def create[F[_]: Sync: Timer: Concurrent](ip: String, port: Int, hldsDir: File): Resource[F, ConsoleHighImpl[F]] = {
+    for {
+      consoleLow <- ConsoleLow.create(port, hldsDir)
+    } yield new ConsoleHighImpl[F](ip, port, consoleLow)
+  }
 }
