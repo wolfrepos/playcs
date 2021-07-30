@@ -19,8 +19,8 @@ class TranslatorImpl extends Translator {
     stringOf(digit | letter | char('_'))
 
   private val newCommandParser: Parser[NewCommand] =
-    (string("/new") ~> optSuffix ~> ws1 ~> mapNameParser ~ opt(ws1 ~> durationParser)).map {
-      case (map, duration) => NewCommand(map, duration.getOrElse(30.minutes))
+    (string("/new") ~> optSuffix ~> opt(ws1 ~> mapNameParser) ~ opt(ws1 ~> durationParser)).map {
+      case (map, duration) => NewCommand(map.getOrElse("de_dust2"), duration.getOrElse(60.minutes))
     }
 
   private val mapsCommandParser: Parser[MapsCommand.type] =

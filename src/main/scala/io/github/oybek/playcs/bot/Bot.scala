@@ -7,7 +7,7 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.github.oybek.common.WithMeta
 import io.github.oybek.console.service.ConsoleHigh
-import io.github.oybek.cstrike.model.Command.{FreeCommand, JoinCommand, NewCommand, StatusCommand}
+import io.github.oybek.cstrike.model.Command.{FreeCommand, HelpCommand, JoinCommand, NewCommand, StatusCommand, helpText}
 import io.github.oybek.cstrike.service.Translator
 import io.github.oybek.playcs.model.ConsoleMeta
 import io.github.oybek.playcs.service.Manager
@@ -46,7 +46,7 @@ class Bot[F[_]: Sync: Timer: Parallel](api: Api[F],
 
     translator.translate(text) match {
       case Left(parseErrorText) =>
-        send(parseErrorText)
+        send("Че? (/help)")
 
       case Right(NewCommand(map, ttl)) =>
         for {
@@ -58,7 +58,7 @@ class Bot[F[_]: Sync: Timer: Parallel](api: Api[F],
             case Right(console) =>
               for {
                 _ <- console.get.changeLevel(map)
-                _ <- send("Скопируй в консоль")
+                _ <- send("Сервер создан. Скопируй в консоль это")
                 _ <- Timer[F].sleep(200.millis)
                 _ <- sendConsole(console)
               } yield ()
@@ -68,7 +68,7 @@ class Bot[F[_]: Sync: Timer: Parallel](api: Api[F],
       case Right(JoinCommand) =>
         for {
           consoleOpt <- manager.findConsole(chatId.id)
-          _ <- consoleOpt.fold(send("Создайте сервер сначала"))(sendConsole)
+          _ <- consoleOpt.fold(send("Создай сервер сначала (/help)"))(sendConsole)
         } yield ()
 
       case Right(StatusCommand) =>
@@ -79,9 +79,12 @@ class Bot[F[_]: Sync: Timer: Parallel](api: Api[F],
 
       case Right(FreeCommand) =>
         for {
-          status <- manager.freeConsole(chatId.id)
+          _ <- manager.freeConsole(chatId.id)
           _ <- send("Сервер освобожден")
         } yield ()
+
+      case Right(HelpCommand) =>
+        send(helpText)
 
       case _ =>
         send("Еще не реализовано")

@@ -1,9 +1,9 @@
 package io.github.oybek.cstrike
 
 import cats.implicits.catsSyntaxEitherId
-import io.github.oybek.cstrike.service.impl.TranslatorImpl
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.model.Command.{HelpCommand, JoinCommand, MapsCommand, NewCommand, StatusCommand}
+import io.github.oybek.cstrike.service.impl.TranslatorImpl
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.prop.TableDrivenPropertyChecks._
@@ -15,11 +15,13 @@ class TranslatorSpec extends AnyFlatSpec {
     ("text", "command"),
     ("/new@playcs_bot de_dust2 40"     , NewCommand("de_dust2", 40.minutes).asRight[String]),
     (" /new@playcs_bot  de_dust2   40 ", NewCommand("de_dust2", 40.minutes).asRight[String]),
-    ("/new@playcs_bot de_dust2"        , NewCommand("de_dust2", 30.minutes).asRight[String]),
+    ("/new@playcs_bot de_dust2"        , NewCommand("de_dust2", 60.minutes).asRight[String]),
+    ("/new@playcs_bot"                 , NewCommand("de_dust2", 60.minutes).asRight[String]),
+    ("/new"                            , NewCommand("de_dust2", 60.minutes).asRight[String]),
     ("/new@playcs_bot de_dust2 hello"  , "endOfInput".asLeft[Command]),
     ("/new de_dust2 40"                , NewCommand("de_dust2", 40.minutes).asRight[String]),
     (" /new  de_dust2   40 "           , NewCommand("de_dust2", 40.minutes).asRight[String]),
-    ("/new de_dust2"                   , NewCommand("de_dust2", 30.minutes).asRight[String]),
+    ("/new de_dust2"                   , NewCommand("de_dust2", 60.minutes).asRight[String]),
     ("/new de_dust2 hello"             , "endOfInput".asLeft[Command]),
     ("/join"                           , JoinCommand.asRight[String]),
     ("   /join@playcs_bot   "          , JoinCommand.asRight[String]),

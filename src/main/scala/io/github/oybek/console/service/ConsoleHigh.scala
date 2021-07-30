@@ -16,9 +16,8 @@ trait ConsoleHigh[F[_]] {
 }
 
 object ConsoleHigh {
-  def create[F[_]: Sync: Timer: Concurrent](ip: String, port: Int, hldsDir: File): Resource[F, ConsoleHighImpl[F]] = {
+  def create[F[_]: Sync: Timer: Concurrent](ip: String, port: Int, hldsDir: File): Resource[F, ConsoleHighImpl[F]] =
     for {
       consoleLow <- ConsoleLow.create(port, hldsDir)
     } yield new ConsoleHighImpl[F](ip, port, consoleLow)
-  }
 }
