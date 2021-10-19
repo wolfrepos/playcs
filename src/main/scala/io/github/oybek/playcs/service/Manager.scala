@@ -2,16 +2,12 @@ package io.github.oybek.playcs.service
 
 import cats.effect.concurrent.Ref
 import cats.effect.{Concurrent, Sync, Timer}
-import cats.implicits.toTraverseOps
-import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.github.oybek.common.WithMeta
-import io.github.oybek.config.Config
 import io.github.oybek.console.service.ConsoleHigh
 import io.github.oybek.playcs.model.{ConsoleMeta, ConsolePool}
 import io.github.oybek.playcs.service.impl.ManagerImpl
 
-import java.io.File
 import scala.concurrent.duration.FiniteDuration
 
 trait Manager[F[_]] {

@@ -30,7 +30,6 @@ class Bot[F[_]: Sync: Timer: Parallel](api: Api[F],
       onTextMessage(ChatIntId(message.chat.id), text)
     }
 
-  ///XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   def onTextMessage(chatId: ChatIntId, text: String): F[Unit] = {
     translator.translate(text) match {
       case Left(_) =>
@@ -55,46 +54,38 @@ class Bot[F[_]: Sync: Timer: Parallel](api: Api[F],
         send(chatId, "Еще не реализовано")
     }
   }
-  ///XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-  private def freeCommandHandler(chatId: ChatIntId) = {
+  private def freeCommandHandler(chatId: ChatIntId) =
     for {
       _ <- manager.freeConsole(chatId.id)
       _ <- send(chatId, "Сервер освобожден")
     } yield ()
-  }
 
-  private def statusCommandHandler(chatId: ChatIntId) = {
+  private def statusCommandHandler(chatId: ChatIntId) =
     for {
       status <- manager.status
       _ <- send(chatId, status)
     } yield ()
-  }
 
-  private def joinCommandHandler(chatId: ChatIntId) = {
+  private def joinCommandHandler(chatId: ChatIntId) =
     for {
       consoleOpt <- manager.findConsole(chatId.id)
       _ <- consoleOpt.fold(send(chatId, "Создай сервер сначала (/help)"))(sendConsole(chatId, _))
     } yield ()
-  }
 
-  private def newCommandHandler(chatId: ChatIntId, map: String, ttl: FiniteDuration) = {
-    for {
-      errorOrConsole <- manager.rentConsole(chatId.id, ttl)
-      _ <- errorOrConsole match {
-        case Left(errorText) =>
-          send(chatId, errorText)
+  private def newCommandHandler(chatId: ChatIntId, map: String, ttl: FiniteDuration) =
+    manager.rentConsole(chatId.id, ttl).flatMap {
+      case Left(errorText) =>
+        send(chatId, errorText)
 
-        case Right(console) =>
-          for {
-            _ <- console.get.changeLevel(map)
-            _ <- send(chatId, "Сервер создан. Скопируй в консоль это")
-            _ <- Timer[F].sleep(200.millis)
-            _ <- sendConsole(chatId, console)
-          } yield ()
-      }
-    } yield ()
-  }
+      case Right(console) =>
+        for {
+          _ <- console.get.changeLevel(map)
+          _ <- send(chatId, "Сервер создан. Скопируй в консоль это")
+          _ <- Timer[F].sleep(200.millis)
+          _ <- sendConsole(chatId, console)
+        } yield ()
+    }
 
   private def send(chatId: ChatIntId, text: String): F[Unit] =
     Methods.sendMessage(

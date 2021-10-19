@@ -4,10 +4,10 @@ object Dependencies {
 
   object V {
     val atto = "0.7.0"
-    val catsCore = "2.0.0"
+    val catsCore = "2.6.1"
     val catsEffect = "2.0.0"
     val scalaTest = "3.1.1"
-    val slf4j = "1.7.26"
+    val slf4j = "1.7.30"
     val logback = "1.2.3"
     val pureConfig = "0.12.3"
     val log4cats = "1.3.1"

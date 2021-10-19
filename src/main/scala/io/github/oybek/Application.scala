@@ -19,16 +19,10 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-/*
-
-MN:
-scalastyle, scapegoat, wartremover
-
- */
 object Application extends IOApp {
   type F[+T] = IO[T]
 
-  def run(args: List[String]): IO[ExitCode] = {
+  def run(args: List[String]): F[ExitCode] = {
     for {
       config <- Config.load[F]
       _ <- log.info(s"loaded config: $config")
@@ -56,6 +50,6 @@ object Application extends IOApp {
         .traverse(i => ConsoleHigh.create(config.serverIp, 27015 + i, new File(config.hldsDir)))
     } yield (client, consoles)
 
-  private val telegramResponseWaitTime = 60
+  private val telegramResponseWaitTime = 60L
   private val log = Slf4jLogger.getLoggerFromName[F]("Application")
 }

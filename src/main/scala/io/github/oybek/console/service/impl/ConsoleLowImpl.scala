@@ -23,7 +23,7 @@ object ConsoleLowImpl {
     def puller(is: InputStream): Unit = {
       Source
         .fromInputStream(is)
-        .getLines
+        .getLines()
         .foreach(queue.add)
     }
 
@@ -39,8 +39,10 @@ object ConsoleLowImpl {
       while (true) {
         wait()
         Option(queue.poll()).foreach { s =>
+          // scalastyle:off
           pw.println(s)
           pw.flush()
+          // scalastyle:on
         }
       }
     }

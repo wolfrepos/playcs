@@ -8,6 +8,6 @@ object Sonar {
     "sonar.sources" -> "src/main/scala",
     "sonar.tests" -> "src/test/scala",
     "sonar.sourceEncoding" -> "UTF-8",
-    "sonar.scala.scoverage.reportPath" -> "target/scala-2.12/scoverage-report/scoverage.xml",
+    "sonar.scala.scoverage.reportPath" -> "target/scala-2.13/scoverage-report/scoverage.xml"
   )
 }
