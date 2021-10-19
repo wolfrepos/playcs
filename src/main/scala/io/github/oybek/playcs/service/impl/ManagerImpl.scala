@@ -10,23 +10,26 @@ import io.github.oybek.common.WithMeta.toMetaOps
 import io.github.oybek.console.service.ConsoleHigh
 import io.github.oybek.playcs.model.{ConsoleMeta, ConsolePool}
 import io.github.oybek.playcs.service.Manager
-import org.typelevel.log4cats.slf4j.Slf4jLogger
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.util.Random
 
 class ManagerImpl[F[_]: Sync: Timer: Clock](consolePoolRef: Ref[F, ConsolePool[F]]) extends Manager[F] {
-  override def findConsole(chatId: Long): F[Option[WithMeta[ConsoleHigh[F], ConsoleMeta]]] =
+  override def findConsole(chatId: Long): F[Option[WithMeta[ConsoleHigh[F], ConsoleMeta]]] = {
     for {
-      ConsolePool(_, busyConsoles) <- consolePoolRef.get
+      consolePool <- consolePoolRef.get
+      ConsolePool(_, busyConsoles) = consolePool
       consoleOpt = busyConsoles.find(_.meta.usingBy == chatId)
     } yield consoleOpt
+  }
 
   override def expireCheck: F[Unit] =
     for {
       _ <- log.info("checking pool for expired consoles...")
       now <- Clock[F].instantNow
-      ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
+      consolePool <- consolePoolRef.get
+      ConsolePool(freeConsoles, busyConsoles) = consolePool
       (expiredConsoles, stillBusy) = busyConsoles.partition(_.meta.deadline.isBefore(now))
       freedConsoles <- expiredConsoles.traverse {
         case console WithMeta _ =>
@@ -67,7 +70,8 @@ class ManagerImpl[F[_]: Sync: Timer: Clock](consolePoolRef: Ref[F, ConsolePool[F
 
   override def freeConsole(chatId: Long): F[Unit] =
     for {
-      ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
+      consolePool <- consolePoolRef.get
+      ConsolePool(freeConsoles, busyConsoles) = consolePool
       now <- Clock[F].instantNow
       _ <- consolePoolRef.set(
         ConsolePool(
@@ -86,7 +90,8 @@ class ManagerImpl[F[_]: Sync: Timer: Clock](consolePoolRef: Ref[F, ConsolePool[F
 
   override def status: F[String] =
     for {
-      ConsolePool(freeConsoles, _) <- consolePoolRef.get
+      consolePool <- consolePoolRef.get
+      ConsolePool(freeConsoles, _) = consolePool
     } yield s"Свободных серверов: ${freeConsoles.length}"
 
   private def resetConsole(console: ConsoleHigh[F], password: String): F[Unit] =

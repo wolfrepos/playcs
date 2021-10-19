@@ -1,7 +1,0 @@
-organization=oybek
-projectKey=playcs
-serverUrl=https://sonarcloud.io
-serverVersion=8.0.0.7420
-dashboardUrl=https://sonarcloud.io/dashboard?id=playcs
-ceTaskId=AXHU3F6XWStA50QHFAf8
-ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AXHU3F6XWStA50QHFAf8

@@ -2,6 +2,7 @@ package io.github.oybek
 
 import cats.effect._
 import cats.implicits.toTraverseOps
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.github.oybek.common.TimeTools.PF
 import io.github.oybek.config.Config
 import io.github.oybek.console.service.ConsoleHigh
@@ -11,7 +12,6 @@ import io.github.oybek.playcs.service.Manager
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.middleware.Logger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
 import telegramium.bots.high.BotApi
 
 import java.io.File

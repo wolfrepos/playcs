@@ -13,22 +13,18 @@ scalacOptions ++= Seq(
  "-language:postfixOps"
 )
 
-addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
-
 lazy val playcs = (project in file("."))
   .settings(name := "playcs")
   .settings(libraryDependencies ++= Dependencies.common)
+  .settings(libraryDependencies ~= { _.map(_.exclude("org.slf4j", "slf4j-simple")) })
   .dependsOn(cstrike, common)
 
 lazy val cstrike = (project in file("cstrike"))
   .settings(name := "cstrike")
   .settings(libraryDependencies ++= Dependencies.common)
+  .settings(libraryDependencies ~= { _.map(_.exclude("org.slf4j", "slf4j-simple")) })
 
 lazy val common = (project in file("common"))
   .settings(name := "common")
   .settings(libraryDependencies ++= Dependencies.common)
-
-assemblyMergeStrategy in assembly := {
- case PathList("META-INF", _ @ _*) => MergeStrategy.discard
- case _ => MergeStrategy.first
-}
+  .settings(libraryDependencies ~= { _.map(_.exclude("org.slf4j", "slf4j-simple")) })
