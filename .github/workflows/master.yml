@@ -27,6 +27,10 @@ jobs:
       with:
         java-version: 1.8
 
+    - name: lint
+      run: |
+        sbt scalastyle
+
     - name: test
       run: |
         sbt clean coverage test

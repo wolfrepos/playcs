@@ -97,7 +97,9 @@ class ManagerImpl[F[_]: Sync: Timer: Clock](consolePoolRef: Ref[F, ConsolePool[F
       _ <- Timer[F].sleep(200.millis)
     } yield ()
 
-  private def randomPassword: String = (Random.nextInt(9000) + 1000).toString
+  private def randomPassword: String = (Random.nextInt(passwordUpperBorder) + passwordOffset).toString
+  private val passwordUpperBorder = 9000
+  private val passwordOffset = 1000
 
   private val log = Slf4jLogger.getLoggerFromName[F]("Manager")
 }

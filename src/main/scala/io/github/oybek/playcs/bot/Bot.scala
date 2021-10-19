@@ -15,27 +15,95 @@ import telegramium.bots.high.implicits.methodOps
 import telegramium.bots.high.{Api, LongPollBot, Methods}
 import telegramium.bots.{ChatIntId, Markdown, Message}
 
-import scala.concurrent.duration.DurationInt
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 class Bot[F[_]: Sync: Timer: Parallel](api: Api[F],
                                        manager: Manager[F],
                                        translator: Translator) extends LongPollBot[F](api) {
 
-  implicit private val apiImplicit = api
+  // scalastyle:off
+  implicit private val apiImplicit: Api[F] = api
+  // scalastyle:on
 
   override def onMessage(message: Message): F[Unit] =
     message.text.fold(().pure[F]) { text =>
       onTextMessage(ChatIntId(message.chat.id), text)
     }
 
+  ///XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   def onTextMessage(chatId: ChatIntId, text: String): F[Unit] = {
-    def send(text: String): F[Unit] =
-      Methods.sendMessage(
-        chatId = chatId,
-        text = text,
-      ).exec.void
+    translator.translate(text) match {
+      case Left(_) =>
+        send(chatId, "Че? (/help)")
 
-    val sendConsole: (ConsoleHigh[F] WithMeta ConsoleMeta) => F[Unit] = {
+      case Right(NewCommand(map, ttl)) =>
+        newCommandHandler(chatId, map, ttl)
+
+      case Right(JoinCommand) =>
+        joinCommandHandler(chatId)
+
+      case Right(StatusCommand) =>
+        statusCommandHandler(chatId)
+
+      case Right(FreeCommand) =>
+        freeCommandHandler(chatId)
+
+      case Right(HelpCommand) =>
+        send(chatId, helpText)
+
+      case _ =>
+        send(chatId, "Еще не реализовано")
+    }
+  }
+  ///XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+  private def freeCommandHandler(chatId: ChatIntId) = {
+    for {
+      _ <- manager.freeConsole(chatId.id)
+      _ <- send(chatId, "Сервер освобожден")
+    } yield ()
+  }
+
+  private def statusCommandHandler(chatId: ChatIntId) = {
+    for {
+      status <- manager.status
+      _ <- send(chatId, status)
+    } yield ()
+  }
+
+  private def joinCommandHandler(chatId: ChatIntId) = {
+    for {
+      consoleOpt <- manager.findConsole(chatId.id)
+      _ <- consoleOpt.fold(send(chatId, "Создай сервер сначала (/help)"))(sendConsole(chatId, _))
+    } yield ()
+  }
+
+  private def newCommandHandler(chatId: ChatIntId, map: String, ttl: FiniteDuration) = {
+    for {
+      errorOrConsole <- manager.rentConsole(chatId.id, ttl)
+      _ <- errorOrConsole match {
+        case Left(errorText) =>
+          send(chatId, errorText)
+
+        case Right(console) =>
+          for {
+            _ <- console.get.changeLevel(map)
+            _ <- send(chatId, "Сервер создан. Скопируй в консоль это")
+            _ <- Timer[F].sleep(200.millis)
+            _ <- sendConsole(chatId, console)
+          } yield ()
+      }
+    } yield ()
+  }
+
+  private def send(chatId: ChatIntId, text: String): F[Unit] =
+    Methods.sendMessage(
+      chatId = chatId,
+      text = text,
+    ).exec.void
+
+  private def sendConsole(chatId: ChatIntId, console: ConsoleHigh[F] WithMeta ConsoleMeta): F[Unit] =
+    console match {
       case console WithMeta ConsoleMeta(password, _, _) =>
         Methods.sendMessage(
           chatId = chatId,
@@ -43,51 +111,4 @@ class Bot[F[_]: Sync: Timer: Parallel](api: Api[F],
           parseMode = Markdown.some
         ).exec.void
     }
-
-    translator.translate(text) match {
-      case Left(parseErrorText) =>
-        send("Че? (/help)")
-
-      case Right(NewCommand(map, ttl)) =>
-        for {
-          errorOrConsole <- manager.rentConsole(chatId.id, ttl)
-          _ <- errorOrConsole match {
-            case Left(errorText) =>
-              send(errorText)
-
-            case Right(console) =>
-              for {
-                _ <- console.get.changeLevel(map)
-                _ <- send("Сервер создан. Скопируй в консоль это")
-                _ <- Timer[F].sleep(200.millis)
-                _ <- sendConsole(console)
-              } yield ()
-          }
-        } yield ()
-
-      case Right(JoinCommand) =>
-        for {
-          consoleOpt <- manager.findConsole(chatId.id)
-          _ <- consoleOpt.fold(send("Создай сервер сначала (/help)"))(sendConsole)
-        } yield ()
-
-      case Right(StatusCommand) =>
-        for {
-          status <- manager.status
-          _ <- send(status)
-        } yield ()
-
-      case Right(FreeCommand) =>
-        for {
-          _ <- manager.freeConsole(chatId.id)
-          _ <- send("Сервер освобожден")
-        } yield ()
-
-      case Right(HelpCommand) =>
-        send(helpText)
-
-      case _ =>
-        send("Еще не реализовано")
-    }
-  }
 }

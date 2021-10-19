@@ -19,6 +19,12 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
+/*
+
+MN:
+scalastyle, scapegoat, wartremover
+
+ */
 object Application extends IOApp {
   type F[+T] = IO[T]
 
@@ -43,12 +49,13 @@ object Application extends IOApp {
                        (config: Config): Resource[F, (Client[F], List[ConsoleHigh[F]])] =
     for {
       client <- BlazeClientBuilder[F](global)
-        .withResponseHeaderTimeout(FiniteDuration(60, TimeUnit.SECONDS))
+        .withResponseHeaderTimeout(FiniteDuration(telegramResponseWaitTime, TimeUnit.SECONDS))
         .resource
       consoles <- (0 until config.serverPoolSize)
         .toList
         .traverse(i => ConsoleHigh.create(config.serverIp, 27015 + i, new File(config.hldsDir)))
     } yield (client, consoles)
 
+  private val telegramResponseWaitTime = 60
   private val log = Slf4jLogger.getLoggerFromName[F]("Application")
 }
