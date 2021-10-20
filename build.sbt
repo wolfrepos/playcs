@@ -1,3 +1,5 @@
+import Settings.module
+
 ThisBuild / version := "0.1"
 ThisBuild / organization := "io.github.oybek"
 ThisBuild / scalaVersion := "2.13.6"
@@ -13,18 +15,6 @@ scalacOptions ++= Seq(
  "-language:postfixOps"
 )
 
-lazy val playcs = (project in file("."))
-  .settings(name := "playcs")
-  .settings(libraryDependencies ++= Dependencies.common)
-  .settings(libraryDependencies ~= { _.map(_.exclude("org.slf4j", "slf4j-simple")) })
-  .dependsOn(cstrike, common)
-
-lazy val cstrike = (project in file("cstrike"))
-  .settings(name := "cstrike")
-  .settings(libraryDependencies ++= Dependencies.common)
-  .settings(libraryDependencies ~= { _.map(_.exclude("org.slf4j", "slf4j-simple")) })
-
-lazy val common = (project in file("common"))
-  .settings(name := "common")
-  .settings(libraryDependencies ++= Dependencies.common)
-  .settings(libraryDependencies ~= { _.map(_.exclude("org.slf4j", "slf4j-simple")) })
+lazy val common  = module("common", file("common"))
+lazy val cstrike = module("cstrike", file("cstrike"))
+lazy val playcs  = module("playcs", file("."), cstrike, common)
