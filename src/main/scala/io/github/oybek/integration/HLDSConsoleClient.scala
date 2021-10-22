@@ -19,7 +19,7 @@ class HLDSConsoleClient[F[_]: Sync](val process: Process,
 object HLDSConsoleClient {
   def create[F[_]: Sync](port: Int, hldsDir: File): Resource[F, HLDSConsoleClient[F]] = {
     val processDesc = Process(
-      s"./hlds_run -game cstrike +ip 0.0.0.0 +port $port +maxplayers 12 +map de_dust2",
+      s"./hlds_run -game cstrike +ip 0.0.0.0 +port $port +maxplayers 12 +map de_dust2 +exec server.cfg",
       hldsDir
     )
     val inputPusher = new InputPusher
