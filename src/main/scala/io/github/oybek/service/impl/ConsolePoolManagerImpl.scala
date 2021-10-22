@@ -1,22 +1,23 @@
-package io.github.oybek.playcs.service.impl
+package io.github.oybek.service.impl
 
+import cats.Monad
 import cats.effect.concurrent.Ref
-import cats.effect.{Clock, Sync, Timer}
+import cats.effect.{Clock, Timer}
 import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxEitherId, toTraverseOps}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
+import io.chrisdavenport.log4cats.SelfAwareStructuredLogger
 import io.github.oybek.common.WithMeta
 import io.github.oybek.common.WithMeta.toMetaOps
-import io.github.oybek.console.service.ConsoleHigh
-import io.github.oybek.playcs.model.{ConsoleMeta, ConsolePool}
-import io.github.oybek.playcs.service.Manager
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import io.github.oybek.model.{ConsoleMeta, ConsolePool}
+import io.github.oybek.service.{ConsolePoolManager, HldsConsole}
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.util.Random
 
-class ManagerImpl[F[_]: Sync: Timer: Clock](consolePoolRef: Ref[F, ConsolePool[F]]) extends Manager[F] {
-  override def findConsole(chatId: Long): F[Option[WithMeta[ConsoleHigh[F], ConsoleMeta]]] = {
+class ConsolePoolManagerImpl[F[_]: Monad: Timer: Clock](consolePoolRef: Ref[F, ConsolePool[F]],
+                                                        log: SelfAwareStructuredLogger[F]) extends ConsolePoolManager[F] {
+  override def findConsole(chatId: Long): F[Option[WithMeta[HldsConsole[F], ConsoleMeta]]] = {
     for {
       consolePool <- consolePoolRef.get
       ConsolePool(_, busyConsoles) = consolePool
@@ -40,12 +41,12 @@ class ManagerImpl[F[_]: Sync: Timer: Clock](consolePoolRef: Ref[F, ConsolePool[F
     } yield ()
 
   override def rentConsole(chatId: Long,
-                           ttl: FiniteDuration): F[Either[String, ConsoleHigh[F] WithMeta ConsoleMeta]] =
+                           ttl: FiniteDuration): F[Either[String, HldsConsole[F] WithMeta ConsoleMeta]] =
     consolePoolRef.get.flatMap {
       case ConsolePool(Nil, busyConsoles) =>
         busyConsoles.find(_.meta.usingBy == chatId).fold(
           "Кончилась оперативка на серваке - напишите @wolfodav"
-            .asLeft[ConsoleHigh[F] WithMeta ConsoleMeta]
+            .asLeft[HldsConsole[F] WithMeta ConsoleMeta]
             .pure[F]
         )(_.asRight[String].pure[F])
 
@@ -94,7 +95,7 @@ class ManagerImpl[F[_]: Sync: Timer: Clock](consolePoolRef: Ref[F, ConsolePool[F
       ConsolePool(freeConsoles, _) = consolePool
     } yield s"Свободных серверов: ${freeConsoles.length}"
 
-  private def resetConsole(console: ConsoleHigh[F], password: String): F[Unit] =
+  private def resetConsole(console: HldsConsole[F], password: String): F[Unit] =
     for {
       _ <- console.svPassword(password)
       _ <- Timer[F].sleep(200.millis)
@@ -105,6 +106,4 @@ class ManagerImpl[F[_]: Sync: Timer: Clock](consolePoolRef: Ref[F, ConsolePool[F
   private def randomPassword: String = (Random.nextInt(passwordUpperBorder) + passwordOffset).toString
   private val passwordUpperBorder = 9000
   private val passwordOffset = 1000
-
-  private val log = Slf4jLogger.getLoggerFromName[F]("Manager")
 }
