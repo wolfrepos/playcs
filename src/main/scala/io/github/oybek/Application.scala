@@ -4,12 +4,10 @@ import cats.effect._
 import cats.effect.concurrent.Ref
 import cats.implicits.toTraverseOps
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.github.oybek.common.TimeTools.PF
-import io.github.oybek.common.WithMeta
+import io.github.oybek.common.Scheduler.toActionOps
 import io.github.oybek.config.Config
-import io.github.oybek.cstrike.service.Translator
 import io.github.oybek.integration.{HLDSConsoleClient, TGGate}
-import io.github.oybek.model.{ConsoleMeta, ConsolePool}
+import io.github.oybek.model.ConsolePool
 import io.github.oybek.service.HldsConsole
 import io.github.oybek.service.impl.{ConsoleImpl, ConsolePoolManagerImpl, HldsConsoleImpl}
 import org.http4s.client.Client
@@ -43,9 +41,9 @@ object Application extends IOApp {
     val consolePool = ConsolePool[F](free = consoles, busy = Nil)
     for {
       consolePoolRef     <- Ref.of[F, ConsolePool[F]](consolePool)
-      consolePoolManager =  new ConsolePoolManagerImpl[F](consolePoolRef, log)
-      _                  <- consolePoolManager.expireCheck.every(2.minutes).start
-      console            = new ConsoleImpl(consolePoolManager)
+      consolePoolManager  = new ConsolePoolManagerImpl[F](consolePoolRef, log)
+      _                  <- consolePoolManager.expireCheck.every(1.minute).start
+      console             = new ConsoleImpl(consolePoolManager)
       _                  <- new TGGate(api, console).start()
     } yield ()
   }
