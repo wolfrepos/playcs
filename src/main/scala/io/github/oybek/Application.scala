@@ -1,5 +1,6 @@
 package io.github.oybek
 
+import cats.Id
 import cats.effect._
 import cats.effect.concurrent.Ref
 import cats.implicits.toTraverseOps
@@ -9,7 +10,7 @@ import io.github.oybek.config.Config
 import io.github.oybek.integration.{HLDSConsoleClient, TGGate}
 import io.github.oybek.model.ConsolePool
 import io.github.oybek.service.HldsConsole
-import io.github.oybek.service.impl.{ConsoleImpl, ConsolePoolManagerImpl, HldsConsoleImpl}
+import io.github.oybek.service.impl.{ConsoleImpl, ConsolePoolManagerImpl, HldsConsoleImpl, PasswordGeneratorImpl}
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.middleware.Logger
@@ -39,9 +40,10 @@ object Application extends IOApp {
     val api         = BotApi[F](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
     val log         = Slf4jLogger.getLoggerFromName[F]("console-pool-manager")
     val consolePool = ConsolePool[F](free = consoles, busy = Nil)
+    val passwordGen = new PasswordGeneratorImpl[F]
     for {
       consolePoolRef     <- Ref.of[F, ConsolePool[F]](consolePool)
-      consolePoolManager  = new ConsolePoolManagerImpl[F](consolePoolRef, log)
+      consolePoolManager  = new ConsolePoolManagerImpl[F](consolePoolRef, passwordGen, log)
       _                  <- consolePoolManager.expireCheck.every(1.minute).start
       console             = new ConsoleImpl(consolePoolManager)
       _                  <- new TGGate(api, console).start()

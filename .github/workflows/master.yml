@@ -33,7 +33,7 @@ jobs:
 
     - name: test
       run: |
-        sbt clean coverage test
+        sbt "clean; coverage; common/test; cstrike/test; scenario/test; test"
         sbt coverageReport
 
     - name: assembly

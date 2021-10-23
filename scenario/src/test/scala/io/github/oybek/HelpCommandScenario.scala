@@ -1,23 +1,24 @@
 package io.github.oybek
 
-import cats.effect.IO
-import io.github.oybek.service.HldsConsole
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.funsuite.AnyFunSuite
-import telegramium.bots.high.Api
+import io.github.oybek.cstrike.model.Command.helpText
+import io.github.oybek.fakes.FakeData.fakeChatId
+import io.github.oybek.model.Reaction.SendText
+import io.github.oybek.setup.ConsoleSetup
+import org.scalatest.GivenWhenThen
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
-class HelpCommandScenario extends AnyFunSuite with MockFactory {
+class HelpCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup {
 
-  test("An empty Set should have size 0") {
-    assert(Set.empty.size == 0)
-  }
+  info("As a user")
+  info("I want to be able to get help message")
 
-  test("Invoking head on an empty Set should produce NoSuchElementException") {
-    assertThrows[NoSuchElementException] {
-      Set.empty.head
+  Feature("/help command") {
+    Scenario("User gives command '/help'") {
+      Given("console")
+      When("/help command received")
+      Then("help message is returned")
+      console.handle(fakeChatId, "/help") shouldEqual List(SendText(fakeChatId, helpText))
     }
   }
-
-  val console: HldsConsole[IO] = mock[HldsConsole[IO]]
-  val apiMock: Api[IO] = mock[Api[IO]]
 }

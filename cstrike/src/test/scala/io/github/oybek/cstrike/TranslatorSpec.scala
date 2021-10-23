@@ -34,8 +34,10 @@ class TranslatorSpec extends AnyFlatSpec {
     ("   /map@playcs_bot   "           , "Unknown command".asLeft[Command]),
   )
 
-  forAll(tests) {
-    (text, command) => translator.translate(text) shouldEqual command
+  "translator" should "be tested" in {
+    forAll(tests) {
+      (text, command) => translator.translate(text) shouldEqual command
+    }
   }
 
   private lazy val translator = new TranslatorImpl

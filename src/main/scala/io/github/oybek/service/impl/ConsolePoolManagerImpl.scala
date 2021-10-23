@@ -1,22 +1,22 @@
 package io.github.oybek.service.impl
 
-import cats.Monad
+import cats.{Id, Monad}
 import cats.effect.concurrent.Ref
 import cats.effect.{Clock, Timer}
 import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxEitherId, toTraverseOps}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import io.chrisdavenport.log4cats.SelfAwareStructuredLogger
+import io.chrisdavenport.log4cats.{MessageLogger, SelfAwareStructuredLogger}
 import io.github.oybek.common.WithMeta
 import io.github.oybek.common.WithMeta.toMetaOps
 import io.github.oybek.model.{ConsoleMeta, ConsolePool}
-import io.github.oybek.service.{ConsolePoolManager, HldsConsole}
+import io.github.oybek.service.{ConsolePoolManager, HldsConsole, PasswordGenerator}
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import scala.util.Random
 
-class ConsolePoolManagerImpl[F[_]: Monad: Timer: Clock](consolePoolRef: Ref[F, ConsolePool[F]],
-                                                        log: SelfAwareStructuredLogger[F]) extends ConsolePoolManager[F] {
+class ConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, ConsolePool[F]],
+                                                 passwordGenerator: PasswordGenerator[F],
+                                                 log: MessageLogger[F]) extends ConsolePoolManager[F] {
   override def findConsole(chatId: Long): F[Option[WithMeta[HldsConsole[F], ConsoleMeta]]] = {
     for {
       consolePool <- consolePoolRef.get
@@ -32,9 +32,10 @@ class ConsolePoolManagerImpl[F[_]: Monad: Timer: Clock](consolePoolRef: Ref[F, C
       consolePool <- consolePoolRef.get
       ConsolePool(freeConsoles, busyConsoles) = consolePool
       (expiredConsoles, stillBusy) = busyConsoles.partition(_.meta.deadline.isBefore(now))
+      password <- passwordGenerator.generate
       freedConsoles <- expiredConsoles.traverse {
         case console WithMeta _ =>
-          resetConsole(console, randomPassword).as(console)
+          resetConsole(console, password).as(console)
       }
       _ <- consolePoolRef.set(ConsolePool(freeConsoles ++ freedConsoles, stillBusy))
       _ <- log.info(s"consoles on ports ${freedConsoles.map(_.port)} is freed")
@@ -54,8 +55,9 @@ class ConsolePoolManagerImpl[F[_]: Monad: Timer: Clock](consolePoolRef: Ref[F, C
         busyConsoles.find(_.meta.usingBy == chatId).fold(
           for {
             now <- Clock[F].instantNow
+            password <- passwordGenerator.generate
             consoleMeta = ConsoleMeta(
-              password = randomPassword,
+              password = password,
               usingBy = chatId,
               deadline = now.plusSeconds(ttl.toSeconds)
             )
@@ -102,8 +104,4 @@ class ConsolePoolManagerImpl[F[_]: Monad: Timer: Clock](consolePoolRef: Ref[F, C
       _ <- console.map("de_dust2")
       _ <- Timer[F].sleep(200.millis)
     } yield ()
-
-  private def randomPassword: String = (Random.nextInt(passwordUpperBorder) + passwordOffset).toString
-  private val passwordUpperBorder = 9000
-  private val passwordOffset = 1000
 }
