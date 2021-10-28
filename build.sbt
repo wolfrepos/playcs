@@ -19,3 +19,20 @@ lazy val common  = module("common", file("common"))
 lazy val cstrike = module("cstrike", file("cstrike"))
 lazy val scenario = module("scenario", file("scenario"), playcs)
 lazy val playcs  = module("playcs", file("."), cstrike, common)
+
+// Custom tasks
+lazy val testAll = taskKey[Unit]("Run all tests")
+testAll := {
+  (common / assembly / test).value
+  (cstrike / assembly / test).value
+  (scenario / assembly / test).value
+  (assembly / test).value
+}
+
+lazy val checkCoverage = taskKey[Unit]("Check coverage for all subprojects")
+checkCoverage := {
+  (common / coverageReport).value
+  (cstrike / coverageReport).value
+  (scenario / coverageReport).value
+  coverageReport.value
+}
