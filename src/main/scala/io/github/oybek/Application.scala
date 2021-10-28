@@ -1,6 +1,5 @@
 package io.github.oybek
 
-import cats.Id
 import cats.effect._
 import cats.effect.concurrent.Ref
 import cats.implicits.toTraverseOps
@@ -24,16 +23,20 @@ import scala.concurrent.duration._
 object Application extends IOApp {
   type F[+T] = IO[T]
 
-  def run(args: List[String]): F[ExitCode] = {
-    for {
-      config <- Config.load[F]
-      _      <- log.info(s"loaded config: $config")
-      _      <- resources(config).use {
-        case (httpClient, consoles) =>
-          assembleAndLaunch(config, httpClient, consoles)
-      }
-    } yield ()
-  }.as(ExitCode.Success)
+  def run(args: List[String]): F[ExitCode] =
+    Config.load match {
+      case Right(config) =>
+        for {
+          _ <- log.info(s"loaded config: $config")
+          _ <- resources(config).use {
+            case (httpClient, consoles) =>
+              assembleAndLaunch(config, httpClient, consoles)
+          }
+        } yield ExitCode.Success
+
+      case Left(_) =>
+        log.error("Could not load config file").as(ExitCode.Error)
+    }
 
   private def assembleAndLaunch(config: Config, httpClient: Client[F], consoles: List[HldsConsole[F]]): IO[Unit] = {
     val client      = Logger(logHeaders = false, logBody = false)(httpClient)

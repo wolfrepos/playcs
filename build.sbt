@@ -36,3 +36,10 @@ checkCoverage := {
   (scenario / coverageReport).value
   coverageReport.value
 }
+
+coverageExcludedPackages := Seq(
+  "Application",
+  "integration.HLDSConsoleClient",
+  "integration.TGGate",
+  "service.impl.HldsConsoleImpl",
+).map(x => s"${(ThisBuild / organization).value}.$x").mkString(";")
