@@ -11,8 +11,9 @@ import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
 object Scheduler {
-  class ActionOps[F[_]: Sync: Timer](action: F[Unit])
-                                    (implicit monadError: MonadError[F, Throwable]) {
+  type ThrowableMonad[F[_]] = MonadError[F, Throwable]
+
+  class ActionOps[F[_]: Timer: ThrowableMonad](action: F[Unit]) {
     def every(finiteDuration: FiniteDuration): F[Unit] =
       for {
         _ <- action.onError { case NonFatal(_) => ().pure[F] }
@@ -21,6 +22,6 @@ object Scheduler {
       } yield ()
   }
 
-  implicit def toActionOps[F[_]: Sync: Timer](action: F[Unit]): ActionOps[F] =
+  implicit def toActionOps[F[_]: Timer: ThrowableMonad](action: F[Unit]): ActionOps[F] =
     new ActionOps[F](action)
 }
