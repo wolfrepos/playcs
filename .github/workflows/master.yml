@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  test:
+  LintAndTest:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -31,7 +31,7 @@ jobs:
       run: |
         sbt "clean; coverage; testAll; checkCoverage"
 
-  build:
+  BuildAndDeploy:
     if: ${{ github.ref == 'refs/heads/master' }}
     needs: test
     runs-on: ubuntu-latest
@@ -53,7 +53,7 @@ jobs:
     - name: deploy
       uses: garygrossgarten/github-action-scp@release
       with:
-        local: target/scala-2.13/playcs-assembly-0.1.jar
+        local: target/scala-2.13/playcs-assembly-*.jar
         remote: /tmp/app.jar
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
