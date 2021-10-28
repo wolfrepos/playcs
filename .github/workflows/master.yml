@@ -33,7 +33,7 @@ jobs:
 
   BuildAndDeploy:
     if: ${{ github.ref == 'refs/heads/master' }}
-    needs: test
+    needs: LintAndTest
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
