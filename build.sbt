@@ -1,4 +1,5 @@
 import Settings.module
+import scoverage.ScoverageKeys.coverageExcludedPackages
 
 ThisBuild / version := "0.1"
 ThisBuild / organization := "io.github.oybek"
@@ -15,10 +16,25 @@ scalacOptions ++= Seq(
  "-language:postfixOps"
 )
 
-lazy val common  = module("common", file("common"))
+lazy val common =
+  module(name = "common", file = file("common"))
+    .settings(
+      coverageExcludedPackages := Seq("io.github.oybek.common.Scheduler").mkString(";")
+    )
+
 lazy val cstrike = module("cstrike", file("cstrike"))
 lazy val scenario = module("scenario", file("scenario"), playcs)
-lazy val playcs  = module("playcs", file("."), cstrike, common)
+lazy val playcs =
+  module("playcs", file("."), cstrike, common)
+    .settings(
+      coverageExcludedPackages := Seq(
+        "Application",
+        "integration.HLDSConsoleClient",
+        "integration.TGGate",
+        "service.impl.HldsConsoleImpl",
+        "common.Scheduler",
+      ).map(x => s"${(ThisBuild / organization).value}.$x").mkString(";")
+    )
 
 // Custom tasks
 lazy val testAll = taskKey[Unit]("Run all tests")
@@ -36,10 +52,3 @@ checkCoverage := {
   (scenario / coverageReport).value
   coverageReport.value
 }
-
-coverageExcludedPackages := Seq(
-  "Application",
-  "integration.HLDSConsoleClient",
-  "integration.TGGate",
-  "service.impl.HldsConsoleImpl",
-).map(x => s"${(ThisBuild / organization).value}.$x").mkString(";")
