@@ -46,7 +46,7 @@ class ConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, ConsoleP
     consolePoolRef.get.flatMap {
       case ConsolePool(Nil, busyConsoles) =>
         busyConsoles.find(_.meta.usingBy == chatId).fold(
-          "Кончилась оперативка на серваке - напишите @wolfodav"
+          "Не осталось свободных серверов"
             .asLeft[HldsConsole[F] WithMeta ConsoleMeta]
             .pure[F]
         )(_.asRight[String].pure[F])
