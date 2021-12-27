@@ -1,26 +1,47 @@
 package io.github.oybek.cstrike.model
 
-import scala.concurrent.duration.FiniteDuration
-
-sealed trait Command
+sealed trait Command {
+  def command: String
+  def description: String
+}
 
 object Command {
-  case class NewCommand(map: String, ttl: FiniteDuration) extends Command
-  case object FreeCommand extends Command
-  case object MapsCommand extends Command
-  case object JoinCommand extends Command
-  case object StatusCommand extends Command
-  case object HelpCommand extends Command
+  case class NewCommand(map: String) extends Command {
+    val command: String = NewCommand.command
+    val description: String = NewCommand.description
+  }
+  object NewCommand extends Command {
+    val command: String = "/new"
+    val description: String = "создать сервер, пример: /new de_dust"
+  }
+
+  case object FreeCommand extends Command {
+    val command: String = "/free"
+    val description: String = "удалить сервер"
+  }
+
+  case object MapsCommand extends Command {
+    val command: String = "/maps"
+    val description: String = "список доступных карт"
+  }
+
+  case object JoinCommand extends Command {
+    val command: String = "/join"
+    val description: String = "напомнить как подключаться"
+  }
+
+  case object BalanceCommand extends Command {
+    val command: String = "/balance"
+    val description: String = "показать баланс"
+  }
+
+  case object HelpCommand extends Command {
+    val command: String = "/help"
+    val description: String = "вывести это сообщение"
+  }
 
   val helpText: String =
-    """
-      |/new - Создать сервер на de_dust2
-      |/new cs_assault - Создать сервер на cs_assault
-      |/new de_dust2 40 - Создать сервер на 40 минут
-      |/free - Удалить сервер
-      |/maps - Список доступных карт
-      |/join - Напомнить как подключаться
-      |/status - Показать статус
-      |/help - Вывести данное сообщение
-      |""".stripMargin
+    List(NewCommand, FreeCommand, MapsCommand, JoinCommand, BalanceCommand, HelpCommand)
+      .map(x => x.command + " - " + x.description)
+      .mkString("\n")
 }

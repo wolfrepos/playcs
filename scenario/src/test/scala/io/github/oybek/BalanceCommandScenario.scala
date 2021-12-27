@@ -7,7 +7,7 @@ import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
-class StatusCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup {
+class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup {
 
   info("As a user")
   info("I want to be able to see the status of the server pool")
