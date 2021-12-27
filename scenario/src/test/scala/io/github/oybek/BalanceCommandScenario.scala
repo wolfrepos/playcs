@@ -12,21 +12,21 @@ class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with Cons
   info("As a user")
   info("I want to be able to see the status of the server pool")
 
-  Feature("/status command") {
-    Scenario("User gives command '/status'") {
+  Feature("/balance command") {
+    Scenario("User gives command '/balance'") {
       Given("console")
-      When("/status command received")
+      When("/balance command received")
       Then("command to status is returned")
-      console.handle(fakeChatId, "/status") shouldEqual
+      console.handle(fakeChatId, "/balance") shouldEqual
         List(SendText(fakeChatId, "Свободных серверов: 1"))
     }
 
-    Scenario("User gives command '/status' when there is not free servers") {
+    Scenario("User gives command '/balance' when there is not free servers") {
       Given("console")
       console.handle(fakeChatId, "/new")
-      When("/status command received")
+      When("/balance command received")
       Then("command to status is returned")
-      console.handle(fakeChatId, "/status") shouldEqual
+      console.handle(fakeChatId, "/balance") shouldEqual
         List(SendText(fakeChatId, "Свободных серверов: 0"))
     }
   }

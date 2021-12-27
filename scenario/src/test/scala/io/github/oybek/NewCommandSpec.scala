@@ -38,7 +38,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
             ConsoleMeta(
               "4444",
               fakeChatId.id,
-              Instant.ofEpochSecond(60*60)
+              Instant.ofEpochSecond(15*60)
             )
           )
         )

@@ -49,7 +49,8 @@ object Application extends IOApp {
       consolePoolManager  = new ConsolePoolManagerImpl[F](consolePoolRef, passwordGen, log)
       _                  <- consolePoolManager.expireCheck.every(1.minute).start
       console             = new ConsoleImpl(consolePoolManager)
-      _                  <- new TGGate(api, console).start()
+      tgGate              = new TGGate(api, console)
+      _                  <- tgGate.start()
     } yield ()
   }
 
