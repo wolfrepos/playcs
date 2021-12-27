@@ -18,7 +18,7 @@ object Migrations {
   lazy val createBalanceTable: Fragment =
     sql"""
          |create table balance (
-         |  telegram_id bigint not null,
+         |  telegram_id bigint primary key,
          |  seconds bigint not null
          |)
          |""".stripMargin
