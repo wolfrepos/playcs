@@ -9,6 +9,7 @@ object Dependencies {
     val scalaTest = "3.1.1"
     val scalaMock = "5.1.0"
     val pureConfig = "0.12.3"
+    val chimney = "0.6.1"
   }
 
   val catsCore   = "org.typelevel" %% "cats-core" % V.catsCore
@@ -16,6 +17,7 @@ object Dependencies {
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % V.pureConfig
   val scalaMock  = "org.scalamock" %% "scalamock" % V.scalaMock % Test
   val scalaTest  = "org.scalatest" %% "scalatest" % V.scalaTest % Test
+  val chimney    = "io.scalaland" %% "chimney" % V.chimney
 
   val http4s = Seq(
     "org.http4s" %% "http4s-blaze-client" % "0.21.18"
@@ -31,5 +33,5 @@ object Dependencies {
     "io.github.apimorphism" %% "telegramium-high" % "3.50.0"
   )
 
-  val common = Seq(catsCore, catsEffect, scalaTest, scalaMock, pureConfig) ++ atto ++ http4s ++ telegramium
+  val common = Seq(catsCore, catsEffect, scalaTest, scalaMock, pureConfig, chimney) ++ atto ++ http4s ++ telegramium
 }
