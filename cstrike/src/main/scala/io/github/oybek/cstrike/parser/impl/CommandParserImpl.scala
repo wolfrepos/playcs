@@ -3,7 +3,7 @@ package io.github.oybek.cstrike.parser.impl
 import atto.Atto._
 import atto._
 import io.github.oybek.cstrike.model.Command
-import io.github.oybek.cstrike.model.Command._
+import io.github.oybek.cstrike.model.Command.{BalanceCommand, FreeCommand, HelpCommand, JoinCommand, MapsCommand, NewCommand}
 import io.github.oybek.cstrike.parser.CommandParser
 
 class CommandParserImpl extends CommandParser {

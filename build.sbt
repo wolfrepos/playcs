@@ -19,13 +19,16 @@ scalacOptions ++= Seq(
 lazy val common =
   module(name = "common", file = file("common"))
     .settings(
-      coverageExcludedPackages := Seq("io.github.oybek.common.Scheduler").mkString(";")
+      coverageExcludedPackages := Seq(
+        "io.github.oybek.common.Scheduler"
+      ).mkString(";")
     )
 
 lazy val cstrike = module("cstrike", file("cstrike"))
 lazy val scenario = module("scenario", file("scenario"), playcs)
+lazy val database = module("database", file("database"))
 lazy val playcs =
-  module("playcs", file("."), cstrike, common)
+  module("playcs", file("."), cstrike, common, database)
     .settings(
       coverageExcludedPackages := Seq(
         "Application",
@@ -41,6 +44,7 @@ lazy val testAll = taskKey[Unit]("Run all tests")
 testAll := {
   (common / assembly / test).value
   (cstrike / assembly / test).value
+  (database / assembly / test).value
   (scenario / assembly / test).value
   (assembly / test).value
 }
@@ -49,6 +53,7 @@ lazy val checkCoverage = taskKey[Unit]("Check coverage for all subprojects")
 checkCoverage := {
   (common / coverageReport).value
   (cstrike / coverageReport).value
+  (database / assembly / test).value
   (scenario / coverageReport).value
   coverageReport.value
 }

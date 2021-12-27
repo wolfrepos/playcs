@@ -10,6 +10,9 @@ object Dependencies {
     val scalaMock = "5.1.0"
     val pureConfig = "0.12.3"
     val chimney = "0.6.1"
+    val dbRush = "0.1"
+    val doobie = "0.8.8"
+    val testContainers = "0.39.12"
   }
 
   val catsCore   = "org.typelevel" %% "cats-core" % V.catsCore
@@ -18,6 +21,13 @@ object Dependencies {
   val scalaMock  = "org.scalamock" %% "scalamock" % V.scalaMock % Test
   val scalaTest  = "org.scalatest" %% "scalatest" % V.scalaTest % Test
   val chimney    = "io.scalaland" %% "chimney" % V.chimney
+  val dbRush     = "io.github.oybek" % "dbrush" % V.dbRush
+  val doobie     = "org.tpolecat" %% "doobie-core" % V.doobie
+
+  val testContainers = Seq(
+    "com.dimafeng" %% "testcontainers-scala-scalatest" % V.testContainers % Test,
+    "com.dimafeng" %% "testcontainers-scala-postgresql" % V.testContainers % Test
+  )
 
   val http4s = Seq(
     "org.http4s" %% "http4s-blaze-client" % "0.21.18"
@@ -33,5 +43,19 @@ object Dependencies {
     "io.github.apimorphism" %% "telegramium-high" % "3.50.0"
   )
 
-  val common = Seq(catsCore, catsEffect, scalaTest, scalaMock, pureConfig, chimney) ++ atto ++ http4s ++ telegramium
+  val common: Seq[ModuleID] =
+    Seq(
+      catsCore,
+      catsEffect,
+      chimney,
+      dbRush,
+      doobie,
+      pureConfig,
+      scalaMock,
+      scalaTest,
+    ) ++
+    atto ++
+    http4s ++
+    telegramium ++
+    testContainers
 }
