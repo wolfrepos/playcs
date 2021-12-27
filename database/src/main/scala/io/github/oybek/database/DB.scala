@@ -1,37 +1,35 @@
 package io.github.oybek.database
 
-import doobie._
-import doobie.implicits._
+import cats.effect.{Async, Blocker, ContextShift, Resource, Sync}
+import doobie.hikari.HikariTransactor
+import doobie.util.transactor.Transactor
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import io.github.oybek.database.Migrations.{createBalanceTable, createPaymentTable}
+import io.github.oybek.database.config.DbConfig
 import io.github.oybek.dbrush.model.Migration
 import io.github.oybek.dbrush.syntax._
-import cats.effect.{Async, BracketThrow, ContextShift}
-import doobie.util.transactor.Transactor
+
+import scala.concurrent.ExecutionContext
 
 object DB {
 
-  def createTransactor[F[_]: Async: ContextShift](driver: String,
-                                                  url: String,
-                                                  user: String,
-                                                  pass: String): Transactor[F] =
-    Transactor.fromDriverManager[F](
-      driver = driver,
-      url = url,
-      user = user,
-      pass = pass
+  def createTransactor[F[_]: Async: ContextShift](config: DbConfig,
+                                                  ec: ExecutionContext,
+                                                  blocker: Blocker): Resource[F, HikariTransactor[F]] =
+    HikariTransactor.newHikariTransactor[F](
+      driverClassName = config.driver,
+      url = config.url,
+      user = config.user,
+      pass = config.pass,
+      connectEC = ec,
+      blocker = blocker
     )
 
-  def runMigrations[F[_]: BracketThrow](transactor: Transactor[F]): F[Unit] =
+  def runMigrations[F[_]: Sync](transactor: Transactor[F]): F[Unit] = {
+    val log = Slf4jLogger.getLoggerFromName[F]("dbrush")
     List(
-      Migration("create payment table", createPaymentTable)
-    ).exec[F](transactor)
-
-  private lazy val createPaymentTable =
-    sql"""
-         |create table payment (
-         |  id bigserial primary key,
-         |  rubles bigint not null,
-         |  telegram_id bigint not null,
-         |  charge_time timestamp with time zone not null
-         |)
-         |""".stripMargin
+      Migration("create payment table", createPaymentTable),
+      Migration("create balance table", createBalanceTable)
+    ).exec[F](transactor, Option(log.info(_)))
+  }
 }
