@@ -19,7 +19,7 @@ class ConsoleImpl[F[_]: Monad: Timer](consolePoolManager: ConsolePoolManager[F])
     CommandParser.parse(text) match {
       case Right(NewCommand(map)) => handleNewCommand(chatId, map)
       case Right(JoinCommand)     => handleJoinCommand(chatId)
-      case Right(BalanceCommand)  => handleStatusCommand(chatId)
+      case Right(BalanceCommand)  => handleBalanceCommand(chatId)
       case Right(FreeCommand)     => handleFreeCommand(chatId)
       case Right(HelpCommand)     => List(SendText(chatId, helpText): Reaction).pure[F]
       case Right(_)               => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
@@ -51,10 +51,17 @@ class ConsoleImpl[F[_]: Monad: Timer](consolePoolManager: ConsolePoolManager[F])
         List(sendConsole(chatId, console, password))
     }
 
-  private def handleStatusCommand(chatId: ChatIntId): F[List[Reaction]] =
-    consolePoolManager
-      .status
-      .map(x => List(SendText(chatId, x)))
+  private def handleBalanceCommand(chatId: ChatIntId): F[List[Reaction]] = List[Reaction](
+    SendText(chatId,
+      s"""
+         |Ваш баланс: 0 минут
+         |Для пополнения пройдите по ссылке:
+         |https://www.tinkoff.ru/rm/khashimov.oybek1/Cc3Jm91036
+         |В сообщении при переводе обязательно укажите следующий код
+         |""".stripMargin),
+    Sleep(500.millis),
+    SendText(chatId, chatId.id.toString),
+  ).pure[F]
 
   private def handleFreeCommand(chatId: ChatIntId): F[List[Reaction]] =
     consolePoolManager.freeConsole(chatId.id)

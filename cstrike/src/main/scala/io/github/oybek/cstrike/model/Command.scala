@@ -40,8 +40,16 @@ object Command {
     val description: String = "вывести это сообщение"
   }
 
-  val helpText: String =
-    List(NewCommand, FreeCommand, MapsCommand, JoinCommand, BalanceCommand, HelpCommand)
-      .map(x => x.command + " - " + x.description)
-      .mkString("\n")
+  val all: List[Command] = List(
+    NewCommand,
+    FreeCommand,
+    MapsCommand,
+    JoinCommand,
+    BalanceCommand,
+    HelpCommand
+  )
+
+  val helpText: String = all
+    .map(x => x.command + " - " + x.description)
+    .mkString("\n")
 }

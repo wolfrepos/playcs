@@ -6,14 +6,19 @@ import cats.implicits.toTraverseOps
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.github.oybek.common.Scheduler.toActionOps
 import io.github.oybek.config.Config
+import io.github.oybek.cstrike.model.Command
 import io.github.oybek.integration.{HLDSConsoleClient, TGGate}
 import io.github.oybek.model.ConsolePool
 import io.github.oybek.service.HldsConsole
 import io.github.oybek.service.impl.{ConsoleImpl, ConsolePoolManagerImpl, HldsConsoleImpl, PasswordGeneratorImpl}
+import io.scalaland.chimney.dsl.TransformerOps
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.middleware.Logger
-import telegramium.bots.high.BotApi
+import telegramium.bots.BotCommand
+import telegramium.bots.high.implicits.methodOps
+import telegramium.bots.high.{BotApi, Methods}
+import io.github.oybek.cstrike.telegram.ToBotCommandTransformer.commandToBotCommand
 
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -50,6 +55,7 @@ object Application extends IOApp {
       _                  <- consolePoolManager.expireCheck.every(1.minute).start
       console             = new ConsoleImpl(consolePoolManager)
       tgGate              = new TGGate(api, console)
+      _                  <- setCommands(api)
       _                  <- tgGate.start()
     } yield ()
   }
@@ -69,6 +75,11 @@ object Application extends IOApp {
           }
         }
     } yield (client, consoles)
+
+  private def setCommands(api: BotApi[F]): F[Unit] = {
+    val commands = Command.all.map(_.transformInto[BotCommand])
+    Methods.setMyCommands(commands).exec(api).void
+  }
 
   private val initialPort = 27015
   private val telegramResponseWaitTime = 60L
