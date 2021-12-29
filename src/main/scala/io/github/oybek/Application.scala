@@ -10,7 +10,7 @@ import io.github.oybek.cstrike.model.Command
 import io.github.oybek.integration.{HLDSConsoleClient, TGGate}
 import io.github.oybek.model.ConsolePool
 import io.github.oybek.service.HldsConsole
-import io.github.oybek.service.impl.{ConsoleImpl, ConsolePoolManagerImpl, HldsConsoleImpl, PasswordGeneratorImpl}
+import io.github.oybek.service.impl.{ConsoleImpl, HldsConsolePoolManagerImpl, HldsConsoleImpl, PasswordGeneratorImpl}
 import io.scalaland.chimney.dsl.TransformerOps
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -51,7 +51,7 @@ object Application extends IOApp {
     val passwordGen = new PasswordGeneratorImpl[F]
     for {
       consolePoolRef     <- Ref.of[F, ConsolePool[F]](consolePool)
-      consolePoolManager  = new ConsolePoolManagerImpl[F](consolePoolRef, passwordGen, log)
+      consolePoolManager  = new HldsConsolePoolManagerImpl[F](consolePoolRef, passwordGen, log)
       _                  <- consolePoolManager.expireCheck.every(1.minute).start
       console             = new ConsoleImpl(consolePoolManager)
       tgGate              = new TGGate(api, console)

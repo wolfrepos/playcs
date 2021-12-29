@@ -10,13 +10,13 @@ import io.chrisdavenport.log4cats.{MessageLogger, SelfAwareStructuredLogger}
 import io.github.oybek.common.WithMeta
 import io.github.oybek.common.WithMeta.toMetaOps
 import io.github.oybek.model.{ConsoleMeta, ConsolePool}
-import io.github.oybek.service.{ConsolePoolManager, HldsConsole, PasswordGenerator}
+import io.github.oybek.service.{HldsConsolePoolManager, HldsConsole, PasswordGenerator}
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
-class ConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, ConsolePool[F]],
-                                                 passwordGenerator: PasswordGenerator[F],
-                                                 log: MessageLogger[F]) extends ConsolePoolManager[F] {
+class HldsConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, ConsolePool[F]],
+                                                     passwordGenerator: PasswordGenerator[F],
+                                                     log: MessageLogger[F]) extends HldsConsolePoolManager[F] {
   override def findConsole(chatId: Long): F[Option[WithMeta[HldsConsole[F], ConsoleMeta]]] = {
     for {
       consolePool <- consolePoolRef.get

@@ -5,7 +5,7 @@ import io.github.oybek.model.ConsoleMeta
 
 import scala.concurrent.duration.FiniteDuration
 
-trait ConsolePoolManager[F[_]] {
+trait HldsConsolePoolManager[F[_]] {
   def expireCheck: F[Unit]
   def rentConsole(chatId: Long,
                   ttl: FiniteDuration): F[Either[String, HldsConsole[F] WithMeta ConsoleMeta]]

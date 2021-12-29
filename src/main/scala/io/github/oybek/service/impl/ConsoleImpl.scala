@@ -8,12 +8,12 @@ import io.github.oybek.cstrike.model.Command._
 import io.github.oybek.cstrike.parser.CommandParser
 import io.github.oybek.model.Reaction.{SendText, Sleep}
 import io.github.oybek.model.{ConsoleMeta, Reaction}
-import io.github.oybek.service.{Console, ConsolePoolManager, HldsConsole}
+import io.github.oybek.service.{Console, HldsConsolePoolManager, HldsConsole}
 import telegramium.bots.{ChatIntId, Markdown}
 
 import scala.concurrent.duration.DurationInt
 
-class ConsoleImpl[F[_]: Monad: Timer](consolePoolManager: ConsolePoolManager[F]) extends Console[F] {
+class ConsoleImpl[F[_]: Monad: Timer](consolePoolManager: HldsConsolePoolManager[F]) extends Console[F] {
 
   def handle(chatId: ChatIntId, text: String): F[List[Reaction]] = {
     CommandParser.parse(text) match {

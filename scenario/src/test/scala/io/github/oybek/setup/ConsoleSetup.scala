@@ -2,7 +2,7 @@ package io.github.oybek.setup
 
 import io.github.oybek.fakes._
 import io.github.oybek.model.ConsolePool
-import io.github.oybek.service.impl.{ConsoleImpl, ConsolePoolManagerImpl}
+import io.github.oybek.service.impl.{ConsoleImpl, HldsConsolePoolManagerImpl}
 import io.github.oybek.setup.TestEffect.F
 
 trait ConsoleSetup {
@@ -13,6 +13,6 @@ trait ConsoleSetup {
   val consolePoolRef                   = new FakeRef[F, ConsolePool[F]](consolePool)
   val logger                           = new FakeMessageLogger[F]
   val passwordGen                      = new FakePasswordGenerator[F]
-  val consolePoolManager               = new ConsolePoolManagerImpl[F](consolePoolRef, passwordGen, logger)
+  val consolePoolManager               = new HldsConsolePoolManagerImpl[F](consolePoolRef, passwordGen, logger)
   val console                          = new ConsoleImpl(consolePoolManager)
 }
