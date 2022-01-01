@@ -51,14 +51,11 @@ class HldsConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, Cons
             consoleMeta = ConsoleMeta(
               password = password,
               usingBy = chatId,
-              deadline = now.plusSeconds(ttl.toSeconds)
-            )
+              deadline = now.plusSeconds(ttl.toSeconds))
             _ <- changePasswordAndKickAll(console, consoleMeta.password.some)
             _ <- log.info(s"console on port=${console.port} is rented by $chatId until ${consoleMeta.deadline}")
             rentedConsole = console.withMeta(consoleMeta)
-            _ <- consolePoolRef.set(
-              ConsolePool(consoles, rentedConsole::busyConsoles)
-            )
+            _ <- consolePoolRef.set(ConsolePool(consoles, rentedConsole::busyConsoles))
           } yield rentedConsole.asRight[String]
         )(_.asRight[String].pure[F])
     }
