@@ -11,5 +11,4 @@ trait HldsConsolePoolManager[F[_]] {
                   ttl: FiniteDuration): F[Either[String, HldsConsole[F] WithMeta ConsoleMeta]]
   def freeConsole(chatId: Long): F[Unit]
   def findConsole(chatId: Long): F[Option[HldsConsole[F] WithMeta ConsoleMeta]]
-  def status: F[String]
 }

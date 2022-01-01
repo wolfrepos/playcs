@@ -5,6 +5,8 @@ ThisBuild / version := "0.1"
 ThisBuild / organization := "io.github.oybek"
 ThisBuild / scalaVersion := "2.13.6"
 
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+
 scalacOptions ++= Seq(
  "-encoding", "utf8", // Option and arguments on same line
  "-Xfatal-warnings",  // New lines for each options

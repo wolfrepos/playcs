@@ -19,8 +19,7 @@ class HldsConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, Cons
                                                      log: MessageLogger[F]) extends HldsConsolePoolManager[F] {
   override def findConsole(chatId: Long): F[Option[WithMeta[HldsConsole[F], ConsoleMeta]]] = {
     for {
-      consolePool <- consolePoolRef.get
-      ConsolePool(_, busyConsoles) = consolePool
+      ConsolePool(_, busyConsoles) <- consolePoolRef.get
       consoleOpt = busyConsoles.find(_.meta.usingBy == chatId)
     } yield consoleOpt
   }
@@ -29,13 +28,11 @@ class HldsConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, Cons
     for {
       _ <- log.info("checking pool for expired consoles...")
       now <- Clock[F].instantNow
-      consolePool <- consolePoolRef.get
-      ConsolePool(freeConsoles, busyConsoles) = consolePool
+      ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
       (expiredConsoles, stillBusy) = busyConsoles.partition(_.meta.deadline.isBefore(now))
       password <- passwordGenerator.generate
       freedConsoles <- expiredConsoles.traverse {
-        case console WithMeta _ =>
-          resetConsole(console, password).as(console)
+        case console WithMeta _ => resetConsole(console, password).as(console)
       }
       _ <- consolePoolRef.set(ConsolePool(freeConsoles ++ freedConsoles, stillBusy))
       _ <- log.info(s"consoles on ports ${freedConsoles.map(_.port)} is freed")
@@ -73,8 +70,7 @@ class HldsConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, Cons
 
   override def freeConsole(chatId: Long): F[Unit] =
     for {
-      consolePool <- consolePoolRef.get
-      ConsolePool(freeConsoles, busyConsoles) = consolePool
+      ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
       now <- Clock[F].instantNow
       _ <- consolePoolRef.set(
         ConsolePool(
@@ -90,12 +86,6 @@ class HldsConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, Cons
       )
       _ <- expireCheck
     } yield ()
-
-  override def status: F[String] =
-    for {
-      consolePool <- consolePoolRef.get
-      ConsolePool(freeConsoles, _) = consolePool
-    } yield s"Свободных серверов: ${freeConsoles.length}"
 
   private def resetConsole(console: HldsConsole[F], password: String): F[Unit] =
     for {
