@@ -1,41 +1,36 @@
 package io.github.oybek.service.impl
 
-import cats.{Id, Monad}
 import cats.effect.concurrent.Ref
 import cats.effect.{Clock, Timer}
-import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxEitherId, toTraverseOps}
+import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxEitherId, catsSyntaxOptionId, toTraverseOps}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import io.chrisdavenport.log4cats.{MessageLogger, SelfAwareStructuredLogger}
+import cats.Monad
+import io.chrisdavenport.log4cats.MessageLogger
 import io.github.oybek.common.WithMeta
 import io.github.oybek.common.WithMeta.toMetaOps
 import io.github.oybek.model.{ConsoleMeta, ConsolePool}
-import io.github.oybek.service.{HldsConsolePoolManager, HldsConsole, PasswordGenerator}
+import io.github.oybek.service.{HldsConsole, HldsConsolePoolManager, PasswordGenerator}
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 class HldsConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, ConsolePool[F]],
                                                      passwordGenerator: PasswordGenerator[F],
                                                      log: MessageLogger[F]) extends HldsConsolePoolManager[F] {
-  override def findConsole(chatId: Long): F[Option[WithMeta[HldsConsole[F], ConsoleMeta]]] = {
+  override def findConsole(chatId: Long): F[Option[WithMeta[HldsConsole[F], ConsoleMeta]]] =
     for {
       ConsolePool(_, busyConsoles) <- consolePoolRef.get
       consoleOpt = busyConsoles.find(_.meta.usingBy == chatId)
     } yield consoleOpt
-  }
 
   override def expireCheck: F[Unit] =
     for {
       _ <- log.info("checking pool for expired consoles...")
       now <- Clock[F].instantNow
-      ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
-      (expiredConsoles, stillBusy) = busyConsoles.partition(_.meta.deadline.isBefore(now))
-      password <- passwordGenerator.generate
-      freedConsoles <- expiredConsoles.traverse {
-        case console WithMeta _ => resetConsole(console, password).as(console)
-      }
-      _ <- consolePoolRef.set(ConsolePool(freeConsoles ++ freedConsoles, stillBusy))
-      _ <- log.info(s"consoles on ports ${freedConsoles.map(_.port)} is freed")
+      ConsolePool(_, busyConsoles) <- consolePoolRef.get
+      expiredConsoles = busyConsoles.filter(_.meta.deadline.isBefore(now))
+      _ <- freeConsole(expiredConsoles.map(_.meta.usingBy): _*)
+      _ <- log.info(s"consoles on ports ${expiredConsoles.map(_.get.port)} is freed")
     } yield ()
 
   override def rentConsole(chatId: Long,
@@ -58,7 +53,7 @@ class HldsConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, Cons
               usingBy = chatId,
               deadline = now.plusSeconds(ttl.toSeconds)
             )
-            _ <- resetConsole(console, consoleMeta.password)
+            _ <- changePasswordAndKickAll(console, consoleMeta.password.some)
             _ <- log.info(s"console on port=${console.port} is rented by $chatId until ${consoleMeta.deadline}")
             rentedConsole = console.withMeta(consoleMeta)
             _ <- consolePoolRef.set(
@@ -68,28 +63,18 @@ class HldsConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, Cons
         )(_.asRight[String].pure[F])
     }
 
-  override def freeConsole(chatId: Long): F[Unit] =
+  override def freeConsole(chatIds: Long*): F[Unit] =
     for {
       ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
-      now <- Clock[F].instantNow
-      _ <- consolePoolRef.set(
-        ConsolePool(
-          freeConsoles,
-          busyConsoles
-            .map {
-              case console WithMeta meta =>
-                console withMeta (
-                  if (meta.usingBy == chatId) meta.copy(deadline = now) else meta
-                )
-            }
-        )
-      )
-      _ <- expireCheck
+      (toSetFree, leftBusy) = busyConsoles.partition(x => chatIds.contains(x.meta.usingBy))
+      _ <- toSetFree.traverse(x => changePasswordAndKickAll(x.get))
+      _ <- consolePoolRef.set(ConsolePool(freeConsoles ++ toSetFree.map(_.get), leftBusy))
     } yield ()
 
-  private def resetConsole(console: HldsConsole[F], password: String): F[Unit] =
+  private def changePasswordAndKickAll(console: HldsConsole[F], password: Option[String] = None): F[Unit] =
     for {
-      _ <- console.svPassword(password)
+      fallBackPassword <- passwordGenerator.generate
+      _ <- console.svPassword(password.getOrElse(fallBackPassword))
       _ <- Timer[F].sleep(200.millis)
       _ <- console.map("de_dust2")
       _ <- Timer[F].sleep(200.millis)

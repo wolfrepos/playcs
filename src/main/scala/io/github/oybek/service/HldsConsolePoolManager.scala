@@ -9,6 +9,6 @@ trait HldsConsolePoolManager[F[_]] {
   def expireCheck: F[Unit]
   def rentConsole(chatId: Long,
                   ttl: FiniteDuration): F[Either[String, HldsConsole[F] WithMeta ConsoleMeta]]
-  def freeConsole(chatId: Long): F[Unit]
+  def freeConsole(chatIds: Long*): F[Unit]
   def findConsole(chatId: Long): F[Option[HldsConsole[F] WithMeta ConsoleMeta]]
 }
