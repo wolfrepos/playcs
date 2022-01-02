@@ -1,22 +1,23 @@
 package io.github.oybek.service.impl
 
 import cats.effect.concurrent.Ref
-import cats.effect.{Clock, Timer}
-import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxEitherId, catsSyntaxOptionId, toTraverseOps}
+import cats.effect.{Clock, MonadThrow, Timer}
+import cats.implicits.{catsSyntaxApplicativeErrorId, catsSyntaxApplicativeId, catsSyntaxOptionId, toTraverseOps}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.Monad
 import io.chrisdavenport.log4cats.MessageLogger
 import io.github.oybek.common.WithMeta
 import io.github.oybek.common.WithMeta.toMetaOps
+import io.github.oybek.exception.PoolManagerException.NoFreeConsolesException
 import io.github.oybek.model.{ConsoleMeta, ConsolePool}
 import io.github.oybek.service.{HldsConsole, HldsConsolePoolManager, PasswordGenerator}
 
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.concurrent.duration.DurationInt
 
-class HldsConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, ConsolePool[F]],
-                                                     passwordGenerator: PasswordGenerator[F],
-                                                     log: MessageLogger[F]) extends HldsConsolePoolManager[F] {
+class HldsConsolePoolManagerImpl[F[_]: MonadThrow: Timer]
+                                (consolePoolRef: Ref[F, ConsolePool[F]],
+                                 passwordGenerator: PasswordGenerator[F],
+                                 log: MessageLogger[F]) extends HldsConsolePoolManager[F] {
   override def findConsole(chatId: Long): F[Option[WithMeta[HldsConsole[F], ConsoleMeta]]] =
     for {
       ConsolePool(_, busyConsoles) <- consolePoolRef.get
@@ -33,32 +34,24 @@ class HldsConsolePoolManagerImpl[F[_]: Monad: Timer](consolePoolRef: Ref[F, Cons
       _ <- log.info(s"consoles on ports ${expiredConsoles.map(_.get.port)} is freed")
     } yield ()
 
-  override def rentConsole(chatId: Long,
-                           ttl: FiniteDuration): F[Either[String, HldsConsole[F] WithMeta ConsoleMeta]] =
-    consolePoolRef.get.flatMap {
-      case ConsolePool(Nil, busyConsoles) =>
-        busyConsoles.find(_.meta.usingBy == chatId).fold(
-          "Не осталось свободных серверов"
-            .asLeft[HldsConsole[F] WithMeta ConsoleMeta]
-            .pure[F]
-        )(_.asRight[String].pure[F])
-
-      case ConsolePool(console::consoles, busyConsoles) =>
-        busyConsoles.find(_.meta.usingBy == chatId).fold(
-          for {
-            now <- Clock[F].instantNow
-            password <- passwordGenerator.generate
-            consoleMeta = ConsoleMeta(
-              password = password,
-              usingBy = chatId,
-              deadline = now.plusSeconds(ttl.toSeconds))
-            _ <- changePasswordAndKickAll(console, consoleMeta.password.some)
-            _ <- log.info(s"console on port=${console.port} is rented by $chatId until ${consoleMeta.deadline}")
-            rentedConsole = console.withMeta(consoleMeta)
-            _ <- consolePoolRef.set(ConsolePool(consoles, rentedConsole::busyConsoles))
-          } yield rentedConsole.asRight[String]
-        )(_.asRight[String].pure[F])
-    }
+  override def rentConsole(chatId: Long): F[HldsConsole[F] WithMeta ConsoleMeta] =
+    for {
+      ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
+      (console, consoles) <- freeConsoles match {
+        case Nil => NoFreeConsolesException.raiseError
+        case x::xs => (x, xs).pure[F]
+      }
+      now <- Clock[F].instantNow
+      password <- passwordGenerator.generate
+      consoleMeta = ConsoleMeta(
+        password = password,
+        usingBy = chatId,
+        deadline = now.plusSeconds(15.minutes.toSeconds))
+      _ <- changePasswordAndKickAll(console, consoleMeta.password.some)
+      _ <- log.info(s"console on port=${console.port} is rented by $chatId until ${consoleMeta.deadline}")
+      rentedConsole = console.withMeta(consoleMeta)
+      _ <- consolePoolRef.set(ConsolePool(consoles, rentedConsole::busyConsoles))
+    } yield rentedConsole
 
   override def freeConsole(chatIds: Long*): F[Unit] =
     for {

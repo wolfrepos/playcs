@@ -1,19 +1,20 @@
 package io.github.oybek.service.impl
 
 import cats.Monad
-import cats.effect.Timer
-import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxOptionId, toFlatMapOps, toFunctorOps}
+import cats.effect.{MonadThrow, Timer}
+import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxApplicativeId, catsSyntaxOptionId, toFlatMapOps, toFunctorOps}
 import io.github.oybek.common.WithMeta
 import io.github.oybek.cstrike.model.Command._
 import io.github.oybek.cstrike.parser.CommandParser
+import io.github.oybek.exception.PoolManagerException.NoFreeConsolesException
 import io.github.oybek.model.Reaction.{SendText, Sleep}
 import io.github.oybek.model.{ConsoleMeta, Reaction}
-import io.github.oybek.service.{Console, HldsConsolePoolManager, HldsConsole}
+import io.github.oybek.service.{Console, HldsConsole, HldsConsolePoolManager}
 import telegramium.bots.{ChatIntId, Markdown}
 
 import scala.concurrent.duration.DurationInt
 
-class ConsoleImpl[F[_]: Monad: Timer](consolePoolManager: HldsConsolePoolManager[F]) extends Console[F] {
+class ConsoleImpl[F[_]: MonadThrow: Timer](consolePoolManager: HldsConsolePoolManager[F]) extends Console[F] {
 
   def handle(chatId: ChatIntId, text: String): F[List[Reaction]] = {
     CommandParser.parse(text) match {
@@ -28,10 +29,7 @@ class ConsoleImpl[F[_]: Monad: Timer](consolePoolManager: HldsConsolePoolManager
   }
 
   private def handleNewCommand(chatId: ChatIntId, map: String): F[List[Reaction]] =
-    consolePoolManager.rentConsole(chatId.id, 15.minutes).flatMap {
-      case Left(errorText) =>
-        List(SendText(chatId, errorText): Reaction).pure[F]
-
+    consolePoolManager.rentConsole(chatId.id).attempt.flatMap {
       case Right(console WithMeta ConsoleMeta(password, _, _))  =>
         console
           .changeLevel(map)
@@ -40,6 +38,12 @@ class ConsoleImpl[F[_]: Monad: Timer](consolePoolManager: HldsConsolePoolManager
             Sleep(200.millis),
             sendConsole(chatId, console, password)
           ))
+
+      case Left(NoFreeConsolesException) =>
+        List(SendText(chatId, "Не осталось свободных серверов"): Reaction).pure[F]
+
+      case Left(_) =>
+        List(SendText(chatId, "Что-то пошло не так"): Reaction).pure[F]
     }
 
   private def handleJoinCommand(chatId: ChatIntId): F[List[Reaction]] =

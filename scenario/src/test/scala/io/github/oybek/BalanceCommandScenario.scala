@@ -20,7 +20,7 @@ class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with Cons
       When("/balance command received")
       Then("command to status is returned")
       console.handle(fakeChatId, "/balance") shouldEqual
-        List(
+        Right(List(
           SendText(fakeChatId,
             s"""
                |Ваш баланс: 0 минут
@@ -30,7 +30,7 @@ class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with Cons
                |""".stripMargin),
           Sleep(500.millis),
           SendText(fakeChatId, fakeChatId.id.toString)
-        )
+        ))
     }
 
     Scenario("User gives command '/balance' when there is not free servers") {
@@ -39,7 +39,7 @@ class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with Cons
       When("/balance command received")
       Then("command to status is returned")
       console.handle(fakeChatId, "/balance") shouldEqual
-        List(
+        Right(List(
           SendText(fakeChatId,
             s"""
                |Ваш баланс: 0 минут
@@ -49,7 +49,7 @@ class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with Cons
                |""".stripMargin),
           Sleep(500.millis),
           SendText(fakeChatId, fakeChatId.id.toString)
-        )
+        ))
     }
   }
 }
