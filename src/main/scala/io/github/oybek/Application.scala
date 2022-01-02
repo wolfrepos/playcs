@@ -4,13 +4,14 @@ import cats.arrow.FunctionK
 import cats.effect._
 import cats.effect.concurrent.Ref
 import cats.implicits._
-import doobie.{ConnectionIO, Transactor}
+import doobie.{ConnectionIO, ExecutionContexts, Transactor}
 import doobie.implicits.toConnectionIOOps
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.github.oybek.common.Scheduler.toActionOps
 import io.github.oybek.config.Config
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.telegram.ToBotCommandTransformer.commandToBotCommand
+import io.github.oybek.database.DB
 import io.github.oybek.database.dao.impl.BalanceDaoImpl
 import io.github.oybek.integration.{HLDSConsoleClient, TGGate}
 import io.github.oybek.model.ConsolePool
@@ -38,8 +39,8 @@ object Application extends IOApp {
         for {
           _ <- log.info(s"loaded config: $config")
           _ <- resources(config).use {
-            case (httpClient, consoles) =>
-              assembleAndLaunch(config, httpClient, consoles, null)
+            case (httpClient, consoles, tx) =>
+              assembleAndLaunch(config, httpClient, consoles, tx)
           }
         } yield ExitCode.Success
 
@@ -71,12 +72,16 @@ object Application extends IOApp {
     } yield ()
   }
 
-  private def resources[F[_]: Timer: ConcurrentEffect]
-                       (config: Config): Resource[F, (Client[F], List[HldsConsole[F]])] =
+  private def resources[F[_]: ContextShift: Timer: ConcurrentEffect]
+                       (config: Config): Resource[F, (Client[F], List[HldsConsole[F]], Transactor[F])] =
     for {
-      client <- BlazeClientBuilder[F](global)
+      blocker <- Blocker[F]
+      connEc <- ExecutionContexts.fixedThreadPool[F](10)
+      tranEc <- ExecutionContexts.cachedThreadPool[F]
+      client <- BlazeClientBuilder[F](connEc)
         .withResponseHeaderTimeout(FiniteDuration(telegramResponseWaitTime, TimeUnit.SECONDS))
         .resource
+      transactor <- DB.createTransactor(config.database, tranEc, blocker)
       consoles <- (0 until config.serverPoolSize)
         .toList
         .traverse { offset =>
@@ -85,7 +90,7 @@ object Application extends IOApp {
             new HldsConsoleImpl[F](config.serverIp, port, _)
           }
         }
-    } yield (client, consoles)
+    } yield (client, consoles, transactor)
 
   private def setCommands(api: BotApi[F]): F[Unit] = {
     val commands = Command.all.map(_.transformInto[BotCommand])
