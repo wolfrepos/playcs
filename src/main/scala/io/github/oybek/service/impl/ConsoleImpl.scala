@@ -59,7 +59,7 @@ class ConsoleImpl[F[_]: MonadThrow: Timer](consolePoolManager: HldsConsolePoolMa
     SendText(chatId,
       s"""
          |Ваш баланс: 0 минут
-         |Для пополнения пройдите по ссылке:
+         |Для пополнения пройдите по ссылке (1 руб = 2 мин)
          |https://www.tinkoff.ru/rm/khashimov.oybek1/Cc3Jm91036
          |В сообщении при переводе обязательно укажите следующий код
          |""".stripMargin),
