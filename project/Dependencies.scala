@@ -13,6 +13,7 @@ object Dependencies {
     val dbRush = "0.1"
     val doobie = "0.8.8"
     val testContainers = "0.39.12"
+    val mouse = "1.0.8"
   }
 
   val catsCore   = "org.typelevel" %% "cats-core" % V.catsCore
@@ -23,6 +24,7 @@ object Dependencies {
   val chimney    = "io.scalaland" %% "chimney" % V.chimney
   val dbRush     = "io.github.oybek" % "dbrush" % V.dbRush
   val doobie     = "org.tpolecat" %% "doobie-core" % V.doobie
+  val mouse      = "org.typelevel" %% "mouse" % V.mouse
 
   val testContainers = Seq(
     "com.dimafeng" %% "testcontainers-scala-scalatest" % V.testContainers % Test,
@@ -50,6 +52,7 @@ object Dependencies {
       chimney,
       dbRush,
       doobie,
+      mouse,
       pureConfig,
       scalaMock,
       scalaTest,

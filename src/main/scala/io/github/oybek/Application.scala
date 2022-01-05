@@ -27,7 +27,6 @@ import telegramium.bots.high.{BotApi, Methods}
 
 import java.io.File
 import java.util.concurrent.TimeUnit
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 object Application extends IOApp {
@@ -63,7 +62,8 @@ object Application extends IOApp {
     }
     for {
       consolePoolRef     <- Ref.of[F, ConsolePool[F]](consolePool)
-      consolePoolManager  = new HldsConsolePoolManagerImpl[F](consolePoolRef, passwordGen, log)
+      consolePoolManager  = new HldsConsolePoolManagerImpl[F, ConnectionIO](
+        consolePoolRef, passwordGen, BalanceDaoImpl, transactor, log)
       _                  <- consolePoolManager.expireCheck.every(1.minute).start
       console             = new ConsoleImpl(consolePoolManager)
       tgGate              = new TGGate(api, console)
