@@ -20,5 +20,5 @@ trait ConsoleSetup {
   }
   val consolePoolManager = new HldsConsolePoolManagerImpl[F, DB](
     consolePoolRef, passwordGen, fakeBalanceDao, transactor, logger)
-  val console            = new ConsoleImpl(consolePoolManager)
+  val console            = new ConsoleImpl(consolePoolManager, logger)
 }

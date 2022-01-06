@@ -1,7 +1,8 @@
 package io.github.oybek.service.impl
 
 import cats.effect.{MonadThrow, Timer}
-import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxApplicativeId, catsSyntaxOptionId, toFlatMapOps, toFunctorOps}
+import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxApplicativeId, catsSyntaxFlatMapOps, catsSyntaxOptionId, toFlatMapOps, toFunctorOps}
+import io.chrisdavenport.log4cats.MessageLogger
 import io.github.oybek.common.WithMeta
 import io.github.oybek.cstrike.model.Command._
 import io.github.oybek.cstrike.parser.CommandParser
@@ -13,7 +14,8 @@ import telegramium.bots.{ChatIntId, Markdown}
 
 import scala.concurrent.duration.DurationInt
 
-class ConsoleImpl[F[_]: MonadThrow: Timer](consolePoolManager: HldsConsolePoolManager[F]) extends Console[F] {
+class ConsoleImpl[F[_]: MonadThrow: Timer](consolePoolManager: HldsConsolePoolManager[F],
+                                           log: MessageLogger[F]) extends Console[F] {
 
   def handle(chatId: ChatIntId, text: String): F[List[Reaction]] =
     CommandParser.parse(text) match {
@@ -40,7 +42,8 @@ class ConsoleImpl[F[_]: MonadThrow: Timer](consolePoolManager: HldsConsolePoolMa
       case Left(NoFreeConsolesException) =>
         List(SendText(chatId, "Не осталось свободных серверов"): Reaction).pure[F]
 
-      case Left(_) =>
+      case Left(th) =>
+        log.info(s"Something went wrong $th") >>
         List(SendText(chatId, "Что-то пошло не так"): Reaction).pure[F]
     }
 

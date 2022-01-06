@@ -36,8 +36,6 @@ lazy val playcs =
         "Application",
         "integration.HLDSConsoleClient",
         "integration.TGGate",
-        "service.impl.HldsConsoleImpl",
-        "service.impl.HldsConsolePoolManagerImpl",
         "common.Scheduler",
       ).map(x => s"${(ThisBuild / organization).value}.$x").mkString(";")
     )
