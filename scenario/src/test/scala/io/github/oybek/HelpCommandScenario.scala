@@ -18,7 +18,7 @@ class HelpCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
       Given("console")
       When("/help command received")
       Then("help message is returned")
-      console.handle(fakeChatId, "/help") shouldEqual List(SendText(fakeChatId, helpText))
+      console.handle(fakeChatId, "/help") shouldEqual Right(List(SendText(fakeChatId, helpText)))
     }
   }
 }

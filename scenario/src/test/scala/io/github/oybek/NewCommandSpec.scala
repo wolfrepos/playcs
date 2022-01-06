@@ -29,26 +29,31 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
       hldsConsole.getCalledCommands shouldEqual List(
         s"sv_password $fakePassword",
         "map de_dust2",
-        "changelevel de_dust2"
-      )
+        "changelevel de_dust2")
       consolePoolRef.get shouldEqual
-        ConsolePool(
+        Right(ConsolePool(
           Nil,
           List(hldsConsole withMeta
             ConsoleMeta(
               "4444",
               fakeChatId.id,
-              Instant.ofEpochSecond(15*60)
-            )
-          )
-        )
+              Instant.ofEpochSecond(15*60)))))
 
       Then("the instructions should be reported")
-      result shouldEqual List(
+      result shouldEqual Right(List(
         SendText(fakeChatId, "Сервер создан. Скопируй в консоль это"),
         Sleep(200.millis),
-        SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`",Some(Markdown))
-      )
+        SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`",Some(Markdown))))
+    }
+
+    Scenario("User gives command '/new' when there is no free server") {
+      Given("console which has no free dedicated servers")
+
+      When("/new command received")
+      val result = console.handle(fakeChatId, "/new")
+
+      Then("No servers left message should be returned")
+      result shouldEqual Right(List(SendText(fakeChatId, "Не осталось свободных серверов")))
     }
   }
 }

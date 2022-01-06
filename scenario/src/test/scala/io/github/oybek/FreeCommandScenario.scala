@@ -20,7 +20,7 @@ class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
 
       Then("server is free and returned back to pool and appropriate message returned")
       console.handle(fakeChatId, "/free") shouldEqual
-        List(SendText(fakeChatId, "Сервер освобожден"))
+        Right(List(SendText(fakeChatId, "Сервер освобожден")))
     }
 
     Scenario("User gives command '/free'") {
@@ -31,7 +31,7 @@ class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
 
       Then("server is free and returned back to pool and appropriate message returned")
       console.handle(fakeChatId, "/free") shouldEqual
-        List(SendText(fakeChatId, "Сервер освобожден"))
+        Right(List(SendText(fakeChatId, "Сервер освобожден")))
     }
   }
 }

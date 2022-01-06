@@ -19,9 +19,9 @@ class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
     Scenario("User gives command '/join' before '/new' command") {
       Given("console without created server")
       When("/join command received")
-      Then("command to join is returned")
+      Then("message about server creation is returned")
       console.handle(fakeChatId, "/join") shouldEqual
-        List(SendText(fakeChatId, "Создай сервер сначала (/help)"))
+        Right(List(SendText(fakeChatId, "Создай сервер сначала (/help)")))
     }
 
     Scenario("User gives command '/join' after '/new' command") {
@@ -30,7 +30,29 @@ class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
       When("/join command received")
       Then("command to join is returned")
       console.handle(fakeChatId, "/join") shouldEqual
-        List(SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`", Markdown.some))
+        Right(List(SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`", Markdown.some)))
     }
+
+    Scenario("User gives command '/join' after '/new' and '/free' commands") {
+      Given("console with created and then released server")
+      console.handle(fakeChatId, "/new")
+      console.handle(fakeChatId, "/free")
+      When("/join command received")
+      Then("message about server creation is returned")
+      console.handle(fakeChatId, "/join") shouldEqual
+        Right(List(SendText(fakeChatId, "Создай сервер сначала (/help)")))
+    }
+
+    Scenario("User gives command '/join' after '/new' and '/free' and '/new' commands") {
+      Given("console with created and then released and then created server")
+      console.handle(fakeChatId, "/new")
+      console.handle(fakeChatId, "/free")
+      console.handle(fakeChatId, "/new")
+      When("/join command received")
+      Then("command to join is returned")
+      console.handle(fakeChatId, "/join") shouldEqual
+        Right(List(SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`", Markdown.some)))
+    }
+
   }
 }
