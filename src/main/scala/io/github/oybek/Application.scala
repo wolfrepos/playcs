@@ -43,8 +43,8 @@ object Application extends IOApp {
           }
         } yield ExitCode.Success
 
-      case Left(_) =>
-        log.error("Could not load config file").as(ExitCode.Error)
+      case Left(err) =>
+        log.error(s"Could not load config file $err").as(ExitCode.Error)
     }
 
   private def assembleAndLaunch(config: Config,
