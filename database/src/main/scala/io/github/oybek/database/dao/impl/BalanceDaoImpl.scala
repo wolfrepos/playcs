@@ -22,4 +22,13 @@ object BalanceDaoImpl extends BalanceDao[ConnectionIO] {
          |select telegram_id, seconds from balance
          |where telegram_id = $telegramId
          |""".stripMargin.query[Balance].option
+
+  override def addIfNotExists(balance: Balance): ConnectionIO[Int] = {
+    import balance._
+    sql"""
+         |insert into balance (telegram_id, seconds)
+         |values ($telegramId, $seconds)
+         |on conflict (telegram_id) do nothing
+         |""".stripMargin.update.run
+  }
 }

@@ -11,4 +11,7 @@ class FakeBalanceDao[F[_]: Applicative] extends BalanceDao[F] {
 
   override def addOrUpdate(balance: Balance): F[Int] =
     1.pure[F]
+
+  override def addIfNotExists(balance: Balance): F[Int] =
+    1.pure[F]
 }

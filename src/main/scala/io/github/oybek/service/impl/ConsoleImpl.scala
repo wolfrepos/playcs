@@ -5,7 +5,7 @@ import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxApplicativeId, cats
 import io.github.oybek.common.WithMeta
 import io.github.oybek.cstrike.model.Command._
 import io.github.oybek.cstrike.parser.CommandParser
-import io.github.oybek.exception.PoolManagerException.NoFreeConsolesException
+import io.github.oybek.exception.PoolManagerException.{NoFreeConsolesException, ZeroBalanceException}
 import io.github.oybek.model.Reaction.{SendText, Sleep}
 import io.github.oybek.model.{ConsoleMeta, Reaction}
 import io.github.oybek.service.{Console, HldsConsole, HldsConsolePoolManager}
@@ -29,23 +29,30 @@ class ConsoleImpl[F[_]: MonadThrow](consolePoolManager: HldsConsolePoolManager[F
     }
 
   private def handleNewCommand(chatId: ChatIntId, map: String): F[List[Reaction]] =
-    consolePoolManager.rentConsole(chatId.id).attempt.flatMap {
-      case Right(console WithMeta ConsoleMeta(password, _, _))  =>
-        console
-          .changeLevel(map)
-          .as(List(
-            SendText(chatId, "Сервер создан. Скопируй в консоль это"),
-            Sleep(200.millis),
-            sendConsole(chatId, console, password)
-          ))
+    consolePoolManager
+      .findConsole(chatId.id)
+      .flatMap(_.fold(consolePoolManager.rentConsole(chatId.id))(_.pure[F]))
+      .attempt
+      .flatMap {
+        case Right(console WithMeta ConsoleMeta(password, _, _))  =>
+          console
+            .changeLevel(map)
+            .as(List(
+              SendText(chatId, "Сервер создан. Скопируй в консоль это"),
+              Sleep(200.millis),
+              sendConsole(chatId, console, password)
+            ))
 
-      case Left(NoFreeConsolesException) =>
-        List(SendText(chatId, "Не осталось свободных серверов"): Reaction).pure[F]
+        case Left(ZeroBalanceException) =>
+          List(SendText(chatId, "Пополните баланс /balance"): Reaction).pure[F]
 
-      case Left(th) =>
-        log.info(s"Something went wrong $th") >>
-        List(SendText(chatId, "Что-то пошло не так"): Reaction).pure[F]
-    }
+        case Left(NoFreeConsolesException) =>
+          List(SendText(chatId, "Не осталось свободных серверов"): Reaction).pure[F]
+
+        case Left(th) =>
+          log.info(s"Something went wrong $th") >>
+          List(SendText(chatId, "Что-то пошло не так"): Reaction).pure[F]
+      }
 
   private def handleJoinCommand(chatId: ChatIntId): F[List[Reaction]] =
     consolePoolManager.findConsole(chatId.id).map {

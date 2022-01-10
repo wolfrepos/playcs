@@ -1,7 +1,7 @@
 package io.github.oybek
 
 import io.github.oybek.common.WithMeta.toMetaOps
-import io.github.oybek.fakes.FakeData.{fakeChatId, fakePassword}
+import io.github.oybek.fakes.FakeData.{anotherFakeChatId, fakeChatId, fakePassword}
 import io.github.oybek.model.Reaction.{SendText, Sleep}
 import io.github.oybek.model.{ConsoleMeta, ConsolePool}
 import io.github.oybek.setup.ConsoleSetup
@@ -50,10 +50,10 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
       Given("console which has no free dedicated servers")
 
       When("/new command received")
-      val result = console.handle(fakeChatId, "/new")
+      val result = console.handle(anotherFakeChatId, "/new")
 
       Then("No servers left message should be returned")
-      result shouldEqual Right(List(SendText(fakeChatId, "Не осталось свободных серверов")))
+      result shouldEqual Right(List(SendText(anotherFakeChatId, "Не осталось свободных серверов")))
     }
   }
 }

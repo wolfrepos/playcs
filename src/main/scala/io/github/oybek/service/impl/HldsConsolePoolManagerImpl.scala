@@ -16,6 +16,7 @@ import io.github.oybek.service.{HldsConsole, HldsConsolePoolManager, PasswordGen
 import org.typelevel.log4cats.MessageLogger
 
 import java.time.{Duration, Instant}
+import scala.concurrent.duration.DurationInt
 
 class HldsConsolePoolManagerImpl[F[_]: MonadThrow: Clock, G[_]]
                                 (consolePoolRef: Ref[F, ConsolePool[F]],
@@ -41,6 +42,7 @@ class HldsConsolePoolManagerImpl[F[_]: MonadThrow: Clock, G[_]]
 
   override def rentConsole(chatId: Long): F[HldsConsole[F] WithMeta ConsoleMeta] =
     for {
+      _ <- tx(balanceDao.addIfNotExists(Balance(chatId, 15.minutes.toSeconds)))
       balanceOpt <- tx(balanceDao.findBy(chatId))
       balance <- balanceOpt.fold(
         ZeroBalanceException.raiseError[F, Balance]
