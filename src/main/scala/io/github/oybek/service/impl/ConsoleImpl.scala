@@ -1,8 +1,7 @@
 package io.github.oybek.service.impl
 
-import cats.effect.{MonadThrow, Timer}
+import cats.MonadThrow
 import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxApplicativeId, catsSyntaxFlatMapOps, catsSyntaxOptionId, toFlatMapOps, toFunctorOps}
-import io.chrisdavenport.log4cats.MessageLogger
 import io.github.oybek.common.WithMeta
 import io.github.oybek.cstrike.model.Command._
 import io.github.oybek.cstrike.parser.CommandParser
@@ -10,12 +9,13 @@ import io.github.oybek.exception.PoolManagerException.NoFreeConsolesException
 import io.github.oybek.model.Reaction.{SendText, Sleep}
 import io.github.oybek.model.{ConsoleMeta, Reaction}
 import io.github.oybek.service.{Console, HldsConsole, HldsConsolePoolManager}
+import org.typelevel.log4cats.MessageLogger
 import telegramium.bots.{ChatIntId, Markdown}
 
 import scala.concurrent.duration.DurationInt
 
-class ConsoleImpl[F[_]: MonadThrow: Timer](consolePoolManager: HldsConsolePoolManager[F],
-                                           log: MessageLogger[F]) extends Console[F] {
+class ConsoleImpl[F[_]: MonadThrow](consolePoolManager: HldsConsolePoolManager[F],
+                                    log: MessageLogger[F]) extends Console[F] {
 
   def handle(chatId: ChatIntId, text: String): F[List[Reaction]] =
     CommandParser.parse(text) match {

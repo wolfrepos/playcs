@@ -1,6 +1,6 @@
 package io.github.oybek.database
 
-import cats.effect.{Blocker, ContextShift, IO}
+import cats.effect.IO
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
 import doobie._
 import doobie.implicits._
@@ -15,8 +15,6 @@ import scala.concurrent.ExecutionContext.global
 
 class BalanceDaoSpec extends AnyFlatSpec with ForAllTestContainer  {
 
-  implicit val contextShift: ContextShift[IO] = IO.contextShift(global)
-  val blocker: Blocker = Blocker.liftExecutionContext(global)
   override val container: PostgreSQLContainer = PostgreSQLContainer()
 
   val balanceDao: BalanceDao[ConnectionIO] = BalanceDaoImpl
@@ -29,8 +27,7 @@ class BalanceDaoSpec extends AnyFlatSpec with ForAllTestContainer  {
         container.username,
         container.password
       ),
-      global,
-      blocker
+      global
     )
 
     transactor.use { tx =>

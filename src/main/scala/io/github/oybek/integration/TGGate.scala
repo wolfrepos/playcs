@@ -1,7 +1,7 @@
 package io.github.oybek.integration
 
 import cats.Parallel
-import cats.effect.{Sync, Timer}
+import cats.effect.{Async, Temporal}
 import cats.implicits.{catsSyntaxApplicativeId, toFlatMapOps, toFunctorOps, toTraverseOps}
 import io.github.oybek.model.Reaction
 import io.github.oybek.model.Reaction.{SendText, Sleep}
@@ -10,7 +10,7 @@ import telegramium.bots.high.implicits.methodOps
 import telegramium.bots.high.{Api, LongPollBot, Methods}
 import telegramium.bots.{ChatIntId, Message}
 
-class TGGate[F[_]: Sync: Timer: Parallel](api: Api[F], console: Console[F]) extends LongPollBot[F](api) {
+class TGGate[F[_]: Async: Temporal: Parallel](api: Api[F], console: Console[F]) extends LongPollBot[F](api) {
 
   override def onMessage(message: Message): F[Unit] =
     message
@@ -32,6 +32,6 @@ class TGGate[F[_]: Sync: Timer: Parallel](api: Api[F], console: Console[F]) exte
         ).exec(api).void
 
       case Sleep(finiteDuration) =>
-        Timer[F].sleep(finiteDuration)
+        Temporal[F].sleep(finiteDuration)
     }.void
 }

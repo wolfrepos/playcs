@@ -1,19 +1,12 @@
 package io.github.oybek.fakes
 
 import cats.Applicative
-import cats.effect.Clock
 import cats.implicits.catsSyntaxApplicativeId
+import io.github.oybek.common.time.Clock
 
-import scala.concurrent.duration.TimeUnit
+import java.time.Instant
 
 class FakeClock[F[_]: Applicative] extends Clock[F] {
-  override def realTime(unit: TimeUnit): F[Long] =
-    time.pure[F]
-
-  override def monotonic(unit: TimeUnit): F[Long] = ???
-
-  def setTime(t: Long): Unit =
-    time = t
-
-  private var time = 0L
+  override def instantNow: F[Instant] =
+    Instant.ofEpochMilli(0L).pure[F]
 }

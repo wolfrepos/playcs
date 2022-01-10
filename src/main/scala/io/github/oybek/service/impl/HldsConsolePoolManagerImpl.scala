@@ -1,24 +1,23 @@
 package io.github.oybek.service.impl
 
-import cats.effect.concurrent.Ref
-import cats.effect.{Clock, MonadThrow, Timer}
+import cats.effect.Ref
 import cats.implicits.{catsSyntaxApplicativeErrorId, catsSyntaxApplicativeId, catsSyntaxOptionId, toTraverseOps}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.~>
-import io.chrisdavenport.log4cats.MessageLogger
+import cats.{MonadThrow, ~>}
 import io.github.oybek.common.WithMeta
 import io.github.oybek.common.WithMeta.toMetaOps
+import io.github.oybek.common.time.Clock
 import io.github.oybek.database.dao.BalanceDao
 import io.github.oybek.database.model.Balance
 import io.github.oybek.exception.PoolManagerException.{NoFreeConsolesException, ZeroBalanceException}
 import io.github.oybek.model.{ConsoleMeta, ConsolePool}
 import io.github.oybek.service.{HldsConsole, HldsConsolePoolManager, PasswordGenerator}
+import org.typelevel.log4cats.MessageLogger
 
 import java.time.{Duration, Instant}
-import scala.concurrent.duration.{DurationInt, DurationLong}
 
-class HldsConsolePoolManagerImpl[F[_]: MonadThrow: Timer, G[_]]
+class HldsConsolePoolManagerImpl[F[_]: MonadThrow: Clock, G[_]]
                                 (consolePoolRef: Ref[F, ConsolePool[F]],
                                  passwordGenerator: PasswordGenerator[F],
                                  balanceDao: BalanceDao[G],
@@ -84,8 +83,6 @@ class HldsConsolePoolManagerImpl[F[_]: MonadThrow: Timer, G[_]]
     for {
       fallBackPassword <- passwordGenerator.generate
       _ <- console.svPassword(password.getOrElse(fallBackPassword))
-      _ <- Timer[F].sleep(200.millis)
       _ <- console.map("de_dust2")
-      _ <- Timer[F].sleep(200.millis)
     } yield ()
 }

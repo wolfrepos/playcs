@@ -2,7 +2,7 @@ package io.github.oybek.fakes
 
 import cats.Applicative
 import cats.data.State
-import cats.effect.concurrent.Ref
+import cats.effect.Ref
 import cats.implicits.catsSyntaxApplicativeId
 
 class FakeRef[F[_]: Applicative, A](a: A) extends Ref[F, A] {
