@@ -23,7 +23,7 @@ class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with Cons
         Right(List(
           SendText(fakeChatId,
             s"""
-               |Ваш баланс: 0 минут
+               |Ваш баланс: 15 минут
                |Для пополнения пройдите по ссылке (1 руб = 2 мин)
                |https://www.tinkoff.ru/rm/khashimov.oybek1/Cc3Jm91036
                |В сообщении при переводе обязательно укажите следующий код

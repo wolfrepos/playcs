@@ -4,7 +4,8 @@ import cats.effect.Ref
 import cats.implicits.{catsSyntaxApplicativeErrorId, catsSyntaxApplicativeId, catsSyntaxOptionId, toTraverseOps}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.{MonadThrow, ~>}
+import cats.syntax.applicative._
+import cats.{Applicative, MonadThrow, ~>}
 import io.github.oybek.common.WithMeta
 import io.github.oybek.common.WithMeta.toMetaOps
 import io.github.oybek.common.time.Clock
@@ -18,7 +19,7 @@ import org.typelevel.log4cats.MessageLogger
 import java.time.{Duration, Instant}
 import scala.concurrent.duration.DurationInt
 
-class HldsConsolePoolManagerImpl[F[_]: MonadThrow: Clock, G[_]]
+class HldsConsolePoolManagerImpl[F[_]: Applicative: MonadThrow: Clock, G[_]]
                                 (consolePoolRef: Ref[F, ConsolePool[F]],
                                  passwordGenerator: PasswordGenerator[F],
                                  balanceDao: BalanceDao[G],
@@ -42,11 +43,7 @@ class HldsConsolePoolManagerImpl[F[_]: MonadThrow: Clock, G[_]]
 
   override def rentConsole(chatId: Long): F[HldsConsole[F] WithMeta ConsoleMeta] =
     for {
-      _ <- tx(balanceDao.addIfNotExists(Balance(chatId, 15.minutes.toSeconds)))
-      balanceOpt <- tx(balanceDao.findBy(chatId))
-      balance <- balanceOpt.fold(
-        ZeroBalanceException.raiseError[F, Balance]
-      )(_.pure[F])
+      balance <- checkAndGetBalance(chatId)
       ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
       (console, consoles) <- freeConsoles match {
         case Nil => NoFreeConsolesException.raiseError
@@ -77,7 +74,7 @@ class HldsConsolePoolManagerImpl[F[_]: MonadThrow: Clock, G[_]]
     for {
       console WithMeta meta <- consoleWithMeta.pure[F]
       _ <- changePasswordAndKickAll(console)
-      secondsLeft = Duration.between(now, meta.deadline).toSeconds
+      secondsLeft = Duration.between(now, meta.deadline).toSeconds.max(0)
       _ <- tx(balanceDao.addOrUpdate(Balance(meta.usingBy, secondsLeft)))
     } yield ()
 
@@ -87,4 +84,18 @@ class HldsConsolePoolManagerImpl[F[_]: MonadThrow: Clock, G[_]]
       _ <- console.svPassword(password.getOrElse(fallBackPassword))
       _ <- console.map("de_dust2")
     } yield ()
+
+  private def checkAndGetBalance(chatId: Long): F[Balance] =
+    for {
+      balanceOpt <- tx(balanceDao.findBy(chatId))
+      balance <- balanceOpt.fold {
+        val balance = defaultBalance(chatId)
+        tx(balanceDao.addIfNotExists(balance)).as(balance)
+      }(_.pure[F])
+      _ <- ZeroBalanceException
+        .raiseError[F, Balance]
+        .whenA(balance.seconds <= 0)
+    } yield balance
+
+  private def defaultBalance(chatId: Long) = Balance(chatId, 15.minutes.toSeconds)
 }

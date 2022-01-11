@@ -73,7 +73,7 @@ object Application extends IOApp {
       consolePoolManager  = new HldsConsolePoolManagerImpl[F, ConnectionIO](
         consolePoolRef, passwordGen, BalanceDaoImpl, transactor, log)
       _                  <- Spawn[F].start(consolePoolManager.expireCheck.every(1.minute))
-      console             = new ConsoleImpl(consolePoolManager, consoleLog)
+      console             = new ConsoleImpl(consolePoolManager, BalanceDaoImpl, transactor, consoleLog)
       tgGate              = new TGGate(api, console)
       _                  <- setCommands(api)
       _                  <- tgGate.start()
