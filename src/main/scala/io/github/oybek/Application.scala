@@ -11,14 +11,12 @@ import io.github.oybek.common.Scheduler.toActionOps
 import io.github.oybek.common.time.{Timer, Clock => Clockk}
 import io.github.oybek.config.Config
 import io.github.oybek.cstrike.model.Command
-import io.github.oybek.cstrike.telegram.ToBotCommandTransformer.commandToBotCommand
 import io.github.oybek.database.DB
 import io.github.oybek.database.dao.impl.BalanceDaoImpl
 import io.github.oybek.integration.{HLDSConsoleClient, TGGate}
 import io.github.oybek.model.ConsolePool
 import io.github.oybek.service.HldsConsole
 import io.github.oybek.service.impl.{ConsoleImpl, HldsConsoleImpl, HldsConsolePoolManagerImpl, PasswordGeneratorImpl}
-import io.scalaland.chimney.dsl.TransformerOps
 import org.http4s.blaze.client.BlazeClientBuilder
 import org.http4s.client.Client
 import org.http4s.client.middleware.Logger
@@ -100,7 +98,7 @@ object Application extends IOApp {
     } yield (client, consoles, transactor)
 
   private def setCommands[F[_]: Functor](api: BotApi[F]): F[Unit] = {
-    val commands = Command.all.map(_.transformInto[BotCommand])
+    val commands = Command.all.map(x => BotCommand(x.command, x.description))
     Methods.setMyCommands(commands).exec(api).void
   }
 

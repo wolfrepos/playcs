@@ -9,7 +9,6 @@ object Dependencies {
     val scalaTest = "3.1.1"
     val scalaMock = "5.1.0"
     val pureConfig = "0.12.3"
-    val chimney = "0.6.1"
     val doobie = "1.0.0-RC1"
     val testContainers = "0.39.12"
     val flyway = "8.4.0"
@@ -20,7 +19,6 @@ object Dependencies {
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % V.pureConfig
   val scalaMock  = "org.scalamock" %% "scalamock" % V.scalaMock % Test
   val scalaTest  = "org.scalatest" %% "scalatest" % V.scalaTest % Test
-  val chimney    = "io.scalaland" %% "chimney" % V.chimney
   val flyway     = "org.flywaydb" % "flyway-core" % V.flyway
 
   val doobie     = Seq(
@@ -48,7 +46,6 @@ object Dependencies {
     Seq(
       catsCore,
       catsEffect,
-      chimney,
       flyway,
       pureConfig,
       scalaMock,
