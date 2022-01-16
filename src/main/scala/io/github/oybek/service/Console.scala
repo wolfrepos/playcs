@@ -5,4 +5,5 @@ import telegramium.bots.ChatIntId
 
 trait Console[F[_]] {
   def handle(chatId: ChatIntId, text: String): F[List[Reaction]]
+  def expireCheck: F[Unit]
 }

@@ -68,10 +68,9 @@ object Application extends IOApp {
     for {
       _                  <- DB.runMigrations[F](tx)
       consolePoolRef     <- Ref.of[F, ConsolePool[F]](consolePool)
-      consolePoolManager  = new HldsConsolePoolManagerImpl[F, ConnectionIO](
-        consolePoolRef, passwordGen, BalanceDaoImpl, transactor, log)
-      _                  <- Spawn[F].start(consolePoolManager.expireCheck.every(1.minute))
+      consolePoolManager  = new HldsConsolePoolManagerImpl[F, ConnectionIO](consolePoolRef, passwordGen, log)
       console             = new ConsoleImpl(consolePoolManager, BalanceDaoImpl, transactor, consoleLog)
+      _                  <- Spawn[F].start(console.expireCheck.every(1.minute))
       tgGate              = new TGGate(api, console)
       _                  <- setCommands(api)
       _                  <- tgGate.start()

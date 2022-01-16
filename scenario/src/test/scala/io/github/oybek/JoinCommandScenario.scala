@@ -4,7 +4,9 @@ import cats.implicits.catsSyntaxOptionId
 import io.github.oybek.cstrike.model.Command.helpText
 import io.github.oybek.fakes.FakeData.fakeChatId
 import io.github.oybek.model.Reaction.SendText
+import io.github.oybek.service.Console
 import io.github.oybek.setup.ConsoleSetup
+import io.github.oybek.setup.TestEffect.F
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
@@ -14,6 +16,8 @@ class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
 
   info("As a user")
   info("I want to be able to join dedicated counter strike server")
+
+  override val console: Console[F] = setupConsole
 
   Feature("/join command") {
     Scenario("User gives command '/join' before '/new' command") {

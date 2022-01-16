@@ -1,4 +1,8 @@
 package io.github.oybek.database.model
 
-case class Balance(telegramId: Long,
-                   seconds: Long)
+import telegramium.bots.ChatIntId
+
+import scala.concurrent.duration.FiniteDuration
+
+case class Balance(telegramId: ChatIntId,
+                   timeLeft: FiniteDuration)
