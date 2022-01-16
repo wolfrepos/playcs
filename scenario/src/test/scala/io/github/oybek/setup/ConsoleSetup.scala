@@ -5,6 +5,7 @@ import cats.arrow.FunctionK
 import io.github.oybek.common.time.{Clock, Timer}
 import io.github.oybek.fakes._
 import io.github.oybek.model.ConsolePool
+import io.github.oybek.service.Console
 import io.github.oybek.service.impl.{ConsoleImpl, HldsConsolePoolManagerImpl}
 import io.github.oybek.setup.TestEffect.{DB, F}
 
@@ -20,7 +21,7 @@ trait ConsoleSetup {
   val transactor         = new FunctionK[DB, F] {
     override def apply[A](fa: DB[A]): F[A] = Right(fa)
   }
-  val consolePoolManager = new HldsConsolePoolManagerImpl[F, DB](
-    consolePoolRef, passwordGen, fakeBalanceDao, transactor, logger)
-  val console            = new ConsoleImpl(consolePoolManager, fakeBalanceDao, transactor, logger)
+  val consolePoolManager = new HldsConsolePoolManagerImpl[F, DB](consolePoolRef, passwordGen, logger)
+  def setupConsole: Console[F] = new ConsoleImpl(consolePoolManager, fakeBalanceDao, transactor, logger)
+  val console: Console[F] = new ConsoleImpl(consolePoolManager, fakeBalanceDao, transactor, logger)
 }

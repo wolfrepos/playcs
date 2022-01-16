@@ -36,7 +36,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
           List(hldsConsole withMeta
             ConsoleMeta(
               "4444",
-              fakeChatId.id,
+              fakeChatId,
               Instant.ofEpochSecond(15*60)))))
 
       Then("the instructions should be reported")
