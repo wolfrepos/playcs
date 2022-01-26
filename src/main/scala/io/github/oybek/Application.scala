@@ -53,8 +53,6 @@ object Application extends IOApp {
                                                                         tx: HikariTransactor[F]): F[Unit] = {
     val client      = Logger(logHeaders = false, logBody = false)(httpClient)
     val api         = BotApi[F](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
-    val log         = Slf4jLogger.getLoggerFromName[F]("console-pool-manager")
-    val consoleLog  = Slf4jLogger.getLoggerFromName[F]("console")
     val consolePool = ConsolePool[F](free = consoles, busy = Nil)
     val passwordGen = new PasswordGeneratorImpl[F]
     val transactor  = new FunctionK[ConnectionIO, F] {
@@ -66,12 +64,15 @@ object Application extends IOApp {
     }
 
     for {
+      consolePoolLogger  <- Slf4jLogger.fromName[F]("console-pool-manager")
+      consoleLogger      <- Slf4jLogger.fromName[F]("console")
+      tgGateLogger       <- Slf4jLogger.fromName[F]("tg-gate")
       _                  <- DB.runMigrations[F](tx)
       consolePoolRef     <- Ref.of[F, ConsolePool[F]](consolePool)
-      consolePoolManager  = new HldsConsolePoolManagerImpl[F, ConnectionIO](consolePoolRef, passwordGen, log)
-      console             = new ConsoleImpl(consolePoolManager, BalanceDaoImpl, transactor, consoleLog)
+      consolePoolManager  = new HldsConsolePoolManagerImpl[F, ConnectionIO](consolePoolRef, passwordGen, consolePoolLogger)
+      console             = new ConsoleImpl(consolePoolManager, BalanceDaoImpl, transactor, consoleLogger)
       _                  <- Spawn[F].start(console.expireCheck.every(1.minute))
-      tgGate              = new TGGate(api, console)
+      tgGate              = new TGGate(api, console, tgGateLogger)
       _                  <- setCommands(api)
       _                  <- tgGate.start()
     } yield ()

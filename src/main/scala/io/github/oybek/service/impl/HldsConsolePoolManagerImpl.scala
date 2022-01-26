@@ -9,7 +9,8 @@ import io.github.oybek.common.WithMeta
 import io.github.oybek.common.WithMeta.toMetaOps
 import io.github.oybek.common.time.Clock
 import io.github.oybek.exception.BusinessException.NoFreeConsolesException
-import io.github.oybek.model.{ConsoleMeta, ConsolePool}
+import io.github.oybek.model.Reaction.SendText
+import io.github.oybek.model.{ConsoleMeta, ConsolePool, Reaction}
 import io.github.oybek.service.{HldsConsole, HldsConsolePoolManager, PasswordGenerator}
 import org.typelevel.log4cats.MessageLogger
 import telegramium.bots.ChatIntId
@@ -36,7 +37,10 @@ class HldsConsolePoolManagerImpl[F[_]: Applicative: MonadThrow: Clock, G[_]]
     for {
       ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
       (console, consoles) <- freeConsoles match {
-        case Nil => NoFreeConsolesException.raiseError
+        case Nil =>
+          MonadThrow[F].raiseError(
+            NoFreeConsolesException(
+              List(SendText(chatId, "Не осталось свободных серверов"))))
         case x::xs => (x, xs).pure[F]
       }
       now <- Clock[F].instantNow

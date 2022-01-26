@@ -1,6 +1,6 @@
 package io.github.oybek.service.impl
 
-import cats.implicits.{catsSyntaxApplicative, catsSyntaxApplicativeError, catsSyntaxApplicativeErrorId, catsSyntaxApplicativeId, catsSyntaxOptionId, toFlatMapOps, toFunctorOps, toTraverseOps}
+import cats.implicits._
 import cats.{Monad, MonadThrow, ~>}
 import io.github.oybek.common.WithMeta
 import io.github.oybek.common.time.Clock
@@ -9,9 +9,9 @@ import io.github.oybek.cstrike.model.Command._
 import io.github.oybek.cstrike.parser.CommandParser
 import io.github.oybek.database.dao.BalanceDao
 import io.github.oybek.database.model.Balance
-import io.github.oybek.exception.BusinessException.{NoFreeConsolesException, ZeroBalanceException}
+import io.github.oybek.exception.BusinessException.ZeroBalanceException
 import io.github.oybek.model.Reaction.{SendText, Sleep}
-import io.github.oybek.model.{ConsoleMeta, ConsolePool, Reaction}
+import io.github.oybek.model.{ConsoleMeta, Reaction}
 import io.github.oybek.service.{Console, HldsConsole, HldsConsolePoolManager}
 import org.typelevel.log4cats.MessageLogger
 import telegramium.bots.{ChatIntId, Markdown}
@@ -29,7 +29,6 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
     CommandParser
       .parse(text)
       .fold(_ => confusedMessage(chatId), handleCommand(chatId, _))
-      .recoverWith(recoverException(chatId, _))
 
   override def expireCheck: F[Unit] =
     for {
@@ -50,17 +49,6 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       case HelpCommand     => handleHelpCommand(chatId)
       case _               => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
     }
-
-  private def recoverException(chatId: ChatIntId, exception: Throwable): F[List[Reaction]] =
-    exception match {
-      case ZeroBalanceException =>
-        List(SendText(chatId, "Пополните баланс /balance"): Reaction).pure[F]
-
-      case NoFreeConsolesException =>
-        List(SendText(chatId, "Не осталось свободных серверов"): Reaction).pure[F]
-
-      case th =>
-        log.info(s"Something went wrong $th") .as(List(SendText(chatId, "Что-то пошло не так"): Reaction)) }
 
   private def handleNewCommand(chatId: ChatIntId, map: String): F[List[Reaction]] = {
     import consolePoolManager.rentConsole
@@ -140,10 +128,10 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
         val balance = defaultBalance(chatId)
         tx(balanceDao.addIfNotExists(balance)).as(balance)
       }(_.pure[F])
-      _ <- ZeroBalanceException
-        .raiseError[F, Balance]
-        .whenA(balance.timeLeft.toSeconds <= 0)
+      _ <- MonadThrow[F].raiseWhen(
+        balance.timeLeft.toSeconds <= 0
+      )(ZeroBalanceException(List(SendText(chatId, "Пополните баланс /balance"): Reaction)))
     } yield balance
 
-  private def defaultBalance(chatId: ChatIntId) = Balance(chatId, 15.minutes)
+  private def defaultBalance(chatId: ChatIntId) = Balance(chatId, 60.minutes)
 }

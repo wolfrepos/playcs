@@ -1,8 +1,12 @@
 package io.github.oybek.exception
 
-sealed trait BusinessException
+import io.github.oybek.model.Reaction
+
+sealed trait BusinessException extends Throwable {
+  def reactions: List[Reaction]
+}
 
 object BusinessException {
-  case object NoFreeConsolesException extends Throwable with BusinessException
-  case object ZeroBalanceException extends Throwable with BusinessException
+  case class NoFreeConsolesException(reactions: List[Reaction]) extends BusinessException
+  case class ZeroBalanceException(reactions: List[Reaction]) extends BusinessException
 }
