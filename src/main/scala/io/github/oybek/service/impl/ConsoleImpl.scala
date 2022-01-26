@@ -133,5 +133,5 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       )(ZeroBalanceException(List(SendText(chatId, "Пополните баланс /balance"): Reaction)))
     } yield balance
 
-  private def defaultBalance(chatId: ChatIntId) = Balance(chatId, 60.minutes)
+  private def defaultBalance(chatId: ChatIntId) = Balance(chatId, 30.minutes)
 }
