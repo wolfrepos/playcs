@@ -18,6 +18,9 @@ I decided to solve this problem and have developed this chat bot for creating te
 ![](https://tlgrm.eu/_/stickers/4dd/300/4dd300fd-0a89-3f3d-ac53-8ec93976495e/192/115.webp)
 
 ## How to use it?
+
+![Demo GIF](https://i.imgur.com/GpDVg2p.gif)
+
 [Start the dialog](https://t.me/playcs_bot) with the bot and write `/help`
 
 Bot could also be added to the telegram groups.
