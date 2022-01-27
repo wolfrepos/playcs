@@ -1,6 +1,8 @@
 # Play CS
 [t.me/playcs_bot](https://t.me/playcs_bot) - telegram bot for creating temporary CS 1.6 dedicated servers.
 
+![Demo GIF](https://raw.githubusercontent.com/oybek/playcs/master/demo.gif)
+
 ## Why I have created this bot
 Sometimes my friends and I play legendary "Counter Strike 1.6".
 Usually we find some empty dedicated server, connect and play on it.
@@ -18,8 +20,6 @@ I decided to solve this problem and have developed this chat bot for creating te
 ![](https://tlgrm.eu/_/stickers/4dd/300/4dd300fd-0a89-3f3d-ac53-8ec93976495e/192/115.webp)
 
 ## How to use it?
-
-![Demo GIF](https://i.imgur.com/GpDVg2p.gif)
 
 [Start the dialog](https://t.me/playcs_bot) with the bot and write `/help`
 
