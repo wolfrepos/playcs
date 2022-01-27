@@ -1,6 +1,8 @@
 # Play CS
 [t.me/playcs_bot](https://t.me/playcs_bot) - telegram bot for creating temporary CS 1.6 dedicated servers.
 
+![](http://94.250.252.25/demo.gif)
+
 ## Why I have created this bot
 Sometimes my friends and I play legendary "Counter Strike 1.6".
 Usually we find some empty dedicated server, connect and play on it.
