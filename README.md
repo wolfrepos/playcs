@@ -7,8 +7,6 @@
 Sometimes my friends and I play legendary "Counter Strike 1.6".
 Usually we find some empty dedicated server, connect and play on it.
 
-![](https://tlgrm.eu/_/stickers/4dd/300/4dd300fd-0a89-3f3d-ac53-8ec93976495e/192/29.webp)
-
 But recently we started to experience the troubles when some random player connects to our game.
 Very often it is some pro player, who kicks our asses and we can't do anything with it.
 
@@ -17,7 +15,7 @@ Very often it is some pro player, who kicks our asses and we can't do anything w
 I decided to solve this problem and have developed this chat bot for creating temporary
 "Counter Strike 1.6" dedicated servers with password.
 
-![](https://tlgrm.eu/_/stickers/4dd/300/4dd300fd-0a89-3f3d-ac53-8ec93976495e/192/115.webp)
+![](https://c.tenor.com/pmhVhO8pOgMAAAAM/billy-herington-smoke.gif)
 
 ## How to use it?
 
