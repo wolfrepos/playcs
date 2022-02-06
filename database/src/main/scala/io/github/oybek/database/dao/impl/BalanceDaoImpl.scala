@@ -20,7 +20,7 @@ object BalanceDaoImpl extends BalanceDao[ConnectionIO] {
          |""".stripMargin.update.run
   }
 
-  implicit val getFiniteDuration: Get[FiniteDuration] =
+  given getFiniteDuration: Get[FiniteDuration] =
     Get[Long].map(FiniteDuration(_, TimeUnit.SECONDS))
 
   override def findBy(telegramId: Long): ConnectionIO[Option[Balance]] =

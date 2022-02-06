@@ -1,6 +1,7 @@
 package io.github.oybek.common
 
-import io.github.oybek.common.WithMeta.toMetaOps
+import io.github.oybek.common.WithMeta
+import io.github.oybek.common.withMeta
 import org.scalatest.funsuite.AnyFunSuite
 
 class WithMetaSpec extends AnyFunSuite {

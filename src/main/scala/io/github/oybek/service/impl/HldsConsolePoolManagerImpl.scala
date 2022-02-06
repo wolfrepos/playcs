@@ -6,7 +6,7 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.{Applicative, MonadThrow}
 import io.github.oybek.common.WithMeta
-import io.github.oybek.common.WithMeta.toMetaOps
+import io.github.oybek.common.withMeta
 import io.github.oybek.common.time.Clock
 import io.github.oybek.exception.BusinessException.NoFreeConsolesException
 import io.github.oybek.model.Reaction.SendText

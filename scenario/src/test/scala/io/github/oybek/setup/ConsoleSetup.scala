@@ -10,15 +10,15 @@ import io.github.oybek.service.impl.{ConsoleImpl, HldsConsolePoolManagerImpl}
 import io.github.oybek.setup.TestEffect.{DB, F}
 
 trait ConsoleSetup {
-  implicit val fakeTimer: Timer[F] = new FakeTimer[F]
-  implicit val fakeClock: Clock[F] = new FakeClock[F]
-  val hldsConsole        = new FakeHldsConsole[F]
-  val consolePool        = ConsolePool[F](free = List(hldsConsole), busy = Nil)
-  val consolePoolRef     = new FakeRef[F, ConsolePool[F]](consolePool)
-  val logger             = new FakeMessageLogger[F]
-  val passwordGen        = new FakePasswordGenerator[F]
-  val fakeBalanceDao     = new FakeBalanceDao[DB]
-  val transactor         = new FunctionK[DB, F] {
+  given fakeTimer: Timer[F] = new FakeTimer[F]
+  given fakeClock: Clock[F] = new FakeClock[F]
+  val hldsConsole           = new FakeHldsConsole[F]
+  val consolePool           = ConsolePool[F](free = List(hldsConsole), busy = Nil)
+  val consolePoolRef        = new FakeRef[F, ConsolePool[F]](consolePool)
+  val logger                = new FakeMessageLogger[F]
+  val passwordGen           = new FakePasswordGenerator[F]
+  val fakeBalanceDao        = new FakeBalanceDao[DB]
+  val transactor            = new FunctionK[DB, F] {
     override def apply[A](fa: DB[A]): F[A] = Right(fa)
   }
   val consolePoolManager = new HldsConsolePoolManagerImpl[F, DB](consolePoolRef, passwordGen, logger)

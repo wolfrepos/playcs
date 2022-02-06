@@ -1,6 +1,7 @@
 package io.github.oybek
 
-import io.github.oybek.common.WithMeta.toMetaOps
+import io.github.oybek.common.WithMeta
+import io.github.oybek.common.withMeta
 import io.github.oybek.exception.BusinessException.NoFreeConsolesException
 import io.github.oybek.fakes.FakeData.{anotherFakeChatId, fakeChatId, fakePassword}
 import io.github.oybek.model.Reaction.{SendText, Sleep}
