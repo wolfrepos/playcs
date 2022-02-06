@@ -23,36 +23,35 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: HldsConsolePoolManager[F],
                                                         balanceDao: BalanceDao[G],
                                                         tx: G ~> F,
-                                                        log: MessageLogger[F]) extends Console[F] {
+                                                        log: MessageLogger[F]) extends Console[F]:
 
   override def handle(chatId: ChatIntId, text: String): F[List[Reaction]] =
-    CommandParser
-      .parse(text)
-      .fold(_ => confusedMessage(chatId), handleCommand(chatId, _))
+    CommandParser.parse(text) match
+      case _: String => confusedMessage(chatId)
+      case command: Command => handleCommand(chatId, command)
 
   override def expireCheck: F[Unit] =
-    for {
+    for
       _ <- log.info("checking pool for expired consoles...")
       now <- Clock[F].instantNow
       expiredConsoles <- consolePoolManager.getConsolesWith(_.deadline.isBefore(now))
       chatIds = expiredConsoles.map(_.meta.usingBy)
       _ <- chatIds.traverse(handleFreeCommand)
       _ <- log.info(s"consoles on ports ${expiredConsoles.map(_.get.port)} is freed")
-    } yield ()
+    yield ()
 
   private def handleCommand(chatId: ChatIntId, command: Command): F[List[Reaction]] =
-    command match {
+    command match
       case NewCommand(map) => handleNewCommand(chatId, map)
       case JoinCommand     => handleJoinCommand(chatId)
       case BalanceCommand  => handleBalanceCommand(chatId)
       case FreeCommand     => handleFreeCommand(chatId)
       case HelpCommand     => handleHelpCommand(chatId)
       case _               => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
-    }
 
-  private def handleNewCommand(chatId: ChatIntId, map: String): F[List[Reaction]] = {
+  private def handleNewCommand(chatId: ChatIntId, map: String): F[List[Reaction]] =
     import consolePoolManager.rentConsole
-    for {
+    for
       balance <- checkAndGetBalance(chatId)
       Balance(_, time) = balance
       consoleOpt <- consolePoolManager.findConsole(chatId)
@@ -64,15 +63,13 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
         Sleep(200.millis),
         sendConsole(chatId, console, pass)
       )
-    } yield reaction
-  }
+    yield reaction
 
   private def handleJoinCommand(chatId: ChatIntId): F[List[Reaction]] =
     consolePoolManager.findConsole(chatId).map {
       case None =>
         List(SendText(chatId, "Создай сервер сначала (/help)"))
-
-      case Some(console WithMeta ConsoleMeta(password, _, _))  =>
+      case Some(console WithMeta ConsoleMeta(password, _, _)) =>
         List(sendConsole(chatId, console, password))
     }
 
@@ -102,13 +99,13 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
   private def handleFreeCommand(chatId: ChatIntId): F[List[Reaction]] =
     consolePoolManager.findConsole(chatId).flatMap {
       case Some(_ WithMeta meta) =>
-        for {
+        for
           _ <- consolePoolManager.freeConsole(chatId)
           now <- Clock[F].instantNow
           secondsLeft = Duration.between(now, meta.deadline).toSeconds.max(0)
           timeLeft = FiniteDuration(secondsLeft, TimeUnit.SECONDS)
           _ <- tx(balanceDao.addOrUpdate(Balance(meta.usingBy, timeLeft)))
-        } yield List(SendText(chatId, "Сервер освобожден"))
+        yield List(SendText(chatId, "Сервер освобожден"))
 
       case None =>
         List(SendText(chatId, "Нет созданных серверов"): Reaction).pure[F]
@@ -124,7 +121,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
     List(SendText(chatId, "Не оч понял /help"): Reaction).pure[F]
 
   private def checkAndGetBalance(chatId: ChatIntId): F[Balance] =
-    for {
+    for
       balanceOpt <- tx(balanceDao.findBy(chatId.id))
       balance <- balanceOpt.fold {
         val balance = defaultBalance(chatId)
@@ -133,7 +130,6 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       _ <- MonadThrow[F].raiseWhen(
         balance.timeLeft.toSeconds <= 0
       )(ZeroBalanceException(List(SendText(chatId, "Пополните баланс /balance"): Reaction)))
-    } yield balance
+    yield balance
 
   private def defaultBalance(chatId: ChatIntId) = Balance(chatId, 30.minutes)
-}

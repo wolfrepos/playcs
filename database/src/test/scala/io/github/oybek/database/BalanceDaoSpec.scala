@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.duration.FiniteDuration
 
-class BalanceDaoSpec extends AnyFlatSpec with ForAllTestContainer  {
+class BalanceDaoSpec extends AnyFlatSpec with ForAllTestContainer:
 
   override val container: PostgreSQLContainer = PostgreSQLContainer()
 
@@ -33,7 +33,7 @@ class BalanceDaoSpec extends AnyFlatSpec with ForAllTestContainer  {
     )
 
     transactor.use { tx =>
-      for {
+      for
         _ <- DB.runMigrations(tx)
         balance = Balance(telegramId = ChatIntId(123), timeLeft = FiniteDuration(60, TimeUnit.SECONDS))
         affectedRows <- balanceDao
@@ -65,8 +65,7 @@ class BalanceDaoSpec extends AnyFlatSpec with ForAllTestContainer  {
           .findBy(telegramId = 0)
           .transact(tx)
         _ = assert(balanceOpt === None)
-      } yield ()
+      yield ()
     }
   }
-}
 

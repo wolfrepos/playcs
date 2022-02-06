@@ -22,21 +22,21 @@ class HldsConsolePoolManagerImpl[F[_]: Applicative: MonadThrow: Clock, G[_]]
                                  passwordGenerator: PasswordGenerator[F],
                                  log: MessageLogger[F]) extends HldsConsolePoolManager[F] {
   override def findConsole(chatId: ChatIntId): F[Option[WithMeta[HldsConsole[F], ConsoleMeta]]] =
-    for {
+    for
       consolePool <- consolePoolRef.get
       ConsolePool(_, busyConsoles) = consolePool
       consoleOpt = busyConsoles.find(_.meta.usingBy == chatId)
-    } yield consoleOpt
+    yield consoleOpt
 
   override def getConsolesWith(prop: ConsoleMeta => Boolean): F[List[HldsConsole[F] WithMeta ConsoleMeta]] =
-    for {
+    for
       consolePool <- consolePoolRef.get
       ConsolePool(_, busyConsoles) = consolePool
       result = busyConsoles.filter(x => prop(x.meta))
-    } yield result
+    yield result
 
   override def rentConsole(chatId: ChatIntId, ttl: FiniteDuration): F[HldsConsole[F] WithMeta ConsoleMeta] =
-    for {
+    for
       consolePool <- consolePoolRef.get
       ConsolePool(freeConsoles, busyConsoles) = consolePool
       allConsoles <- freeConsoles match {
@@ -57,22 +57,22 @@ class HldsConsolePoolManagerImpl[F[_]: Applicative: MonadThrow: Clock, G[_]]
       _ <- log.info(s"console on port=${console.port} is rented by $chatId until ${consoleMeta.deadline}")
       rentedConsole = console.withMeta(consoleMeta)
       _ <- consolePoolRef.set(ConsolePool(consoles, rentedConsole::busyConsoles))
-    } yield rentedConsole
+    yield rentedConsole
 
   override def freeConsole(chatIds: ChatIntId*): F[Unit] =
-    for {
+    for
       consolePool <- consolePoolRef.get
       ConsolePool(freeConsoles, busyConsoles) = consolePool
       (toSetFree, leftBusy) = busyConsoles.partition(x => chatIds.contains(x.meta.usingBy))
       toSetFreeConsoles = toSetFree.map(_.get)
       _ <- toSetFreeConsoles.traverse(changePasswordAndKickAll(_))
       _ <- consolePoolRef.set(ConsolePool(freeConsoles ++ toSetFreeConsoles, leftBusy))
-    } yield ()
+    yield ()
 
   private def changePasswordAndKickAll(console: HldsConsole[F], password: Option[String] = None): F[Unit] =
-    for {
+    for
       fallBackPassword <- passwordGenerator.generate
       _ <- console.svPassword(password.getOrElse(fallBackPassword))
       _ <- console.map("de_dust2")
-    } yield ()
+    yield ()
 }

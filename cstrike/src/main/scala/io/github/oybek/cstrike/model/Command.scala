@@ -1,15 +1,15 @@
 package io.github.oybek.cstrike.model
 
-sealed trait Command {
+sealed trait Command:
   def command: String
   def description: String
-}
 
 object Command {
   case class NewCommand(map: String) extends Command {
     val command: String = NewCommand.command
     val description: String = NewCommand.description
   }
+
   object NewCommand extends Command {
     val command: String = "/new"
     val description: String = "создать сервер, пример: /new de_dust"

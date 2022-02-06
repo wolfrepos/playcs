@@ -9,7 +9,7 @@ import org.testcontainers.utility.DockerImageName
 
 import scala.concurrent.ExecutionContext.global as globalEc
 
-class MigrationSpec extends AnyFlatSpec with ForAllTestContainer  {
+class MigrationSpec extends AnyFlatSpec with ForAllTestContainer:
 
   override val container: PostgreSQLContainer = PostgreSQLContainer(DockerImageName.parse("postgres:10.10"))
 
@@ -26,5 +26,4 @@ class MigrationSpec extends AnyFlatSpec with ForAllTestContainer  {
 
     transactor.use(DB.runMigrations(_)).unsafeRunSync()
   }
-}
 

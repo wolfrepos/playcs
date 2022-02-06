@@ -6,7 +6,7 @@ import io.github.oybek.setup.ConsoleSetup
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
 
-class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup {
+class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup:
 
   info("As a user")
   info("I want to be able to free the server used by us")
@@ -33,4 +33,3 @@ class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
         Right(List(SendText(fakeChatId, "Сервер освобожден"))))
     }
   }
-}

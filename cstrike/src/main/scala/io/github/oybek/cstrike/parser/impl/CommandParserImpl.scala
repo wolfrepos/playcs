@@ -6,9 +6,12 @@ import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.model.Command.{BalanceCommand, FreeCommand, HelpCommand, JoinCommand, MapsCommand, NewCommand}
 import io.github.oybek.cstrike.parser.CommandParser
 
-class CommandParserImpl extends CommandParser {
-  override def parse(text: String): Either[String, Command] =
-    commandParser.parseOnly(text).either
+class CommandParserImpl extends CommandParser:
+  override def parse(text: String): String | Command =
+    commandParser.parseOnly(text).either match {
+      case Left(error) => error
+      case Right(command) => command
+    }
 
   private val mapNameParser: Parser[String] =
     stringOf(digit | letter | char('_'))
@@ -46,4 +49,3 @@ class CommandParserImpl extends CommandParser {
   private lazy val optSuffix = opt(string("@playcs_bot"))
   private lazy val ws1 = many1(whitespace)
   private lazy val ws = many(whitespace)
-}

@@ -36,7 +36,7 @@ object HLDSConsoleClient {
     )(consoleLow => Sync[F].delay(consoleLow.process.destroy()))
   }
 
-  class OutputPuller[F[_]: Sync] {
+  class OutputPuller[F[_]: Sync]:
     private val queue = new ConcurrentLinkedQueue[String]()
 
     def puller(is: InputStream): Unit = {
@@ -48,9 +48,8 @@ object HLDSConsoleClient {
 
     def pull: F[Option[String]] =
       Sync[F].delay(Option(queue.poll()))
-  }
 
-  class InputPusher {
+  class InputPusher:
     private val queue = new ConcurrentLinkedQueue[String]()
 
     def pusher(os: OutputStream): Unit = synchronized {
@@ -70,5 +69,4 @@ object HLDSConsoleClient {
       queue.add(s)
       notify()
     }
-  }
 }

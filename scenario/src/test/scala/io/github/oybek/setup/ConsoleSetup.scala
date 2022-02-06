@@ -9,7 +9,7 @@ import io.github.oybek.service.Console
 import io.github.oybek.service.impl.{ConsoleImpl, HldsConsolePoolManagerImpl}
 import io.github.oybek.setup.TestEffect.{DB, F}
 
-trait ConsoleSetup {
+trait ConsoleSetup:
   given fakeTimer: Timer[F] = new FakeTimer[F]
   given fakeClock: Clock[F] = new FakeClock[F]
   val hldsConsole           = new FakeHldsConsole[F]
@@ -24,4 +24,3 @@ trait ConsoleSetup {
   val consolePoolManager = new HldsConsolePoolManagerImpl[F, DB](consolePoolRef, passwordGen, logger)
   def setupConsole: Console[F] = new ConsoleImpl(consolePoolManager, fakeBalanceDao, transactor, logger)
   val console: Console[F] = new ConsoleImpl(consolePoolManager, fakeBalanceDao, transactor, logger)
-}

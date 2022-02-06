@@ -7,30 +7,31 @@ import io.github.oybek.cstrike.parser.impl.CommandParserImpl
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.prop.TableDrivenPropertyChecks._
+import org.scalatest.prop.TableFor2
 
-class CommandParserSpec extends AnyFlatSpec {
+class CommandParserSpec extends AnyFlatSpec:
 
-  private val tests = Table(
+  val tests: TableFor2[String, String | Command] = Table(
     ("String", "Command"),
-    ("/new@playcs_bot de_dust2"       , NewCommand("de_dust2").asRight[String]),
-    (" /new@playcs_bot  de_dust2"     , NewCommand("de_dust2").asRight[String]),
-    ("/new@playcs_bot de_dust2"       , NewCommand("de_dust2").asRight[String]),
-    ("/new@playcs_bot"                , NewCommand("de_dust2").asRight[String]),
-    ("/new"                           , NewCommand("de_dust2").asRight[String]),
-    ("/new@playcs_bot de_dust2 hello" , "endOfInput".asLeft[Command]),
-    ("/new de_dust2"                  , NewCommand("de_dust2").asRight[String]),
-    (" /new  de_dust2 "               , NewCommand("de_dust2").asRight[String]),
-    ("/new de_dust2"                  , NewCommand("de_dust2").asRight[String]),
-    ("/new de_dust2 hello"            , "endOfInput".asLeft[Command]),
-    ("/join"                          , JoinCommand.asRight[String]),
-    ("   /join@playcs_bot   "         , JoinCommand.asRight[String]),
-    ("/help"                          , HelpCommand.asRight[String]),
-    ("   /help@playcs_bot   "         , HelpCommand.asRight[String]),
-    ("/balance"                       , BalanceCommand.asRight[String]),
-    ("   /balance@playcs_bot   "      , BalanceCommand.asRight[String]),
-    ("/maps"                          , MapsCommand.asRight[String]),
-    ("   /maps@playcs_bot   "         , MapsCommand.asRight[String]),
-    ("   /map@playcs_bot   "          , "Unknown command".asLeft[Command]),
+    ("/new@playcs_bot de_dust2"       , NewCommand("de_dust2")),
+    (" /new@playcs_bot  de_dust2"     , NewCommand("de_dust2")),
+    ("/new@playcs_bot de_dust2"       , NewCommand("de_dust2")),
+    ("/new@playcs_bot"                , NewCommand("de_dust2")),
+    ("/new"                           , NewCommand("de_dust2")),
+    ("/new@playcs_bot de_dust2 hello" , "endOfInput"),
+    ("/new de_dust2"                  , NewCommand("de_dust2")),
+    (" /new  de_dust2 "               , NewCommand("de_dust2")),
+    ("/new de_dust2"                  , NewCommand("de_dust2")),
+    ("/new de_dust2 hello"            , "endOfInput"),
+    ("/join"                          , JoinCommand),
+    ("   /join@playcs_bot   "         , JoinCommand),
+    ("/help"                          , HelpCommand),
+    ("   /help@playcs_bot   "         , HelpCommand),
+    ("/balance"                       , BalanceCommand),
+    ("   /balance@playcs_bot   "      , BalanceCommand),
+    ("/maps"                          , MapsCommand),
+    ("   /maps@playcs_bot   "         , MapsCommand),
+    ("   /map@playcs_bot   "          , "Unknown command"),
   )
 
   "translator" should "be tested" in {
@@ -40,4 +41,3 @@ class CommandParserSpec extends AnyFlatSpec {
   }
 
   private lazy val translator = new CommandParserImpl
-}

@@ -14,7 +14,7 @@ import telegramium.bots.Markdown
 import java.time.Instant
 import scala.concurrent.duration.DurationInt
 
-class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup {
+class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup:
 
   info("As a user")
   info("I want to be able to create dedicated counter strike server")
@@ -62,4 +62,3 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
       ))
     }
   }
-}

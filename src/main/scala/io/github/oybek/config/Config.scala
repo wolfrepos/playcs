@@ -9,9 +9,9 @@ case class Config(database: DbConfig,
                   hldsDir: String,
                   serverPoolSize: Int)
 
-object Config {
-  def load[F[_]]: ConfigValue[F, Config] = {
-    for {
+object Config:
+  def load[F[_]]: ConfigValue[F, Config] =
+    for
       databaseDriver <- prop("database.driver").as[String]
       databaseUrl <- prop("database.url").as[String]
       databaseUser <- prop("database.user").as[String]
@@ -26,12 +26,10 @@ object Config {
       tgBotApiToken <- prop("tg.token").as[String]
       hldsDir <- prop("hlds.dir").as[String]
       serverPoolSize <- prop("pool.size").as[Int]
-    } yield Config(
+    yield Config(
       database = databaseConfig,
       serverIp = serverIp,
       tgBotApiToken = tgBotApiToken,
       hldsDir = hldsDir,
       serverPoolSize = serverPoolSize
     )
-  }
-}
