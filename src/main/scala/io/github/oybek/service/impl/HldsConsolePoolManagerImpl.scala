@@ -2,8 +2,8 @@ package io.github.oybek.service.impl
 
 import cats.effect.Ref
 import cats.implicits.{catsSyntaxApplicativeErrorId, catsSyntaxApplicativeId, catsSyntaxOptionId, toTraverseOps}
-import cats.syntax.flatMap._
-import cats.syntax.functor._
+import cats.syntax.flatMap.*
+import cats.syntax.functor.*
 import cats.{Applicative, MonadThrow}
 import io.github.oybek.common.WithMeta
 import io.github.oybek.common.withMeta
@@ -23,29 +23,25 @@ class HldsConsolePoolManagerImpl[F[_]: Applicative: MonadThrow: Clock, G[_]]
                                  log: MessageLogger[F]) extends HldsConsolePoolManager[F] {
   override def findConsole(chatId: ChatIntId): F[Option[WithMeta[HldsConsole[F], ConsoleMeta]]] =
     for
-      consolePool <- consolePoolRef.get
-      ConsolePool(_, busyConsoles) = consolePool
+      ConsolePool(_, busyConsoles) <- consolePoolRef.get
       consoleOpt = busyConsoles.find(_.meta.usingBy == chatId)
     yield consoleOpt
 
   override def getConsolesWith(prop: ConsoleMeta => Boolean): F[List[HldsConsole[F] WithMeta ConsoleMeta]] =
     for
-      consolePool <- consolePoolRef.get
-      ConsolePool(_, busyConsoles) = consolePool
+      ConsolePool(_, busyConsoles) <- consolePoolRef.get
       result = busyConsoles.filter(x => prop(x.meta))
     yield result
 
   override def rentConsole(chatId: ChatIntId, ttl: FiniteDuration): F[HldsConsole[F] WithMeta ConsoleMeta] =
     for
-      consolePool <- consolePoolRef.get
-      ConsolePool(freeConsoles, busyConsoles) = consolePool
-      allConsoles <- freeConsoles match {
+      ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
+      allConsoles <- freeConsoles match
         case Nil =>
           MonadThrow[F].raiseError(
             NoFreeConsolesException(
               List(SendText(chatId, "Не осталось свободных серверов"))))
         case x::xs => (x, xs).pure[F]
-      }
       (console, consoles) = allConsoles
       now <- Clock[F].instantNow
       password <- passwordGenerator.generate
@@ -61,8 +57,7 @@ class HldsConsolePoolManagerImpl[F[_]: Applicative: MonadThrow: Clock, G[_]]
 
   override def freeConsole(chatIds: ChatIntId*): F[Unit] =
     for
-      consolePool <- consolePoolRef.get
-      ConsolePool(freeConsoles, busyConsoles) = consolePool
+      ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
       (toSetFree, leftBusy) = busyConsoles.partition(x => chatIds.contains(x.meta.usingBy))
       toSetFreeConsoles = toSetFree.map(_.get)
       _ <- toSetFreeConsoles.traverse(changePasswordAndKickAll(_))

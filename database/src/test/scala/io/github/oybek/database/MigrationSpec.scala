@@ -13,7 +13,7 @@ class MigrationSpec extends AnyFlatSpec with ForAllTestContainer:
 
   override val container: PostgreSQLContainer = PostgreSQLContainer(DockerImageName.parse("postgres:10.10"))
 
-  "db/migration" should "be successful" in {
+  "db/migration".should("be successful") in {
     val transactor = DB.createTransactor[IO](
       DbConfig(
         container.driverClassName,

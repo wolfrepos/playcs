@@ -1,14 +1,14 @@
 package io.github.oybek
 
 import cats.arrow.FunctionK
-import cats.effect._
-import cats.implicits._
+import cats.effect.*
+import cats.implicits.*
 import cats.{Functor, Parallel}
 import doobie.hikari.HikariTransactor
 import doobie.implicits.toConnectionIOOps
 import doobie.{ConnectionIO, ExecutionContexts}
 import io.github.oybek.common.Scheduler.every
-import io.github.oybek.common.time.{Timer, Clock => Clockk}
+import io.github.oybek.common.time.{Timer, Clock as Clockk}
 import io.github.oybek.config.Config
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.database.DB
@@ -28,7 +28,7 @@ import telegramium.bots.high.{BotApi, Methods}
 import java.io.File
 import java.time.Instant
 import java.util.concurrent.TimeUnit
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 object Application extends IOApp:
 

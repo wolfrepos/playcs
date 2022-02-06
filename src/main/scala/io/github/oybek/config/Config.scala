@@ -1,6 +1,6 @@
 package io.github.oybek.config
 
-import ciris._
+import ciris.*
 import io.github.oybek.database.config.DbConfig
 
 case class Config(database: DbConfig,

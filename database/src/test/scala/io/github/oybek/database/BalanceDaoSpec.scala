@@ -2,8 +2,8 @@ package io.github.oybek.database
 
 import cats.effect.IO
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
-import doobie._
-import doobie.implicits._
+import doobie.*
+import doobie.implicits.*
 import io.github.oybek.database.config.DbConfig
 import io.github.oybek.database.dao.BalanceDao
 import io.github.oybek.database.dao.impl.BalanceDaoImpl
@@ -21,7 +21,7 @@ class BalanceDaoSpec extends AnyFlatSpec with ForAllTestContainer:
 
   val balanceDao: BalanceDao[ConnectionIO] = BalanceDaoImpl
 
-  "addOrUpdate" should "work" in {
+  "addOrUpdate".should("work") in {
     val transactor = DB.createTransactor[IO](
       DbConfig(
         container.driverClassName,

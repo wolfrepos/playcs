@@ -3,7 +3,7 @@ package io.github.oybek.setup
 import cats.Id
 import cats.arrow.FunctionK
 import io.github.oybek.common.time.{Clock, Timer}
-import io.github.oybek.fakes._
+import io.github.oybek.fakes.*
 import io.github.oybek.model.ConsolePool
 import io.github.oybek.service.Console
 import io.github.oybek.service.impl.{ConsoleImpl, HldsConsolePoolManagerImpl}

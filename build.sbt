@@ -11,7 +11,8 @@ ThisBuild / scalacOptions ++= Seq(
  "-language:implicitConversions",
  "-language:higherKinds",
  "-language:existentials",
- "-language:postfixOps"
+ "-language:postfixOps",
+ "-source:future"
 )
 
 lazy val common = module(name = "common", file = file("common"))

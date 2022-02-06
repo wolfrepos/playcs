@@ -1,11 +1,11 @@
 package io.github.oybek.service.impl
 
-import cats.implicits._
+import cats.implicits.*
 import cats.{Monad, MonadThrow, ~>}
 import io.github.oybek.common.WithMeta
 import io.github.oybek.common.time.Clock
 import io.github.oybek.cstrike.model.Command
-import io.github.oybek.cstrike.model.Command._
+import io.github.oybek.cstrike.model.Command.*
 import io.github.oybek.cstrike.parser.CommandParser
 import io.github.oybek.database.dao.BalanceDao
 import io.github.oybek.database.model.Balance
@@ -49,15 +49,14 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       case HelpCommand     => handleHelpCommand(chatId)
       case _               => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
 
-  private def handleNewCommand(chatId: ChatIntId, map: String): F[List[Reaction]] =
+  private def handleNewCommand(chatId: ChatIntId, map: Option[String]): F[List[Reaction]] =
     import consolePoolManager.rentConsole
     for
-      balance <- checkAndGetBalance(chatId)
-      Balance(_, time) = balance
+      Balance(_, time) <- checkAndGetBalance(chatId)
       consoleOpt <- consolePoolManager.findConsole(chatId)
       consoleWithMeta <- consoleOpt.fold(rentConsole(chatId, time))(_.pure[F])
       console WithMeta ConsoleMeta(pass, _, _) = consoleWithMeta
-      _ <- console.changeLevel(map)
+      _ <- console.changeLevel(map.getOrElse("de_dust2"))
       reaction = List(
         SendText(chatId, "Сервер создан. Скопируй в консоль это"),
         Sleep(200.millis),
