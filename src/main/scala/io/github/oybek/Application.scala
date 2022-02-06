@@ -30,32 +30,32 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration._
 
-object Application extends IOApp {
+object Application extends IOApp:
   def run(args: List[String]): IO[ExitCode] =
-    Config.load match {
+    Config.load[IO].attempt.flatMap {
       case Right(config) =>
         implicit val timer: Timer[IO] = (duration: FiniteDuration) => Temporal[IO].sleep(duration)
-        for {
+        for
           _ <- log.info(s"loaded config: $config")
-          _ <- resources[IO](config).use {
-            case (httpClient, consoles, tx) =>
+          _ <- resources[IO](config).use(
+            (httpClient, consoles, tx) =>
               assembleAndLaunch(config, httpClient, consoles, tx)
-          }
-        } yield ExitCode.Success
+          )
+        yield ExitCode.Success
 
       case Left(err) =>
         log.error(s"Could not load config file $err").as(ExitCode.Error)
     }
 
-  private def assembleAndLaunch[F[_]: Parallel: Temporal: Async: Spawn](config: Config,
-                                                                        httpClient: Client[F],
-                                                                        consoles: List[HldsConsole[F]],
-                                                                        tx: HikariTransactor[F]): F[Unit] = {
-    val client      = Logger(logHeaders = false, logBody = false)(httpClient)
-    val api         = BotApi[F](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
+  private def assembleAndLaunch[F[_] : Parallel : Temporal : Async : Spawn](config: Config,
+                                                                            httpClient: Client[F],
+                                                                            consoles: List[HldsConsole[F]],
+                                                                            tx: HikariTransactor[F]): F[Unit] =
+    val client = Logger(logHeaders = false, logBody = false)(httpClient)
+    val api = BotApi[F](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
     val consolePool = ConsolePool[F](free = consoles, busy = Nil)
     val passwordGen = new PasswordGeneratorImpl[F]
-    val transactor  = new FunctionK[ConnectionIO, F] {
+    val transactor = new FunctionK[ConnectionIO, F] {
       override def apply[A](a: ConnectionIO[A]): F[A] =
         a.transact(tx)
     }
@@ -63,27 +63,27 @@ object Application extends IOApp {
       def instantNow: F[Instant] = Temporal[F].realTimeInstant
     }
 
-    for {
-      consolePoolLogger  <- Slf4jLogger.fromName[F]("console-pool-manager")
-      consoleLogger      <- Slf4jLogger.fromName[F]("console")
-      tgGateLogger       <- Slf4jLogger.fromName[F]("tg-gate")
-      _                  <- DB.runMigrations[F](tx)
-      consolePoolRef     <- Ref.of[F, ConsolePool[F]](consolePool)
-      consolePoolManager  = new HldsConsolePoolManagerImpl[F, ConnectionIO](consolePoolRef, passwordGen, consolePoolLogger)
-      console             = new ConsoleImpl(consolePoolManager, BalanceDaoImpl, transactor, consoleLogger)
-      _                  <- Spawn[F].start(console.expireCheck.every(1.minute))
-      tgGate              = new TGGate(api, console, tgGateLogger)
-      _                  <- setCommands(api)
-      _                  <- tgGate.start()
-    } yield ()
-  }
+    for
+      consolePoolLogger <- Slf4jLogger.fromName[F]("console-pool-manager")
+      consoleLogger <- Slf4jLogger.fromName[F]("console")
+      tgGateLogger <- Slf4jLogger.fromName[F]("tg-gate")
+      _ <- DB.runMigrations[F](tx)
+      consolePoolRef <- Ref.of[F, ConsolePool[F]](consolePool)
+      consolePoolManager = new HldsConsolePoolManagerImpl[F, ConnectionIO](consolePoolRef, passwordGen, consolePoolLogger)
+      console = new ConsoleImpl(consolePoolManager, BalanceDaoImpl, transactor, consoleLogger)
+      _ <- Spawn[F].start(console.expireCheck.every(1.minute))
+      tgGate = new TGGate(api, console, tgGateLogger)
+      _ <- setCommands(api)
+      _ <- tgGate.start()
+    yield ()
+  end assembleAndLaunch
 
-  private def resources[F[_]: Timer: Async]
-                       (config: Config): Resource[F, (Client[F], List[HldsConsole[F]], HikariTransactor[F])] =
-    for {
+  private def resources[F[_] : Timer : Async]
+  (config: Config): Resource[F, (Client[F], List[HldsConsole[F]], HikariTransactor[F])] =
+    for
       connEc <- ExecutionContexts.fixedThreadPool[F](10)
       tranEc <- ExecutionContexts.cachedThreadPool[F]
-      client <- BlazeClientBuilder[F](connEc)
+      client <- BlazeClientBuilder[F].withExecutionContext(connEc)
         .withResponseHeaderTimeout(FiniteDuration(telegramResponseWaitTime, TimeUnit.SECONDS))
         .resource
       transactor <- DB.createTransactor(config.database, tranEc)
@@ -95,14 +95,13 @@ object Application extends IOApp {
             new HldsConsoleImpl[F](config.serverIp, port, _)
           }
         }
-    } yield (client, consoles, transactor)
+    yield (client, consoles, transactor)
 
-  private def setCommands[F[_]: Functor](api: BotApi[F]): F[Unit] = {
+  private def setCommands[F[_] : Functor](api: BotApi[F]): F[Unit] =
     val commands = Command.all.map(x => BotCommand(x.command, x.description))
     Methods.setMyCommands(commands).exec(api).void
-  }
 
   private val initialPort = 27015
   private val telegramResponseWaitTime = 60L
   private val log = Slf4jLogger.getLoggerFromName[IO]("application")
-}
+end Application

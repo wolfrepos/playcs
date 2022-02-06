@@ -1,9 +1,7 @@
 package io.github.oybek.config
 
+import ciris._
 import io.github.oybek.database.config.DbConfig
-import pureconfig.ConfigReader.Result
-import pureconfig._
-import pureconfig.generic.auto._
 
 case class Config(database: DbConfig,
                   serverIp: String,
@@ -12,6 +10,28 @@ case class Config(database: DbConfig,
                   serverPoolSize: Int)
 
 object Config {
-  def load: Result[Config] =
-    ConfigSource.default.load[Config]
+  def load[F[_]]: ConfigValue[F, Config] = {
+    for {
+      databaseDriver <- prop("database.driver").as[String]
+      databaseUrl <- prop("database.url").as[String]
+      databaseUser <- prop("database.user").as[String]
+      databasePass <- prop("database.pass").as[String]
+      databaseConfig = DbConfig(
+        driver = databaseDriver,
+        url = databaseUrl,
+        user = databaseUser,
+        pass = databasePass
+      )
+      serverIp <- prop("server.ip").as[String]
+      tgBotApiToken <- prop("tg.token").as[String]
+      hldsDir <- prop("hlds.dir").as[String]
+      serverPoolSize <- prop("pool.size").as[Int]
+    } yield Config(
+      database = databaseConfig,
+      serverIp = serverIp,
+      tgBotApiToken = tgBotApiToken,
+      hldsDir = hldsDir,
+      serverPoolSize = serverPoolSize
+    )
+  }
 }

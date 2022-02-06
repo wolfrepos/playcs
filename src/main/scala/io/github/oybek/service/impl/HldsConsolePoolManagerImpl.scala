@@ -23,26 +23,30 @@ class HldsConsolePoolManagerImpl[F[_]: Applicative: MonadThrow: Clock, G[_]]
                                  log: MessageLogger[F]) extends HldsConsolePoolManager[F] {
   override def findConsole(chatId: ChatIntId): F[Option[WithMeta[HldsConsole[F], ConsoleMeta]]] =
     for {
-      ConsolePool(_, busyConsoles) <- consolePoolRef.get
+      consolePool <- consolePoolRef.get
+      ConsolePool(_, busyConsoles) = consolePool
       consoleOpt = busyConsoles.find(_.meta.usingBy == chatId)
     } yield consoleOpt
 
   override def getConsolesWith(prop: ConsoleMeta => Boolean): F[List[HldsConsole[F] WithMeta ConsoleMeta]] =
     for {
-      ConsolePool(_, busyConsoles) <- consolePoolRef.get
+      consolePool <- consolePoolRef.get
+      ConsolePool(_, busyConsoles) = consolePool
       result = busyConsoles.filter(x => prop(x.meta))
     } yield result
 
   override def rentConsole(chatId: ChatIntId, ttl: FiniteDuration): F[HldsConsole[F] WithMeta ConsoleMeta] =
     for {
-      ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
-      (console, consoles) <- freeConsoles match {
+      consolePool <- consolePoolRef.get
+      ConsolePool(freeConsoles, busyConsoles) = consolePool
+      allConsoles <- freeConsoles match {
         case Nil =>
           MonadThrow[F].raiseError(
             NoFreeConsolesException(
               List(SendText(chatId, "Не осталось свободных серверов"))))
         case x::xs => (x, xs).pure[F]
       }
+      (console, consoles) = allConsoles
       now <- Clock[F].instantNow
       password <- passwordGenerator.generate
       consoleMeta = ConsoleMeta(
@@ -57,7 +61,8 @@ class HldsConsolePoolManagerImpl[F[_]: Applicative: MonadThrow: Clock, G[_]]
 
   override def freeConsole(chatIds: ChatIntId*): F[Unit] =
     for {
-      ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
+      consolePool <- consolePoolRef.get
+      ConsolePool(freeConsoles, busyConsoles) = consolePool
       (toSetFree, leftBusy) = busyConsoles.partition(x => chatIds.contains(x.meta.usingBy))
       toSetFreeConsoles = toSetFree.map(_.get)
       _ <- toSetFreeConsoles.traverse(changePasswordAndKickAll(_))

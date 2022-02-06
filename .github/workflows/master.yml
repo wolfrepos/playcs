@@ -24,12 +24,9 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: '11'
-    - name: lint
-      run: |
-        sbt scalastyle
     - name: test
       run: |
-        sbt "clean; coverage; testAll; checkCoverage"
+        sbt "clean; testAll"
 
   BuildAndDeploy:
     if: ${{ github.ref == 'refs/heads/master' }}

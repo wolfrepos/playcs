@@ -5,7 +5,6 @@ import io.github.oybek.model.Reaction.SendText
 import io.github.oybek.setup.ConsoleSetup
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
 class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup {
 
@@ -19,8 +18,8 @@ class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
       When("/free command received")
 
       Then("server is free and returned back to pool and appropriate message returned")
-      console.handle(fakeChatId, "/free") shouldEqual
-        Right(List(SendText(fakeChatId, "Нет созданных серверов")))
+      assert(console.handle(fakeChatId, "/free") ===
+        Right(List(SendText(fakeChatId, "Нет созданных серверов"))))
     }
 
     Scenario("User gives command '/free'") {
@@ -30,8 +29,8 @@ class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
       When("/free command received")
 
       Then("server is free and returned back to pool and appropriate message returned")
-      console.handle(fakeChatId, "/free") shouldEqual
-        Right(List(SendText(fakeChatId, "Сервер освобожден")))
+      assert(console.handle(fakeChatId, "/free") ===
+        Right(List(SendText(fakeChatId, "Сервер освобожден"))))
     }
   }
 }

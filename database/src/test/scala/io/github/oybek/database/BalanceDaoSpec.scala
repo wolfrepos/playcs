@@ -9,7 +9,6 @@ import io.github.oybek.database.dao.BalanceDao
 import io.github.oybek.database.dao.impl.BalanceDaoImpl
 import io.github.oybek.database.model.Balance
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import telegramium.bots.ChatIntId
 
 import java.util.concurrent.TimeUnit
@@ -40,32 +39,32 @@ class BalanceDaoSpec extends AnyFlatSpec with ForAllTestContainer  {
         affectedRows <- balanceDao
           .addOrUpdate(balance)
           .transact(tx)
-        _ = affectedRows shouldEqual 1
+        _ = assert(affectedRows === 1)
 
         balanceOpt <- balanceDao
           .findBy(telegramId = 123)
           .transact(tx)
-        _ = balanceOpt shouldEqual Some(balance)
+        _ = assert(balanceOpt === Some(balance))
 
         affectedRows <- balanceDao
           .addOrUpdate(balance)
           .transact(tx)
-        _ = affectedRows shouldEqual 1
+        _ = assert(affectedRows === 1)
 
         affectedRows <- balanceDao
           .addOrUpdate(balance)
           .transact(tx)
-        _ = affectedRows shouldEqual 0
+        _ = assert(affectedRows === 0)
 
         balanceOpt <- balanceDao
           .findBy(telegramId = 123)
           .transact(tx)
-        _ = balanceOpt shouldEqual Some(balance)
+        _ = assert(balanceOpt === Some(balance))
 
         balanceOpt <- balanceDao
           .findBy(telegramId = 0)
           .transact(tx)
-        _ = balanceOpt shouldEqual None
+        _ = assert(balanceOpt === None)
       } yield ()
     }
   }
