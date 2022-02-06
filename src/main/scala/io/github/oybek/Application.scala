@@ -1,14 +1,14 @@
 package io.github.oybek
 
 import cats.arrow.FunctionK
-import cats.effect._
-import cats.implicits._
+import cats.effect.*
+import cats.implicits.*
 import cats.{Functor, Parallel}
 import doobie.hikari.HikariTransactor
 import doobie.implicits.toConnectionIOOps
 import doobie.{ConnectionIO, ExecutionContexts}
-import io.github.oybek.common.Scheduler.toActionOps
-import io.github.oybek.common.time.{Timer, Clock => Clockk}
+import io.github.oybek.common.Scheduler.every
+import io.github.oybek.common.time.{Timer, Clock as Clockk}
 import io.github.oybek.config.Config
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.database.DB
@@ -28,13 +28,17 @@ import telegramium.bots.high.{BotApi, Methods}
 import java.io.File
 import java.time.Instant
 import java.util.concurrent.TimeUnit
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 object Application extends IOApp:
+
+  given timer: Timer[IO] with
+    def sleep(duration: FiniteDuration) =
+      Temporal[IO].sleep(duration)
+
   def run(args: List[String]): IO[ExitCode] =
     Config.load[IO].attempt.flatMap {
       case Right(config) =>
-        implicit val timer: Timer[IO] = (duration: FiniteDuration) => Temporal[IO].sleep(duration)
         for
           _ <- log.info(s"loaded config: $config")
           _ <- resources[IO](config).use(
@@ -59,9 +63,9 @@ object Application extends IOApp:
       override def apply[A](a: ConnectionIO[A]): F[A] =
         a.transact(tx)
     }
-    implicit val clock: Clockk[F] = new Clockk[F] {
+
+    given clock: Clockk[F] with
       def instantNow: F[Instant] = Temporal[F].realTimeInstant
-    }
 
     for
       consolePoolLogger <- Slf4jLogger.fromName[F]("console-pool-manager")
@@ -104,4 +108,5 @@ object Application extends IOApp:
   private val initialPort = 27015
   private val telegramResponseWaitTime = 60L
   private val log = Slf4jLogger.getLoggerFromName[IO]("application")
+
 end Application

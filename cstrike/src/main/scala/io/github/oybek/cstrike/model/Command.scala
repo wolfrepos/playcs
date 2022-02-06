@@ -1,47 +1,19 @@
 package io.github.oybek.cstrike.model
 
-sealed trait Command {
-  def command: String
-  def description: String
-}
+import io.github.oybek.cstrike.model.Command.helpText
 
-object Command {
-  case class NewCommand(map: String) extends Command {
-    val command: String = NewCommand.command
-    val description: String = NewCommand.description
-  }
-  object NewCommand extends Command {
-    val command: String = "/new"
-    val description: String = "создать сервер, пример: /new de_dust"
-  }
+enum Command(val command: String, val description: String):
+  case NewCommand(map: Option[String]) extends Command("/new", "создать сервер, пример: /new de_dust")
+  case FreeCommand extends Command("/free", "удалить сервер")
+  case MapsCommand extends Command("/maps", "список доступных карт")
+  case JoinCommand extends Command("/join", "напомнить как подключаться")
+  case BalanceCommand extends Command("/balance", "показать баланс")
+  case HelpCommand extends Command("/help", "вывести это сообщение")
 
-  case object FreeCommand extends Command {
-    val command: String = "/free"
-    val description: String = "удалить сервер"
-  }
-
-  case object MapsCommand extends Command {
-    val command: String = "/maps"
-    val description: String = "список доступных карт"
-  }
-
-  case object JoinCommand extends Command {
-    val command: String = "/join"
-    val description: String = "напомнить как подключаться"
-  }
-
-  case object BalanceCommand extends Command {
-    val command: String = "/balance"
-    val description: String = "показать баланс"
-  }
-
-  case object HelpCommand extends Command {
-    val command: String = "/help"
-    val description: String = "вывести это сообщение"
-  }
+object Command:
 
   val all: List[Command] = List(
-    NewCommand,
+    NewCommand(None),
     FreeCommand,
     MapsCommand,
     JoinCommand,
@@ -52,4 +24,3 @@ object Command {
   val helpText: String = all
     .map(x => x.command + " - " + x.description)
     .mkString("\n")
-}

@@ -6,9 +6,8 @@ import io.github.oybek.service.PasswordGenerator
 
 import scala.util.Random
 
-class PasswordGeneratorImpl[F[_]: Applicative] extends PasswordGenerator[F] {
+class PasswordGeneratorImpl[F[_]: Applicative] extends PasswordGenerator[F]:
   def generate: F[String] =
     (Random.nextInt(passwordUpperBorder) + passwordOffset).toString.pure[F]
   private val passwordUpperBorder = 9000
   private val passwordOffset = 1000
-}

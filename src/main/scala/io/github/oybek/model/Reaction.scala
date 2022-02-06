@@ -4,7 +4,6 @@ import telegramium.bots.{ChatIntId, ParseMode}
 
 import scala.concurrent.duration.FiniteDuration
 
-sealed trait Reaction
-object Reaction:
-  case class SendText(chatId: ChatIntId, text: String, parseMode: Option[ParseMode] = None) extends Reaction
-  case class Sleep(finiteDuration: FiniteDuration) extends Reaction
+enum Reaction:
+  case SendText(chatId: ChatIntId, text: String, parseMode: Option[ParseMode] = None) extends Reaction
+  case Sleep(finiteDuration: FiniteDuration) extends Reaction

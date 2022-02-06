@@ -7,7 +7,7 @@ import io.github.oybek.service.HldsConsole
 
 import scala.collection.mutable.ListBuffer
 
-class FakeHldsConsole[F[_]: Applicative] extends HldsConsole[F] {
+class FakeHldsConsole[F[_]: Applicative] extends HldsConsole[F]:
   override def map(map: String): F[Unit] =
     calledCommands.addOne(s"map $map").pure[F].void
 
@@ -27,4 +27,3 @@ class FakeHldsConsole[F[_]: Applicative] extends HldsConsole[F] {
     calledCommands.toList
 
   private val calledCommands = ListBuffer.empty[String]
-}

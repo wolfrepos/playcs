@@ -5,7 +5,7 @@ import cats.data.State
 import cats.effect.Ref
 import cats.implicits.catsSyntaxApplicativeId
 
-class FakeRef[F[_]: Applicative, A](a: A) extends Ref[F, A] {
+class FakeRef[F[_]: Applicative, A](a: A) extends Ref[F, A]:
   override def get: F[A] = value.pure[F]
 
   override def set(a: A): F[Unit] = (value = a).pure[F]
@@ -25,4 +25,3 @@ class FakeRef[F[_]: Applicative, A](a: A) extends Ref[F, A] {
   override def modifyState[B](state: State[A, B]): F[B] = ???
 
   private var value = a
-}

@@ -9,8 +9,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.concurrent.ExecutionContext
 
-object DB {
-
+object DB:
   def createTransactor[F[_]: Async](config: DbConfig,
                                     ec: ExecutionContext): Resource[F, HikariTransactor[F]] =
     HikariTransactor.newHikariTransactor[F](
@@ -21,7 +20,7 @@ object DB {
       connectEC = ec,
     )
 
-  def runMigrations[F[_]: Sync](transactor: HikariTransactor[F]): F[Unit] = {
+  def runMigrations[F[_]: Sync](transactor: HikariTransactor[F]): F[Unit] =
     transactor.configure {
       dataSource =>
         Sync[F].delay {
@@ -32,5 +31,3 @@ object DB {
             .migrate()
         }
     }
-  }
-}

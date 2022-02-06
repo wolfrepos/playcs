@@ -1,21 +1,24 @@
 package io.github.oybek.cstrike.parser.impl
 
-import atto.Atto._
-import atto._
+import atto.Atto.*
+import atto.*
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.model.Command.{BalanceCommand, FreeCommand, HelpCommand, JoinCommand, MapsCommand, NewCommand}
 import io.github.oybek.cstrike.parser.CommandParser
 
-class CommandParserImpl extends CommandParser {
-  override def parse(text: String): Either[String, Command] =
-    commandParser.parseOnly(text).either
+class CommandParserImpl extends CommandParser:
+  override def parse(text: String): String | Command =
+    commandParser.parseOnly(text).either match {
+      case Left(error) => error
+      case Right(command) => command
+    }
 
   private val mapNameParser: Parser[String] =
     stringOf(digit | letter | char('_'))
 
   private val newCommandParser: Parser[NewCommand] =
-    (string(NewCommand.command) ~> optSuffix ~> opt(ws1 ~> mapNameParser))
-      .map(map => NewCommand(map.getOrElse("de_dust2")))
+    (string(NewCommand(None).command) ~> optSuffix ~> opt(ws1 ~> mapNameParser))
+      .map(map => NewCommand(map))
 
   private val mapsCommandParser: Parser[MapsCommand.type] =
     (string(MapsCommand.command) ~> optSuffix).map(_ => MapsCommand)
@@ -46,4 +49,3 @@ class CommandParserImpl extends CommandParser {
   private lazy val optSuffix = opt(string("@playcs_bot"))
   private lazy val ws1 = many1(whitespace)
   private lazy val ws = many(whitespace)
-}

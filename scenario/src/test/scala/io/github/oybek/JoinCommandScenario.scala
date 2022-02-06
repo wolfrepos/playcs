@@ -11,7 +11,7 @@ import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
 import telegramium.bots.Markdown
 
-class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup {
+class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup:
 
   info("As a user")
   info("I want to be able to join dedicated counter strike server")
@@ -58,4 +58,3 @@ class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
     }
 
   }
-}

@@ -2,8 +2,8 @@ package io.github.oybek.database
 
 import cats.effect.IO
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
-import doobie._
-import doobie.implicits._
+import doobie.*
+import doobie.implicits.*
 import io.github.oybek.database.config.DbConfig
 import io.github.oybek.database.dao.BalanceDao
 import io.github.oybek.database.dao.impl.BalanceDaoImpl
@@ -15,13 +15,13 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.duration.FiniteDuration
 
-class BalanceDaoSpec extends AnyFlatSpec with ForAllTestContainer  {
+class BalanceDaoSpec extends AnyFlatSpec with ForAllTestContainer:
 
   override val container: PostgreSQLContainer = PostgreSQLContainer()
 
   val balanceDao: BalanceDao[ConnectionIO] = BalanceDaoImpl
 
-  "addOrUpdate" should "work" in {
+  "addOrUpdate".should("work") in {
     val transactor = DB.createTransactor[IO](
       DbConfig(
         container.driverClassName,
@@ -33,7 +33,7 @@ class BalanceDaoSpec extends AnyFlatSpec with ForAllTestContainer  {
     )
 
     transactor.use { tx =>
-      for {
+      for
         _ <- DB.runMigrations(tx)
         balance = Balance(telegramId = ChatIntId(123), timeLeft = FiniteDuration(60, TimeUnit.SECONDS))
         affectedRows <- balanceDao
@@ -65,8 +65,7 @@ class BalanceDaoSpec extends AnyFlatSpec with ForAllTestContainer  {
           .findBy(telegramId = 0)
           .transact(tx)
         _ = assert(balanceOpt === None)
-      } yield ()
+      yield ()
     }
   }
-}
 

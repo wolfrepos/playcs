@@ -9,7 +9,7 @@ import telegramium.bots.ChatIntId
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 
-class FakeBalanceDao[F[_]: Applicative] extends BalanceDao[F] {
+class FakeBalanceDao[F[_]: Applicative] extends BalanceDao[F]:
   override def findBy(telegramId: Long): F[Option[Balance]] =
     Option(Balance(ChatIntId(123), FiniteDuration(15*60, TimeUnit.SECONDS))).pure[F]
 
@@ -18,4 +18,3 @@ class FakeBalanceDao[F[_]: Applicative] extends BalanceDao[F] {
 
   override def addIfNotExists(balance: Balance): F[Int] =
     1.pure[F]
-}
