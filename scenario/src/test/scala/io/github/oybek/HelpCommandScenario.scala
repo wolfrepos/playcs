@@ -6,7 +6,6 @@ import io.github.oybek.model.Reaction.SendText
 import io.github.oybek.setup.ConsoleSetup
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
 class HelpCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup {
 
@@ -18,7 +17,7 @@ class HelpCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
       Given("console")
       When("/help command received")
       Then("help message is returned")
-      console.handle(fakeChatId, "/help") shouldEqual Right(List(SendText(fakeChatId, helpText)))
+      assert(console.handle(fakeChatId, "/help") === Right(List(SendText(fakeChatId, helpText))))
     }
   }
 }

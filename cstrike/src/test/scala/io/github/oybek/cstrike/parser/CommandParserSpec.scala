@@ -35,7 +35,7 @@ class CommandParserSpec extends AnyFlatSpec {
 
   "translator" should "be tested" in {
     forAll(tests) {
-      (text, command) => translator.parse(text) shouldEqual command
+      (text, command) => assert(translator.parse(text) === command)
     }
   }
 

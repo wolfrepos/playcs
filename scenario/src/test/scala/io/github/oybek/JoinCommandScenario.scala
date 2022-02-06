@@ -9,7 +9,6 @@ import io.github.oybek.setup.ConsoleSetup
 import io.github.oybek.setup.TestEffect.F
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import telegramium.bots.Markdown
 
 class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup {
@@ -24,8 +23,8 @@ class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
       Given("console without created server")
       When("/join command received")
       Then("message about server creation is returned")
-      console.handle(fakeChatId, "/join") shouldEqual
-        Right(List(SendText(fakeChatId, "Создай сервер сначала (/help)")))
+      assert(console.handle(fakeChatId, "/join") ===
+        Right(List(SendText(fakeChatId, "Создай сервер сначала (/help)"))))
     }
 
     Scenario("User gives command '/join' after '/new' command") {
@@ -33,8 +32,8 @@ class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
       console.handle(fakeChatId, "/new")
       When("/join command received")
       Then("command to join is returned")
-      console.handle(fakeChatId, "/join") shouldEqual
-        Right(List(SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`", Markdown.some)))
+      assert(console.handle(fakeChatId, "/join") ===
+        Right(List(SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`", Markdown.some))))
     }
 
     Scenario("User gives command '/join' after '/new' and '/free' commands") {
@@ -43,8 +42,8 @@ class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
       console.handle(fakeChatId, "/free")
       When("/join command received")
       Then("message about server creation is returned")
-      console.handle(fakeChatId, "/join") shouldEqual
-        Right(List(SendText(fakeChatId, "Создай сервер сначала (/help)")))
+      assert(console.handle(fakeChatId, "/join") ===
+        Right(List(SendText(fakeChatId, "Создай сервер сначала (/help)"))))
     }
 
     Scenario("User gives command '/join' after '/new' and '/free' and '/new' commands") {
@@ -54,8 +53,8 @@ class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
       console.handle(fakeChatId, "/new")
       When("/join command received")
       Then("command to join is returned")
-      console.handle(fakeChatId, "/join") shouldEqual
-        Right(List(SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`", Markdown.some)))
+      assert(console.handle(fakeChatId, "/join") ===
+        Right(List(SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`", Markdown.some))))
     }
 
   }

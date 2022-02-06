@@ -8,7 +8,6 @@ import io.github.oybek.model.{ConsoleMeta, ConsolePool}
 import io.github.oybek.setup.ConsoleSetup
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import telegramium.bots.Markdown
 
 import java.time.Instant
@@ -27,24 +26,27 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
       val result = console.handle(fakeChatId, "/new")
 
       Then("new dedicated server should be created")
-      hldsConsole.getCalledCommands shouldEqual List(
-        s"sv_password $fakePassword",
-        "map de_dust2",
-        "changelevel de_dust2")
-      consolePoolRef.get shouldEqual
+      assert(
+        hldsConsole.getCalledCommands ===
+          List(
+            s"sv_password $fakePassword",
+            "map de_dust2",
+            "changelevel de_dust2")
+      )
+      assert(consolePoolRef.get ===
         Right(ConsolePool(
           Nil,
           List(hldsConsole withMeta
             ConsoleMeta(
               "4444",
               fakeChatId,
-              Instant.ofEpochSecond(15*60)))))
+              Instant.ofEpochSecond(15*60))))))
 
       Then("the instructions should be reported")
-      result shouldEqual Right(List(
+      assert(result === Right(List(
         SendText(fakeChatId, "Сервер создан. Скопируй в консоль это"),
         Sleep(200.millis),
-        SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`",Some(Markdown))))
+        SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`",Some(Markdown)))))
     }
 
     Scenario("User gives command '/new' when there is no free server") {
@@ -54,9 +56,9 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
       val result = console.handle(anotherFakeChatId, "/new")
 
       Then("No servers left message should be returned")
-      result shouldEqual Left(
+      assert(result === Left(
         NoFreeConsolesException(List(SendText(anotherFakeChatId, "Не осталось свободных серверов")))
-      )
+      ))
     }
   }
 }

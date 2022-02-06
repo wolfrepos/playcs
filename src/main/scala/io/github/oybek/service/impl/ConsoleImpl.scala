@@ -53,9 +53,11 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
   private def handleNewCommand(chatId: ChatIntId, map: String): F[List[Reaction]] = {
     import consolePoolManager.rentConsole
     for {
-      Balance(_, time) <- checkAndGetBalance(chatId)
+      balance <- checkAndGetBalance(chatId)
+      Balance(_, time) = balance
       consoleOpt <- consolePoolManager.findConsole(chatId)
-      console WithMeta ConsoleMeta(pass, _, _) <- consoleOpt.fold(rentConsole(chatId, time))(_.pure[F])
+      consoleWithMeta <- consoleOpt.fold(rentConsole(chatId, time))(_.pure[F])
+      console WithMeta ConsoleMeta(pass, _, _) = consoleWithMeta
       _ <- console.changeLevel(map)
       reaction = List(
         SendText(chatId, "Сервер создан. Скопируй в консоль это"),

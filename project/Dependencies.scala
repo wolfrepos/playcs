@@ -3,23 +3,21 @@ import sbt._
 object Dependencies {
 
   object V {
-    val atto = "0.7.0"
+    val atto = "0.9.5"
     val catsCore = "2.7.0"
     val catsEffect = "3.3.3"
-    val scalaTest = "3.1.1"
-    val scalaMock = "5.1.0"
-    val pureConfig = "0.12.3"
+    val scalaTest = "3.2.11"
     val doobie = "1.0.0-RC1"
     val testContainers = "0.39.12"
     val flyway = "8.4.0"
+    val ciris = "2.3.1"
   }
 
   val catsCore   = "org.typelevel" %% "cats-core" % V.catsCore
   val catsEffect = "org.typelevel" %% "cats-effect" % V.catsEffect
-  val pureConfig = "com.github.pureconfig" %% "pureconfig" % V.pureConfig
-  val scalaMock  = "org.scalamock" %% "scalamock" % V.scalaMock % Test
   val scalaTest  = "org.scalatest" %% "scalatest" % V.scalaTest % Test
   val flyway     = "org.flywaydb" % "flyway-core" % V.flyway
+  val ciris      = "is.cir" %% "ciris" % V.ciris
 
   val doobie     = Seq(
     "org.tpolecat" %% "doobie-core" % V.doobie,
@@ -38,17 +36,16 @@ object Dependencies {
   )
 
   val telegramium = Seq(
-    "io.github.apimorphism" %% "telegramium-core" % "7.53.0",
-    "io.github.apimorphism" %% "telegramium-high" % "7.53.0"
+    "io.github.apimorphism" %% "telegramium-core" % "7.56.0",
+    "io.github.apimorphism" %% "telegramium-high" % "7.56.0"
   )
 
   val common: Seq[ModuleID] =
     Seq(
       catsCore,
       catsEffect,
+      ciris,
       flyway,
-      pureConfig,
-      scalaMock,
       scalaTest,
     ) ++
     atto ++
