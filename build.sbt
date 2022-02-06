@@ -23,9 +23,9 @@ lazy val playcs = module("playcs", file("."), cstrike, common, database)
 // Custom tasks
 lazy val testAll = taskKey[Unit]("Run all tests")
 testAll := {
-  (common / assembly / test).value
-  (cstrike / assembly / test).value
-  (database / assembly / test).value
-  (scenario / assembly / test).value
-  (assembly / test).value
+  (common / Test / test).value
+  (cstrike / Test / test).value
+  (database / Test / test).value
+  (scenario / Test / test).value
+  (Test / test).value
 }
