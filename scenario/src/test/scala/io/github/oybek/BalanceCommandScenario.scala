@@ -1,5 +1,6 @@
 package io.github.oybek
 
+import io.github.oybek.common.logger.ContextData
 import io.github.oybek.fakes.FakeData.fakeChatId
 import io.github.oybek.model.Reaction.{SendText, Sleep}
 import io.github.oybek.setup.ConsoleSetup

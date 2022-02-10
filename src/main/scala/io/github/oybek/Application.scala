@@ -8,6 +8,7 @@ import doobie.hikari.HikariTransactor
 import doobie.implicits.toConnectionIOOps
 import doobie.{ConnectionIO, ExecutionContexts}
 import io.github.oybek.common.Scheduler.every
+import io.github.oybek.common.logger.{ContextData, ContextLogger}
 import io.github.oybek.common.time.{Timer, Clock as Clockk}
 import io.github.oybek.config.Config
 import io.github.oybek.cstrike.model.Command
@@ -61,14 +62,17 @@ def assembleAndLaunch(config: Config,
       a.transact(tx)
   }
   for
-    consolePoolLogger <- Slf4jLogger.fromName[IO]("console-pool-manager")
-    consoleLogger <- Slf4jLogger.fromName[IO]("console")
-    tgGateLogger <- Slf4jLogger.fromName[IO]("tg-gate")
+    consolePoolLogger <- ContextLogger.create[IO]("console-pool-manager")
+    consoleLogger <- ContextLogger.create[IO]("console")
+    tgGateLogger <- ContextLogger.create[IO]("tg-gate")
     _ <- DB.runMigrations[IO](tx)
     consolePoolRef <- Ref.of[IO, ConsolePool[IO]](consolePool)
     consolePoolManager = new HldsConsolePoolManagerImpl[IO, ConnectionIO](consolePoolRef, passwordGen, consolePoolLogger)
     console = new ConsoleImpl[IO, ConnectionIO](consolePoolManager, BalanceDaoImpl, transactor, consoleLogger)
-    _ <- Spawn[IO].start(console.expireCheck.every(1.minute))
+    _ <- Spawn[IO].start {
+      given ContextData(1234)
+      console.expireCheck.every(1.minute)
+    }
     tgGate = new TGGate(api, console, tgGateLogger)
     _ <- setCommands(api)
     _ <- tgGate.start()
