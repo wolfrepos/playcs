@@ -17,7 +17,7 @@ ThisBuild / scalacOptions ++= Seq(
 
 lazy val common = module(name = "common", file = file("common"))
 lazy val cstrike = module("cstrike", file("cstrike"))
-lazy val scenario = module("scenario", file("scenario"), playcs)
+lazy val scenario = module("scenario", file("scenario"), common, playcs)
 lazy val database = module("database", file("database"))
 lazy val playcs = module("playcs", file("."), cstrike, common, database)
 

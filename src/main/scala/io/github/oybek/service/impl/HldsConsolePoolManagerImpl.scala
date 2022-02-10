@@ -6,13 +6,13 @@ import cats.syntax.flatMap.*
 import cats.syntax.functor.*
 import cats.{Applicative, MonadThrow}
 import io.github.oybek.common.WithMeta
+import io.github.oybek.common.logger.{Context, ContextLogger}
 import io.github.oybek.common.withMeta
 import io.github.oybek.common.time.Clock
 import io.github.oybek.exception.BusinessException.NoFreeConsolesException
 import io.github.oybek.model.Reaction.SendText
 import io.github.oybek.model.{ConsoleMeta, ConsolePool, Reaction}
 import io.github.oybek.service.{HldsConsole, HldsConsolePoolManager, PasswordGenerator}
-import org.typelevel.log4cats.MessageLogger
 import telegramium.bots.ChatIntId
 
 import scala.concurrent.duration.FiniteDuration
@@ -20,20 +20,20 @@ import scala.concurrent.duration.FiniteDuration
 class HldsConsolePoolManagerImpl[F[_]: Applicative: MonadThrow: Clock, G[_]]
                                 (consolePoolRef: Ref[F, ConsolePool[F]],
                                  passwordGenerator: PasswordGenerator[F],
-                                 log: MessageLogger[F]) extends HldsConsolePoolManager[F] {
-  override def findConsole(chatId: ChatIntId): F[Option[WithMeta[HldsConsole[F], ConsoleMeta]]] =
+                                 log: ContextLogger[F]) extends HldsConsolePoolManager[F] {
+  override def findConsole(chatId: ChatIntId): Context[F[Option[WithMeta[HldsConsole[F], ConsoleMeta]]]] =
     for
       ConsolePool(_, busyConsoles) <- consolePoolRef.get
       consoleOpt = busyConsoles.find(_.meta.usingBy == chatId)
     yield consoleOpt
 
-  override def getConsolesWith(prop: ConsoleMeta => Boolean): F[List[HldsConsole[F] WithMeta ConsoleMeta]] =
+  override def getConsolesWith(prop: ConsoleMeta => Boolean): Context[F[List[HldsConsole[F] WithMeta ConsoleMeta]]] =
     for
       ConsolePool(_, busyConsoles) <- consolePoolRef.get
       result = busyConsoles.filter(x => prop(x.meta))
     yield result
 
-  override def rentConsole(chatId: ChatIntId, ttl: FiniteDuration): F[HldsConsole[F] WithMeta ConsoleMeta] =
+  override def rentConsole(chatId: ChatIntId, ttl: FiniteDuration): Context[F[HldsConsole[F] WithMeta ConsoleMeta]] =
     for
       ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
       allConsoles <- freeConsoles match
@@ -55,7 +55,7 @@ class HldsConsolePoolManagerImpl[F[_]: Applicative: MonadThrow: Clock, G[_]]
       _ <- consolePoolRef.set(ConsolePool(consoles, rentedConsole::busyConsoles))
     yield rentedConsole
 
-  override def freeConsole(chatIds: ChatIntId*): F[Unit] =
+  override def freeConsole(chatIds: ChatIntId*): Context[F[Unit]] =
     for
       ConsolePool(freeConsoles, busyConsoles) <- consolePoolRef.get
       (toSetFree, leftBusy) = busyConsoles.partition(x => chatIds.contains(x.meta.usingBy))

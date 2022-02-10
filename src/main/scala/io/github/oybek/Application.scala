@@ -8,6 +8,7 @@ import doobie.hikari.HikariTransactor
 import doobie.implicits.toConnectionIOOps
 import doobie.{ConnectionIO, ExecutionContexts}
 import io.github.oybek.common.Scheduler.every
+import io.github.oybek.common.logger.{ContextData, ContextLogger}
 import io.github.oybek.common.time.{Timer, Clock as Clockk}
 import io.github.oybek.config.Config
 import io.github.oybek.cstrike.model.Command
@@ -30,83 +31,73 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.*
 
+given timer: Timer[IO] = (duration: FiniteDuration) => IO.sleep(duration)
+given clock: Clockk[IO] = new Clockk[IO] {
+  def instantNow: IO[Instant] = IO.realTimeInstant
+}
+
 object Application extends IOApp:
-
-  given timer: Timer[IO] with
-    def sleep(duration: FiniteDuration) =
-      Temporal[IO].sleep(duration)
-
   def run(args: List[String]): IO[ExitCode] =
-    Config.load[IO].attempt.flatMap {
-      case Right(config) =>
-        for
-          _ <- log.info(s"loaded config: $config")
-          _ <- resources[IO](config).use(
-            (httpClient, consoles, tx) =>
-              assembleAndLaunch(config, httpClient, consoles, tx)
-          )
-        yield ExitCode.Success
-
-      case Left(err) =>
-        log.error(s"Could not load config file $err").as(ExitCode.Error)
-    }
-
-  private def assembleAndLaunch[F[_] : Parallel : Temporal : Async : Spawn](config: Config,
-                                                                            httpClient: Client[F],
-                                                                            consoles: List[HldsConsole[F]],
-                                                                            tx: HikariTransactor[F]): F[Unit] =
-    val client = Logger(logHeaders = false, logBody = false)(httpClient)
-    val api = BotApi[F](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
-    val consolePool = ConsolePool[F](free = consoles, busy = Nil)
-    val passwordGen = new PasswordGeneratorImpl[F]
-    val transactor = new FunctionK[ConnectionIO, F] {
-      override def apply[A](a: ConnectionIO[A]): F[A] =
-        a.transact(tx)
-    }
-
-    given clock: Clockk[F] with
-      def instantNow: F[Instant] = Temporal[F].realTimeInstant
-
     for
-      consolePoolLogger <- Slf4jLogger.fromName[F]("console-pool-manager")
-      consoleLogger <- Slf4jLogger.fromName[F]("console")
-      tgGateLogger <- Slf4jLogger.fromName[F]("tg-gate")
-      _ <- DB.runMigrations[F](tx)
-      consolePoolRef <- Ref.of[F, ConsolePool[F]](consolePool)
-      consolePoolManager = new HldsConsolePoolManagerImpl[F, ConnectionIO](consolePoolRef, passwordGen, consolePoolLogger)
-      console = new ConsoleImpl(consolePoolManager, BalanceDaoImpl, transactor, consoleLogger)
-      _ <- Spawn[F].start(console.expireCheck.every(1.minute))
-      tgGate = new TGGate(api, console, tgGateLogger)
-      _ <- setCommands(api)
-      _ <- tgGate.start()
-    yield ()
-  end assembleAndLaunch
-
-  private def resources[F[_] : Timer : Async]
-  (config: Config): Resource[F, (Client[F], List[HldsConsole[F]], HikariTransactor[F])] =
-    for
-      connEc <- ExecutionContexts.fixedThreadPool[F](10)
-      tranEc <- ExecutionContexts.cachedThreadPool[F]
-      client <- BlazeClientBuilder[F].withExecutionContext(connEc)
-        .withResponseHeaderTimeout(FiniteDuration(telegramResponseWaitTime, TimeUnit.SECONDS))
-        .resource
-      transactor <- DB.createTransactor(config.database, tranEc)
-      consoles <- (0 until config.serverPoolSize)
-        .toList
-        .traverse { offset =>
-          val port = initialPort + offset
-          HLDSConsoleClient.create(port, new File(config.hldsDir)).map {
-            new HldsConsoleImpl[F](config.serverIp, port, _)
-          }
-        }
-    yield (client, consoles, transactor)
-
-  private def setCommands[F[_] : Functor](api: BotApi[F]): F[Unit] =
-    val commands = Command.all.map(x => BotCommand(x.command, x.description))
-    Methods.setMyCommands(commands).exec(api).void
-
-  private val initialPort = 27015
-  private val telegramResponseWaitTime = 60L
+      config <- Config.load[IO].load[IO]
+      _ <- log.info(s"loaded config: $config")
+      _ <- resources[IO](config).use(
+        (httpClient, consoles, tx) =>
+          assembleAndLaunch(config, httpClient, consoles, tx)
+      )
+    yield ExitCode.Success
   private val log = Slf4jLogger.getLoggerFromName[IO]("application")
-
 end Application
+
+def assembleAndLaunch(config: Config,
+                      httpClient: Client[IO],
+                      consoles: List[HldsConsole[IO]],
+                      tx: HikariTransactor[IO]): IO[Unit] =
+  val client = Logger(logHeaders = false, logBody = false)(httpClient)
+  val api = BotApi[IO](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
+  val consolePool = ConsolePool[IO](free = consoles, busy = Nil)
+  val passwordGen = new PasswordGeneratorImpl[IO]
+  val transactor = new FunctionK[ConnectionIO, IO] {
+    override def apply[A](a: ConnectionIO[A]): IO[A] =
+      a.transact(tx)
+  }
+  for
+    consolePoolLogger <- ContextLogger.create[IO]("console-pool-manager")
+    consoleLogger <- ContextLogger.create[IO]("console")
+    tgGateLogger <- ContextLogger.create[IO]("tg-gate")
+    _ <- DB.runMigrations[IO](tx)
+    consolePoolRef <- Ref.of[IO, ConsolePool[IO]](consolePool)
+    consolePoolManager = new HldsConsolePoolManagerImpl[IO, ConnectionIO](consolePoolRef, passwordGen, consolePoolLogger)
+    console = new ConsoleImpl[IO, ConnectionIO](consolePoolManager, BalanceDaoImpl, transactor, consoleLogger)
+    _ <- Spawn[IO].start {
+      given ContextData(1234)
+      console.expireCheck.every(1.minute)
+    }
+    tgGate = new TGGate(api, console, tgGateLogger)
+    _ <- setCommands(api)
+    _ <- tgGate.start()
+  yield ()
+
+def resources[F[_] : Timer : Async](config: Config): Resource[F, (Client[F], List[HldsConsole[F]], HikariTransactor[F])] =
+  val initialPort = 27015
+  val telegramResponseWaitTime = 60L
+  for
+    connEc <- ExecutionContexts.fixedThreadPool[F](10)
+    tranEc <- ExecutionContexts.cachedThreadPool[F]
+    client <- BlazeClientBuilder[F].withExecutionContext(connEc)
+      .withResponseHeaderTimeout(FiniteDuration(telegramResponseWaitTime, TimeUnit.SECONDS))
+      .resource
+    transactor <- DB.createTransactor(config.database, tranEc)
+    consoles <- (0 until config.serverPoolSize)
+      .toList
+      .traverse { offset =>
+        val port = initialPort + offset
+        HLDSConsoleClient.create(port, new File(config.hldsDir)).map {
+          new HldsConsoleImpl[F](config.serverIp, port, _)
+        }
+      }
+  yield (client, consoles, transactor)
+
+def setCommands[F[_] : Functor](api: BotApi[F]): F[Unit] =
+  val commands = Command.all.map(x => BotCommand(x.command, x.description))
+  Methods.setMyCommands(commands).exec(api).void

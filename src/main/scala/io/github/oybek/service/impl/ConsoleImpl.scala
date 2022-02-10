@@ -3,6 +3,7 @@ package io.github.oybek.service.impl
 import cats.implicits.*
 import cats.{Monad, MonadThrow, ~>}
 import io.github.oybek.common.WithMeta
+import io.github.oybek.common.logger.{Context, ContextData, ContextLogger}
 import io.github.oybek.common.time.Clock
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.model.Command.*
@@ -13,7 +14,6 @@ import io.github.oybek.exception.BusinessException.ZeroBalanceException
 import io.github.oybek.model.Reaction.{SendText, Sleep}
 import io.github.oybek.model.{ConsoleMeta, Reaction}
 import io.github.oybek.service.{Console, HldsConsole, HldsConsolePoolManager}
-import org.typelevel.log4cats.MessageLogger
 import telegramium.bots.{ChatIntId, Markdown}
 
 import java.time.Duration
@@ -23,14 +23,14 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: HldsConsolePoolManager[F],
                                                         balanceDao: BalanceDao[G],
                                                         tx: G ~> F,
-                                                        log: MessageLogger[F]) extends Console[F]:
+                                                        log: ContextLogger[F]) extends Console[F]:
 
-  override def handle(chatId: ChatIntId, text: String): F[List[Reaction]] =
+  override def handle(chatId: ChatIntId, text: String): Context[F[List[Reaction]]] =
     CommandParser.parse(text) match
       case _: String => confusedMessage(chatId)
       case command: Command => handleCommand(chatId, command)
 
-  override def expireCheck: F[Unit] =
+  override def expireCheck(using contextData: ContextData): Context[F[Unit]] =
     for
       _ <- log.info("checking pool for expired consoles...")
       now <- Clock[F].instantNow
@@ -40,7 +40,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       _ <- log.info(s"consoles on ports ${expiredConsoles.map(_.get.port)} is freed")
     yield ()
 
-  private def handleCommand(chatId: ChatIntId, command: Command): F[List[Reaction]] =
+  private def handleCommand(chatId: ChatIntId, command: Command): Context[F[List[Reaction]]] =
     command match
       case NewCommand(map) => handleNewCommand(chatId, map)
       case JoinCommand     => handleJoinCommand(chatId)
@@ -49,7 +49,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       case HelpCommand     => handleHelpCommand(chatId)
       case _               => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
 
-  private def handleNewCommand(chatId: ChatIntId, map: Option[String]): F[List[Reaction]] =
+  private def handleNewCommand(chatId: ChatIntId, map: Option[String]): Context[F[List[Reaction]]] =
     import consolePoolManager.rentConsole
     for
       Balance(_, time) <- checkAndGetBalance(chatId)
@@ -64,7 +64,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       )
     yield reaction
 
-  private def handleJoinCommand(chatId: ChatIntId): F[List[Reaction]] =
+  private def handleJoinCommand(chatId: ChatIntId): Context[F[List[Reaction]]] =
     consolePoolManager.findConsole(chatId).map {
       case None =>
         List(SendText(chatId, "Создай сервер сначала (/help)"))
@@ -72,7 +72,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
         List(sendConsole(chatId, console, password))
     }
 
-  private def handleBalanceCommand(chatId: ChatIntId): F[List[Reaction]] =
+  private def handleBalanceCommand(chatId: ChatIntId): Context[F[List[Reaction]]] =
     tx {
       balanceDao.findBy(chatId.id).flatMap {
         case None =>
@@ -95,7 +95,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       )
     }
 
-  private def handleFreeCommand(chatId: ChatIntId): F[List[Reaction]] =
+  private def handleFreeCommand(chatId: ChatIntId): Context[F[List[Reaction]]] =
     consolePoolManager.findConsole(chatId).flatMap {
       case Some(_ WithMeta meta) =>
         for
