@@ -62,6 +62,7 @@ class HldsConsolePoolManagerImpl[F[_]: Applicative: MonadThrow: Clock, G[_]]
       toSetFreeConsoles = toSetFree.map(_.get)
       _ <- toSetFreeConsoles.traverse(changePasswordAndKickAll(_))
       _ <- consolePoolRef.set(ConsolePool(freeConsoles ++ toSetFreeConsoles, leftBusy))
+      _ <- log.info(s"consoles on ports ${toSetFreeConsoles.map(_.port)} has been released")
     yield ()
 
   private def changePasswordAndKickAll(console: HldsConsole[F], password: Option[String] = None): F[Unit] =

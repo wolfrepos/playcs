@@ -3,7 +3,7 @@ package io.github.oybek.integration
 import cats.Parallel
 import cats.effect.{Async, IO, Temporal}
 import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxApplicativeId, toFlatMapOps, toFunctorOps, toTraverseOps}
-import io.github.oybek.common.logger.{ContextData, ContextLogger}
+import io.github.oybek.common.logger.{Context, ContextData, ContextLogger}
 import io.github.oybek.exception.BusinessException
 import io.github.oybek.model.Reaction
 import io.github.oybek.model.Reaction.{SendText, Sleep}
@@ -21,7 +21,7 @@ class TGGate(api: Api[IO],
       .text
       .fold(IO.unit)(handle(ChatIntId(message.chat.id), _)(using ContextData(message.chat.id)))
 
-  private def handle(chatId: ChatIntId, text: String)(using contextData: ContextData): IO[Unit] =
+  private def handle(chatId: ChatIntId, text: String): Context[IO[Unit]] =
     console
       .handle(chatId, text)
       .recoverWith {
@@ -35,9 +35,10 @@ class TGGate(api: Api[IO],
       }
       .flatMap(interpret)
 
-  private def interpret(reactions: List[Reaction]): IO[Unit] =
+  private def interpret(reactions: List[Reaction]): Context[IO[Unit]] =
     reactions.traverse {
       case SendText(chatId, text, parseMode) =>
+        logger.info(s"Sending message $text") >>
         Methods.sendMessage(
           chatId = chatId,
           text = text,
@@ -45,5 +46,6 @@ class TGGate(api: Api[IO],
         ).exec(api).void
 
       case Sleep(finiteDuration) =>
+        logger.info(s"Sleeping $finiteDuration") >>
         Temporal[IO].sleep(finiteDuration)
     }.void

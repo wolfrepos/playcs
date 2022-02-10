@@ -26,9 +26,11 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
                                                         log: ContextLogger[F]) extends Console[F]:
 
   override def handle(chatId: ChatIntId, text: String): Context[F[List[Reaction]]] =
-    CommandParser.parse(text) match
-      case _: String => confusedMessage(chatId)
-      case command: Command => handleCommand(chatId, command)
+    log.info(s"Got message $text") >> (
+      CommandParser.parse(text) match
+        case _: String => confusedMessage(chatId)
+        case command: Command => handleCommand(chatId, command)
+    )
 
   override def expireCheck(using contextData: ContextData): Context[F[Unit]] =
     for
@@ -119,13 +121,14 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
   private def confusedMessage(chatId: ChatIntId): F[List[Reaction]] =
     List(SendText(chatId, "Не оч понял /help"): Reaction).pure[F]
 
-  private def checkAndGetBalance(chatId: ChatIntId): F[Balance] =
+  private def checkAndGetBalance(chatId: ChatIntId): Context[F[Balance]] =
     for
       balanceOpt <- tx(balanceDao.findBy(chatId.id))
       balance <- balanceOpt.fold {
         val balance = defaultBalance(chatId)
         tx(balanceDao.addIfNotExists(balance)).as(balance)
       }(_.pure[F])
+      _ <- log.info(s"Chat's balance = $balance")
       _ <- MonadThrow[F].raiseWhen(
         balance.timeLeft.toSeconds <= 0
       )(ZeroBalanceException(List(SendText(chatId, "Пополните баланс /balance"): Reaction)))
