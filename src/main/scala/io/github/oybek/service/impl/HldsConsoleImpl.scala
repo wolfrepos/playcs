@@ -18,3 +18,6 @@ class HldsConsoleImpl[F[_]](val ip: String,
 
   override def svPassword(password: String): F[Unit] =
     consoleLow.execute(s"sv_password $password")
+
+  override def say(text: String): F[Unit] =
+    consoleLow.execute(s"say $text")

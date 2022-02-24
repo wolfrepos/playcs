@@ -9,6 +9,7 @@ enum Command(val command: String, val description: String):
   case JoinCommand extends Command("/join", "напомнить как подключаться")
   case BalanceCommand extends Command("/balance", "показать баланс")
   case HelpCommand extends Command("/help", "вывести это сообщение")
+  case SayCommand(text: String) extends Command("/say", "написать сообщение игрокам")
 
 object Command:
 
@@ -18,7 +19,8 @@ object Command:
     MapsCommand,
     JoinCommand,
     BalanceCommand,
-    HelpCommand
+    HelpCommand,
+    SayCommand("")
   )
 
   val helpText: String = all

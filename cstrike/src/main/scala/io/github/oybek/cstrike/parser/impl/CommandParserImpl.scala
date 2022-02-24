@@ -3,7 +3,7 @@ package io.github.oybek.cstrike.parser.impl
 import atto.Atto.*
 import atto.*
 import io.github.oybek.cstrike.model.Command
-import io.github.oybek.cstrike.model.Command.{BalanceCommand, FreeCommand, HelpCommand, JoinCommand, MapsCommand, NewCommand}
+import io.github.oybek.cstrike.model.Command.{BalanceCommand, FreeCommand, HelpCommand, JoinCommand, MapsCommand, NewCommand, SayCommand}
 import io.github.oybek.cstrike.parser.CommandParser
 
 class CommandParserImpl extends CommandParser:
@@ -35,6 +35,10 @@ class CommandParserImpl extends CommandParser:
   private val freeCommandParser: Parser[FreeCommand.type] =
     (string(FreeCommand.command) ~> optSuffix).map(_ => FreeCommand)
 
+  private val sayCommandParser: Parser[SayCommand] =
+    (string(SayCommand("").command) ~> optSuffix ~> ws1 ~> stringOf1(anyChar))
+      .map(text => SayCommand(text))
+
   private val commandParser: Parser[Command] =
     ws ~> (
       newCommandParser |
@@ -43,6 +47,7 @@ class CommandParserImpl extends CommandParser:
       balanceCommandParser |
       helpCommandParser |
       freeCommandParser |
+      sayCommandParser |
       err[Command]("Unknown command")
     ) <~ ws <~ endOfInput
 
