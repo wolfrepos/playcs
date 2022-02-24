@@ -7,5 +7,6 @@ trait HldsConsole[F[_]]:
   def svPassword(password: String): F[Unit]
   def hostname(name: String): F[Unit]
   def changeLevel(map: String): F[Unit]
+  def say(text: String): F[Unit]
   def ip: String
   def port: Int

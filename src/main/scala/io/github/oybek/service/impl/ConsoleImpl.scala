@@ -44,20 +44,20 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
 
   private def handleCommand(chatId: ChatIntId, command: Command): Context[F[List[Reaction]]] =
     command match
-      case NewCommand(map) => handleNewCommand(chatId, map)
-      case JoinCommand     => handleJoinCommand(chatId)
-      case BalanceCommand  => handleBalanceCommand(chatId)
-      case FreeCommand     => handleFreeCommand(chatId)
-      case HelpCommand     => handleHelpCommand(chatId)
-      case _               => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
+      case NewCommand(map)  => handleNewCommand(chatId, map)
+      case JoinCommand      => handleJoinCommand(chatId)
+      case BalanceCommand   => handleBalanceCommand(chatId)
+      case FreeCommand      => handleFreeCommand(chatId)
+      case HelpCommand      => handleHelpCommand(chatId)
+      case SayCommand(text) => handleSayCommand(chatId, text)
+      case _                => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
 
   private def handleNewCommand(chatId: ChatIntId, map: Option[String]): Context[F[List[Reaction]]] =
     import consolePoolManager.rentConsole
     for
       Balance(_, time) <- checkAndGetBalance(chatId)
       consoleOpt <- consolePoolManager.findConsole(chatId)
-      consoleWithMeta <- consoleOpt.fold(rentConsole(chatId, time))(_.pure[F])
-      console WithMeta ConsoleMeta(pass, _, _) = consoleWithMeta
+      console WithMeta ConsoleMeta(pass, _, _) <- consoleOpt.fold(rentConsole(chatId, time))(_.pure[F])
       _ <- console.changeLevel(map.getOrElse("de_dust2"))
       reaction = List(
         SendText(chatId, "Сервер создан. Скопируй в консоль это"),
@@ -114,6 +114,14 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
 
   private def handleHelpCommand(chatId: ChatIntId): F[List[Reaction]] =
     List(SendText(chatId, helpText): Reaction).pure[F]
+
+  private def handleSayCommand(chatId: ChatIntId, text: String): Context[F[List[Reaction]]] =
+    consolePoolManager.findConsole(chatId).flatMap {
+      case None =>
+        List(SendText(chatId, "Создай сервер сначала (/help)")).pure[F]
+      case Some(console WithMeta ConsoleMeta(password, _, _)) =>
+        console.say(text).as(List.empty[Reaction])
+    }
 
   private def sendConsole(chatId: ChatIntId, console: HldsConsole[F], password: String): SendText =
     SendText(chatId, s"`connect ${console.ip}:${console.port}; password $password`", Markdown.some)

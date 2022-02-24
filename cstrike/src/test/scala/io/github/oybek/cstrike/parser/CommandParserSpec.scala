@@ -31,6 +31,8 @@ class CommandParserSpec extends AnyFlatSpec:
     ("   /balance@playcs_bot   "      , BalanceCommand),
     ("/maps"                          , MapsCommand),
     ("   /maps@playcs_bot   "         , MapsCommand),
+    ("   /say@playcs_bot hello"       , SayCommand("hello")),
+    ("   /say hello"                  , SayCommand("hello")),
     ("   /map@playcs_bot   "          , "Unknown command"),
   )
 

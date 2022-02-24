@@ -20,6 +20,9 @@ class FakeHldsConsole[F[_]: Applicative] extends HldsConsole[F]:
   override def changeLevel(map: String): F[Unit] =
     calledCommands.addOne(s"changelevel $map").pure[F].void
 
+  override def say(text: String): F[Unit] =
+    calledCommands.addOne(s"say $text").pure[F].void
+
   override def ip: String = fakeIp
   override def port: Int = fakePort
 
