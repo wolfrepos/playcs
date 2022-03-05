@@ -88,7 +88,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
         SendText(chatId,
           s"""
              |Ваш баланс: ${balance.timeLeft.toSeconds/60} минут
-             |Для пополнения пройдите по ссылке (1 руб = 2 мин)
+             |Для пополнения пройдите по ссылке (1 руб = 5 мин)
              |https://www.tinkoff.ru/rm/khashimov.oybek1/Cc3Jm91036
              |В сообщении при переводе обязательно укажите следующий код
              |""".stripMargin),
