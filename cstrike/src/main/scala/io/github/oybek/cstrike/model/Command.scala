@@ -2,7 +2,7 @@ package io.github.oybek.cstrike.model
 
 import io.github.oybek.cstrike.model.Command.helpText
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 enum Command(val command: String, val description: String):
   case NewCommand(map: Option[String]) extends Command("/new", "создать сервер, пример: /new de_dust")
@@ -12,7 +12,7 @@ enum Command(val command: String, val description: String):
   case BalanceCommand extends Command("/balance", "показать баланс")
   case HelpCommand extends Command("/help", "вывести это сообщение")
   case SayCommand(text: String) extends Command("/say", "написать сообщение игрокам")
-  case IncreaseBalanceCommand(telegramId: Long, duration: Duration) extends Command("/balance", "пополнить баланс")
+  case IncreaseBalanceCommand(telegramId: Long, duration: FiniteDuration) extends Command("/balance", "пополнить баланс")
 
 object Command:
 
