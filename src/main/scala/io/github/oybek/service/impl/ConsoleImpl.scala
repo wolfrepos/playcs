@@ -78,15 +78,13 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
 
   private def handleBalanceCommand(chatId: ChatIntId): Context[F[List[Reaction]]] =
     tx {
-      balanceDao.findBy(chatId.id).flatMap {
-        case None =>
+      for
+        balanceOpt <- balanceDao.findBy(chatId.id)
+        balance <- balanceOpt.fold {
           val balance = Balance(chatId, 15.minutes)
           balanceDao.addIfNotExists(balance).as(balance)
-        case Some(balance) =>
-          balance.pure[G]
-      }
-    } map { balance =>
-      List[Reaction](
+        }(_.pure[G])
+      yield List(
         SendText(chatId,
           s"""
              |Ваш баланс: ${balance.timeLeft.toSeconds/60} минут
