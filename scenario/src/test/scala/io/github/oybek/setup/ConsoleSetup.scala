@@ -20,9 +20,10 @@ trait ConsoleSetup:
   val logger                = new ContextLogger[F](new FakeMessageLogger[F])
   val passwordGen           = new FakePasswordGenerator[F]
   val fakeBalanceDao        = new FakeBalanceDao[DB]
+  val fakeAdminDao          = new FakeAdminDao[DB]
   val transactor            = new FunctionK[DB, F] {
     override def apply[A](fa: DB[A]): F[A] = Right(fa)
   }
   val consolePoolManager = new HldsConsolePoolManagerImpl[F, DB](consolePoolRef, passwordGen, logger)
-  def setupConsole: Console[F] = new ConsoleImpl(consolePoolManager, fakeBalanceDao, transactor, logger)
-  val console: Console[F] = new ConsoleImpl(consolePoolManager, fakeBalanceDao, transactor, logger)
+  def setupConsole: Console[F] = new ConsoleImpl(consolePoolManager, fakeBalanceDao, fakeAdminDao, transactor, logger)
+  val console: Console[F] = new ConsoleImpl(consolePoolManager, fakeBalanceDao, fakeAdminDao, transactor, logger)

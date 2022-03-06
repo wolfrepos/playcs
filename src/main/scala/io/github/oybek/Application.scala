@@ -13,7 +13,7 @@ import io.github.oybek.common.time.{Timer, Clock as Clockk}
 import io.github.oybek.config.Config
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.database.DB
-import io.github.oybek.database.dao.impl.BalanceDaoImpl
+import io.github.oybek.database.dao.impl.{AdminDaoImpl, BalanceDaoImpl}
 import io.github.oybek.integration.{HLDSConsoleClient, TGGate}
 import io.github.oybek.model.ConsolePool
 import io.github.oybek.service.HldsConsole
@@ -68,7 +68,7 @@ def assembleAndLaunch(config: Config,
     _ <- DB.runMigrations[IO](tx)
     consolePoolRef <- Ref.of[IO, ConsolePool[IO]](consolePool)
     consolePoolManager = new HldsConsolePoolManagerImpl[IO, ConnectionIO](consolePoolRef, passwordGen, consolePoolLogger)
-    console = new ConsoleImpl[IO, ConnectionIO](consolePoolManager, BalanceDaoImpl, transactor, consoleLogger)
+    console = new ConsoleImpl[IO, ConnectionIO](consolePoolManager, BalanceDaoImpl, AdminDaoImpl, transactor, consoleLogger)
     _ <- Spawn[IO].start {
       given ContextData(1234)
       console.expireCheck.every(1.minute)

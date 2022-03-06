@@ -8,9 +8,9 @@ import io.github.oybek.common.time.Clock
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.model.Command.*
 import io.github.oybek.cstrike.parser.CommandParser
-import io.github.oybek.database.dao.BalanceDao
+import io.github.oybek.database.dao.{AdminDao, BalanceDao}
 import io.github.oybek.database.model.Balance
-import io.github.oybek.exception.BusinessException.ZeroBalanceException
+import io.github.oybek.exception.BusinessException.{UnathorizedException, ZeroBalanceException}
 import io.github.oybek.model.Reaction.{SendText, Sleep}
 import io.github.oybek.model.{ConsoleMeta, Reaction}
 import io.github.oybek.service.{Console, HldsConsole, HldsConsolePoolManager}
@@ -22,6 +22,7 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: HldsConsolePoolManager[F],
                                                         balanceDao: BalanceDao[G],
+                                                        adminDao: AdminDao[G],
                                                         tx: G ~> F,
                                                         log: ContextLogger[F]) extends Console[F]:
 
@@ -97,19 +98,19 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       )
     }
 
-  private def handleIncreaseBalanceCommand(adminChatId: ChatIntId,
+  private def handleIncreaseBalanceCommand(writerChatId: ChatIntId,
                                            chatId: ChatIntId,
                                            delta: FiniteDuration): Context[F[List[Reaction]]] =
-    tx {
       for
-        balanceOpt <- balanceDao.findBy(chatId.id)
+        isAdmin    <- tx(adminDao.isAdmin(writerChatId.id))
+        _          <- MonadThrow[F].raiseWhen(!isAdmin)(UnathorizedException)
+        balanceOpt <- tx(balanceDao.findBy(chatId.id))
         newBalance = balanceOpt.fold(0.seconds)(_.timeLeft) + delta
-        _ <- balanceDao.addOrUpdate(Balance(chatId, newBalance))
+        _          <- tx(balanceDao.addOrUpdate(Balance(chatId, newBalance)))
       yield List(
-        SendText(adminChatId, s"Увеличен баланс чата ${chatId.id} до ${newBalance}"),
+        SendText(writerChatId, s"Увеличен баланс чата ${chatId.id} до ${newBalance}"),
         SendText(chatId, s"Ваш баланс увеличен до ${newBalance}"),
       )
-    }
 
   private def handleFreeCommand(chatId: ChatIntId): Context[F[List[Reaction]]] =
     consolePoolManager.findConsole(chatId).flatMap {
