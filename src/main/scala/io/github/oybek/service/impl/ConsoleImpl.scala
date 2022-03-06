@@ -50,6 +50,8 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       case FreeCommand      => handleFreeCommand(chatId)
       case HelpCommand      => handleHelpCommand(chatId)
       case SayCommand(text) => handleSayCommand(chatId, text)
+      case IncreaseBalanceCommand(telegramId, duration)
+                            => handleIncreaseBalanceCommand(chatId, ChatIntId(telegramId), duration)
       case _                => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
 
   private def handleNewCommand(chatId: ChatIntId, map: Option[String]): Context[F[List[Reaction]]] =
@@ -76,24 +78,36 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
 
   private def handleBalanceCommand(chatId: ChatIntId): Context[F[List[Reaction]]] =
     tx {
-      balanceDao.findBy(chatId.id).flatMap {
-        case None =>
+      for
+        balanceOpt <- balanceDao.findBy(chatId.id)
+        balance <- balanceOpt.fold {
           val balance = Balance(chatId, 15.minutes)
           balanceDao.addIfNotExists(balance).as(balance)
-        case Some(balance) =>
-          balance.pure[G]
-      }
-    } map { balance =>
-      List[Reaction](
+        }(_.pure[G])
+      yield List(
         SendText(chatId,
           s"""
              |Ваш баланс: ${balance.timeLeft.toSeconds/60} минут
-             |Для пополнения пройдите по ссылке (1 руб = 2 мин)
+             |Для пополнения пройдите по ссылке (1 руб = 5 мин)
              |https://www.tinkoff.ru/rm/khashimov.oybek1/Cc3Jm91036
              |В сообщении при переводе обязательно укажите следующий код
              |""".stripMargin),
         Sleep(500.millis),
         SendText(chatId, chatId.id.toString),
+      )
+    }
+
+  private def handleIncreaseBalanceCommand(adminChatId: ChatIntId,
+                                           chatId: ChatIntId,
+                                           delta: FiniteDuration): Context[F[List[Reaction]]] =
+    tx {
+      for
+        balanceOpt <- balanceDao.findBy(chatId.id)
+        newBalance = balanceOpt.fold(0.seconds)(_.timeLeft) + delta
+        _ <- balanceDao.addOrUpdate(Balance(chatId, newBalance))
+      yield List(
+        SendText(adminChatId, s"Увеличен баланс чата ${chatId.id} до ${newBalance}"),
+        SendText(chatId, s"Ваш баланс увеличен до ${newBalance}"),
       )
     }
 

@@ -1,10 +1,12 @@
 package io.github.oybek.cstrike.parser.impl
 
-import atto.Atto.*
 import atto.*
+import atto.Atto.*
 import io.github.oybek.cstrike.model.Command
-import io.github.oybek.cstrike.model.Command.{BalanceCommand, FreeCommand, HelpCommand, JoinCommand, MapsCommand, NewCommand, SayCommand}
+import io.github.oybek.cstrike.model.Command.*
 import io.github.oybek.cstrike.parser.CommandParser
+
+import scala.concurrent.duration.DurationLong
 
 class CommandParserImpl extends CommandParser:
   override def parse(text: String): String | Command =
@@ -39,11 +41,17 @@ class CommandParserImpl extends CommandParser:
     (string(SayCommand("").command) ~> optSuffix ~> ws1 ~> stringOf1(anyChar))
       .map(text => SayCommand(text))
 
+  private val increaseBalanceCommandParser: Parser[IncreaseBalanceCommand] =
+    (string(BalanceCommand.command) ~> optSuffix ~> ws1 ~> long ~ (ws1 ~> long)).map {
+      case (telegramId, duration) => IncreaseBalanceCommand(telegramId, duration.minutes)
+    }
+
   private val commandParser: Parser[Command] =
     ws ~> (
       newCommandParser |
       mapsCommandParser |
       joinCommandParser |
+      increaseBalanceCommandParser |
       balanceCommandParser |
       helpCommandParser |
       freeCommandParser |

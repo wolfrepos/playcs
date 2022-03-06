@@ -9,6 +9,8 @@ import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.prop.TableDrivenPropertyChecks.*
 import org.scalatest.prop.TableFor2
 
+import scala.concurrent.duration.DurationLong
+
 class CommandParserSpec extends AnyFlatSpec:
 
   val tests: TableFor2[String, String | Command] = Table(
@@ -29,6 +31,8 @@ class CommandParserSpec extends AnyFlatSpec:
     ("   /help@playcs_bot   "         , HelpCommand),
     ("/balance"                       , BalanceCommand),
     ("   /balance@playcs_bot   "      , BalanceCommand),
+    ("/balance 123 32"                , IncreaseBalanceCommand(123, 32.minutes)),
+    ("/balance@playcs_bot 12 3"       , IncreaseBalanceCommand(12, 3.minutes)),
     ("/maps"                          , MapsCommand),
     ("   /maps@playcs_bot   "         , MapsCommand),
     ("   /say@playcs_bot hello"       , SayCommand("hello")),
