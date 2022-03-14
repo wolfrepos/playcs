@@ -22,8 +22,8 @@ class IncreaseBalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen w
       Then("balance of chat increased, admin and chat are informed")
       assert(console.handle(adminChatId, s"/balance ${fakeChatId.id} 30") ===
         Right(List(
-          SendText(adminChatId, s"Увеличен баланс чата ${fakeChatId.id} до 2700 seconds"),
-          SendText(fakeChatId, "Ваш баланс увеличен до 2700 seconds")
+          SendText(adminChatId, s"Chat ${fakeChatId.id} balance increased to 2700 seconds"),
+          SendText(fakeChatId, "Your balance increased to 2700 seconds")
         )))
     }
 

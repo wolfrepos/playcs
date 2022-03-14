@@ -63,7 +63,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       console WithMeta ConsoleMeta(pass, _, _) <- consoleOpt.fold(rentConsole(chatId, time))(_.pure[F])
       _ <- console.changeLevel(map.getOrElse("de_dust2"))
       reaction = List(
-        SendText(chatId, "Сервер создан. Скопируй в консоль это"),
+        SendText(chatId, "Your server is ready. Copy paste this"),
         Sleep(200.millis),
         sendConsole(chatId, console, pass)
       )
@@ -72,7 +72,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
   private def handleJoinCommand(chatId: ChatIntId): Context[F[List[Reaction]]] =
     consolePoolManager.findConsole(chatId).map {
       case None =>
-        List(SendText(chatId, "Создай сервер сначала (/help)"))
+        List(SendText(chatId, "Create a server first (/help)"))
       case Some(console WithMeta ConsoleMeta(password, _, _)) =>
         List(sendConsole(chatId, console, password))
     }
@@ -88,10 +88,10 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       yield List(
         SendText(chatId,
           s"""
-             |Ваш баланс: ${balance.timeLeft.toSeconds/60} минут
-             |Для пополнения пройдите по ссылке (1 руб = 5 мин)
+             |Your balance: ${balance.timeLeft.toSeconds/60} minutes
+             |Transfer some money by link below and get minutes (1 rub. = 5 minutes)
              |https://www.tinkoff.ru/rm/khashimov.oybek1/Cc3Jm91036
-             |В сообщении при переводе обязательно укажите следующий код
+             |Be sure to include the following code in your message when transferring 
              |""".stripMargin),
         Sleep(500.millis),
         SendText(chatId, chatId.id.toString),
@@ -108,8 +108,8 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
         newBalance = balanceOpt.fold(0.seconds)(_.timeLeft) + delta
         _          <- tx(balanceDao.addOrUpdate(Balance(chatId, newBalance)))
       yield List(
-        SendText(writerChatId, s"Увеличен баланс чата ${chatId.id} до ${newBalance}"),
-        SendText(chatId, s"Ваш баланс увеличен до ${newBalance}"),
+        SendText(writerChatId, s"Chat ${chatId.id} balance increased to ${newBalance}"),
+        SendText(chatId, s"Your balance increased to ${newBalance}"),
       )
 
   private def handleFreeCommand(chatId: ChatIntId): Context[F[List[Reaction]]] =
@@ -121,10 +121,10 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
           secondsLeft = Duration.between(now, meta.deadline).toSeconds.max(0)
           timeLeft = FiniteDuration(secondsLeft, TimeUnit.SECONDS)
           _ <- tx(balanceDao.addOrUpdate(Balance(meta.usingBy, timeLeft)))
-        yield List(SendText(chatId, "Сервер освобожден"))
+        yield List(SendText(chatId, "Server has been deleted"))
 
       case None =>
-        List(SendText(chatId, "Нет созданных серверов"): Reaction).pure[F]
+        List(SendText(chatId, "No created servers"): Reaction).pure[F]
     }
 
   private def handleHelpCommand(chatId: ChatIntId): F[List[Reaction]] =
@@ -133,7 +133,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
   private def handleSayCommand(chatId: ChatIntId, text: String): Context[F[List[Reaction]]] =
     consolePoolManager.findConsole(chatId).flatMap {
       case None =>
-        List(SendText(chatId, "Создай сервер сначала (/help)")).pure[F]
+        List(SendText(chatId, "Create a server first (/help)")).pure[F]
       case Some(console WithMeta ConsoleMeta(password, _, _)) =>
         console.say(text).as(List.empty[Reaction])
     }
@@ -142,7 +142,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
     SendText(chatId, s"`connect ${console.ip}:${console.port}; password $password`", Markdown.some)
 
   private def confusedMessage(chatId: ChatIntId): F[List[Reaction]] =
-    List(SendText(chatId, "Не оч понял /help"): Reaction).pure[F]
+    List(SendText(chatId, "What? /help"): Reaction).pure[F]
 
   private def checkAndGetBalance(chatId: ChatIntId): Context[F[Balance]] =
     for
@@ -154,7 +154,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
       _ <- log.info(s"Chat's balance = $balance")
       _ <- MonadThrow[F].raiseWhen(
         balance.timeLeft.toSeconds <= 0
-      )(ZeroBalanceException(List(SendText(chatId, "Пополните баланс /balance"): Reaction)))
+      )(ZeroBalanceException(List(SendText(chatId, "Top up your balance /balance"): Reaction)))
     yield balance
 
   private def defaultBalance(chatId: ChatIntId) = Balance(chatId, 30.minutes)

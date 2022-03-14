@@ -40,7 +40,7 @@ class HldsConsolePoolManagerImpl[F[_]: Applicative: MonadThrow: Clock, G[_]]
         case Nil =>
           MonadThrow[F].raiseError(
             NoFreeConsolesException(
-              List(SendText(chatId, "Не осталось свободных серверов"))))
+              List(SendText(chatId, "Can't create new server, connect @wolfodav"))))
         case x::xs => (x, xs).pure[F]
       (console, consoles) = allConsoles
       now <- Clock[F].instantNow
