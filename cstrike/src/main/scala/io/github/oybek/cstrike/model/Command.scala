@@ -1,18 +1,19 @@
 package io.github.oybek.cstrike.model
 
+import concurrent.duration.DurationInt
 import io.github.oybek.cstrike.model.Command.helpText
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 enum Command(val command: String, val description: String):
-  case NewCommand(map: Option[String]) extends Command("/new", "создать сервер, пример: /new de_dust")
-  case FreeCommand extends Command("/free", "удалить сервер")
-  case MapsCommand extends Command("/maps", "список доступных карт")
-  case JoinCommand extends Command("/join", "напомнить как подключаться")
-  case BalanceCommand extends Command("/balance", "показать баланс")
-  case HelpCommand extends Command("/help", "вывести это сообщение")
-  case SayCommand(text: String) extends Command("/say", "написать сообщение игрокам")
-  case IncreaseBalanceCommand(telegramId: Long, duration: FiniteDuration) extends Command("/balance", "пополнить баланс")
+  case NewCommand(map: Option[String]) extends Command("/new", "create a server, example: /new de_dust")
+  case FreeCommand extends Command("/free", "delete the server")
+  case MapsCommand extends Command("/maps", "list available maps")
+  case JoinCommand extends Command("/join", "remind join command")
+  case BalanceCommand extends Command("/balance", "show balance")
+  case HelpCommand extends Command("/help", "show this message")
+  case SayCommand(text: String) extends Command("/say", "write message to game")
+  case IncreaseBalanceCommand(telegramId: Long, duration: FiniteDuration) extends Command("/balance", "increase balance [admin]")
 
 object Command:
 

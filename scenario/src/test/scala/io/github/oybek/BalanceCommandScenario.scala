@@ -23,10 +23,10 @@ class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with Cons
         Right(List(
           SendText(fakeChatId,
             s"""
-               |Ваш баланс: 15 минут
-               |Для пополнения пройдите по ссылке (1 руб = 5 мин)
+               |Your balance: 15 minutes
+               |Transfer some money by link below and get minutes (1 rub. = 5 minutes)
                |https://www.tinkoff.ru/rm/khashimov.oybek1/Cc3Jm91036
-               |В сообщении при переводе обязательно укажите следующий код
+               |Be sure to include the following code in your message when transferring 
                |""".stripMargin),
           Sleep(500.millis),
           SendText(fakeChatId, fakeChatId.id.toString)
@@ -42,10 +42,10 @@ class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with Cons
         Right(List(
           SendText(fakeChatId,
             s"""
-               |Ваш баланс: 15 минут
-               |Для пополнения пройдите по ссылке (1 руб = 5 мин)
+               |Your balance: 15 minutes
+               |Transfer some money by link below and get minutes (1 rub. = 5 minutes)
                |https://www.tinkoff.ru/rm/khashimov.oybek1/Cc3Jm91036
-               |В сообщении при переводе обязательно укажите следующий код
+               |Be sure to include the following code in your message when transferring 
                |""".stripMargin),
           Sleep(500.millis),
           SendText(fakeChatId, fakeChatId.id.toString))

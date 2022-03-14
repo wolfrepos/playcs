@@ -24,7 +24,7 @@ class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
       When("/join command received")
       Then("message about server creation is returned")
       assert(console.handle(fakeChatId, "/join") ===
-        Right(List(SendText(fakeChatId, "Создай сервер сначала (/help)"))))
+        Right(List(SendText(fakeChatId, "Create a server first (/help)"))))
     }
 
     Scenario("User gives command '/join' after '/new' command") {
@@ -43,7 +43,7 @@ class JoinCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
       When("/join command received")
       Then("message about server creation is returned")
       assert(console.handle(fakeChatId, "/join") ===
-        Right(List(SendText(fakeChatId, "Создай сервер сначала (/help)"))))
+        Right(List(SendText(fakeChatId, "Create a server first (/help)"))))
     }
 
     Scenario("User gives command '/join' after '/new' and '/free' and '/new' commands") {

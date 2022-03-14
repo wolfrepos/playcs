@@ -25,7 +25,7 @@ class SayCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleS
       When("/say command received")
       Then("message about server creation is returned")
       assert(console.handle(fakeChatId, "/say hello") ===
-        Right(List(SendText(fakeChatId, "Создай сервер сначала (/help)"))))
+        Right(List(SendText(fakeChatId, "Create a server first (/help)"))))
     }
 
     Scenario("User gives command '/say' after '/new' command") {

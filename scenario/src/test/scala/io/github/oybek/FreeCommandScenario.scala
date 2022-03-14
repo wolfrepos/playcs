@@ -19,7 +19,7 @@ class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
 
       Then("server is free and returned back to pool and appropriate message returned")
       assert(console.handle(fakeChatId, "/free") ===
-        Right(List(SendText(fakeChatId, "Нет созданных серверов"))))
+        Right(List(SendText(fakeChatId, "No created servers"))))
     }
 
     Scenario("User gives command '/free'") {
@@ -30,6 +30,6 @@ class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with Console
 
       Then("server is free and returned back to pool and appropriate message returned")
       assert(console.handle(fakeChatId, "/free") ===
-        Right(List(SendText(fakeChatId, "Сервер освобожден"))))
+        Right(List(SendText(fakeChatId, "Server has been deleted"))))
     }
   }

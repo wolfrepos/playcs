@@ -45,7 +45,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
 
       Then("the instructions should be reported")
       assert(result === Right(List(
-        SendText(fakeChatId, "Сервер создан. Скопируй в консоль это"),
+        SendText(fakeChatId, "Your server is ready. Copy paste this"),
         Sleep(200.millis),
         SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`",Some(Markdown)))))
     }
@@ -58,7 +58,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
 
       Then("No servers left message should be returned")
       assert(result === Left(
-        NoFreeConsolesException(List(SendText(anotherFakeChatId, "Не осталось свободных серверов")))
+        NoFreeConsolesException(List(SendText(anotherFakeChatId, "Can't create new server, connect @wolfodav")))
       ))
     }
   }
