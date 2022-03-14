@@ -21,3 +21,8 @@ project/metals.sbt
 
 .bsp/
 
+.metals/
+.bloop/
+.ammonite/
+.vscode/
+metals.sbt
