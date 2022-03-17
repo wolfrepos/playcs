@@ -4,20 +4,19 @@ import cats.effect.{Resource, Sync}
 import cats.implicits.catsSyntaxFlatMapOps
 import cats.syntax.functor.*
 import io.github.oybek.common.time.Timer
-import io.github.oybek.integration.HLDSConsoleClient.{InputPusher, OutputPuller}
+import io.github.oybek.integration.HLDSConsoleClient.InputPusher
 
 import java.io.{File, InputStream, OutputStream, PrintWriter}
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.concurrent.duration.DurationInt
 import scala.io.Source
 import scala.sys.process.{Process, ProcessIO}
+import java.io.PipedInputStream
 
 class HLDSConsoleClient[F[_]: Sync: Timer](val process: Process,
-                                           inputPusher: InputPusher,
-                                           outputPuller: OutputPuller[F]):
+                                           inputPusher: InputPusher):
   def execute(s: String): F[Unit] =
     Sync[F].delay(inputPusher.push(s)) >> Timer[F].sleep(200.millis)
-  def readln: F[Option[String]] = outputPuller.pull
 
 object HLDSConsoleClient:
   def create[F[_]: Sync: Timer](port: Int, hldsDir: File): Resource[F, HLDSConsoleClient[F]] =
@@ -26,40 +25,27 @@ object HLDSConsoleClient:
       hldsDir
     )
     val inputPusher = new InputPusher
-    val outputPuller = new OutputPuller[F]
-    val processIO = new ProcessIO(inputPusher.pusher, outputPuller.puller, _ => ())
+    val processIO = new ProcessIO(inputPusher.pusher, _ => (), _ => ())
     Resource.make(
       Sync[F].delay(processDesc.run(processIO)).map(
-        new HLDSConsoleClient[F](_, inputPusher, outputPuller)
+        new HLDSConsoleClient[F](_, inputPusher)
       )
     )(consoleLow => Sync[F].delay(consoleLow.process.destroy()))
 
-  class OutputPuller[F[_]: Sync]:
-    private val queue = new ConcurrentLinkedQueue[String]()
-    def puller(is: InputStream): Unit = {
-      Source
-        .fromInputStream(is)
-        .getLines()
-        .foreach(queue.add)
-    }
-    def pull: F[Option[String]] =
-      Sync[F].delay(Option(queue.poll()))
-
   class InputPusher:
     private val queue = new ConcurrentLinkedQueue[String]()
+
     def pusher(os: OutputStream): Unit = synchronized {
-      val pw = new PrintWriter(os)
       while (true) {
         wait()
         Option(queue.poll()).foreach { s =>
-          // scalastyle:off
-          pw.println(s)
-          pw.flush()
-          // scalastyle:on
+          os.write((s + System.lineSeparator()).getBytes)
+          os.flush()
         }
       }
     }
-    def push(s: String): Unit = synchronized {
+
+    def push(s: String): Unit = {
       queue.add(s)
       notify()
     }
