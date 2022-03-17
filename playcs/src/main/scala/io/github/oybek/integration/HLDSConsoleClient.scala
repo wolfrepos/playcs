@@ -45,7 +45,7 @@ object HLDSConsoleClient:
       }
     }
 
-    def push(s: String): Unit = {
+    def push(s: String): Unit = synchronized {
       queue.add(s)
       notify()
     }
