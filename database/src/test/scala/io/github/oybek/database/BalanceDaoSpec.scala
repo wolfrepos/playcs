@@ -27,7 +27,7 @@ class BalanceDaoSpec extends AnyFlatSpec with PostgresSetup:
         _ <- DB.runMigrations(tx)
         balance = Balance(telegramId = ChatIntId(123), timeLeft = FiniteDuration(60, TimeUnit.SECONDS))
         affectedRows <- balanceDao
-          .addOrUpdate(balance)
+          .add(balance)
           .transact(tx)
         _ = assert(affectedRows === 1)
 
@@ -37,12 +37,12 @@ class BalanceDaoSpec extends AnyFlatSpec with PostgresSetup:
         _ = assert(balanceOpt === Some(balance))
 
         affectedRows <- balanceDao
-          .addOrUpdate(balance)
+          .add(balance)
           .transact(tx)
         _ = assert(affectedRows === 1)
 
         affectedRows <- balanceDao
-          .addOrUpdate(balance)
+          .add(balance)
           .transact(tx)
         _ = assert(affectedRows === 1)
 

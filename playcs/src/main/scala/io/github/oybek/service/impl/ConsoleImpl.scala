@@ -106,7 +106,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
         _          <- MonadThrow[F].raiseWhen(!isAdmin)(UnathorizedException)
         balanceOpt <- tx(balanceDao.findBy(chatId.id))
         newBalance = balanceOpt.fold(0.seconds)(_.timeLeft) + delta
-        _          <- tx(balanceDao.addOrUpdate(Balance(chatId, newBalance)))
+        _          <- tx(balanceDao.add(Balance(chatId, newBalance)))
       yield List(
         SendText(writerChatId, s"Chat ${chatId.id} balance increased to ${newBalance}"),
         SendText(chatId, s"Your balance increased to ${newBalance}"),
@@ -120,7 +120,7 @@ class ConsoleImpl[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: Hlds
           now <- Clock[F].instantNow
           secondsLeft = Duration.between(now, meta.deadline).toSeconds.max(0)
           timeLeft = FiniteDuration(secondsLeft, TimeUnit.SECONDS)
-          _ <- tx(balanceDao.addOrUpdate(Balance(meta.usingBy, timeLeft)))
+          _ <- tx(balanceDao.update(Balance(meta.usingBy, timeLeft)))
         yield List(SendText(chatId, "Server has been deleted"))
 
       case None =>

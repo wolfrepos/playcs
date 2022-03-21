@@ -12,13 +12,18 @@ given getFiniteDuration: Get[FiniteDuration] =
   Get[Long].map(FiniteDuration(_, TimeUnit.SECONDS))
 
 object BalanceDaoImpl extends BalanceDao[ConnectionIO]:
-  override def addOrUpdate(balance: Balance): ConnectionIO[Int] =
+  override def add(balance: Balance): ConnectionIO[Int] =
     import balance.*
     sql"""
          |insert into balance (telegram_id, seconds)
          |values (${telegramId.id}, ${timeLeft.toSeconds})
-         |on conflict (telegram_id) do
-         |update set seconds = ${timeLeft.toSeconds}
+         |""".stripMargin.update.run
+
+  override def update(balance: Balance): ConnectionIO[Int] =
+    import balance.*
+    sql"""
+         |update balance set seconds = ${timeLeft.toSeconds}
+         |where telegram_id = ${telegramId.id}
          |""".stripMargin.update.run
 
   override def findBy(telegramId: Long): ConnectionIO[Option[Balance]] =
