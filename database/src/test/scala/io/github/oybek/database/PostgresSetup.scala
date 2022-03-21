@@ -1,11 +1,16 @@
 package io.github.oybek.database
 
+import cats.arrow.FunctionK
 import cats.effect.IO
-import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
+import com.dimafeng.testcontainers.ForAllTestContainer
+import com.dimafeng.testcontainers.PostgreSQLContainer
+import doobie.ConnectionIO
+import doobie.implicits.toConnectionIOOps
 import io.github.oybek.database.config.DbConfig
 import org.scalatest.Suite
 import org.scalatest.flatspec.AnyFlatSpec
 import org.testcontainers.utility.DockerImageName
+
 import scala.concurrent.ExecutionContext.global
 
 trait PostgresSetup extends ForAllTestContainer:
