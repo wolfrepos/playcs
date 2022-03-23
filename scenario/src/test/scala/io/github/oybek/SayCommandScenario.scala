@@ -19,6 +19,7 @@ class SayCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetup
 
   Feature("/say command") {
     Scenario("User writes command '/say' before '/new' command") {
+      hldsConsole.reset
       Given("console without created server")
       When("/say command received")
       Then("message about server creation is returned")
@@ -27,6 +28,7 @@ class SayCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetup
     }
 
     Scenario("User gives command '/say' after '/new' command") {
+      hldsConsole.reset
       Given("console with created server")
       hub.handle(fakeChatId, "/new")
 

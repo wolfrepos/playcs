@@ -22,6 +22,8 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
 
   Feature("/new command") {
     Scenario("User gives command '/new'") {
+      hldsConsole.reset
+
       Given("console which has a free dedicated servers")
 
       When("/new command received")
@@ -46,13 +48,33 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
         SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`",Some(Markdown)))))
     }
 
+    Scenario("User gives command '/new' already having the server") {
+      hldsConsole.reset
+
+      Given("user who already has the server")
+
+      When("/new command received")
+      val result = hub.handle(fakeChatId, "/new")
+
+      Then("new dedicated server should be created")
+      assert(hldsConsole.getCalledCommands === List("changelevel de_dust2"))
+      assert(consolePoolRef.get === Right((Nil, List(hldsConsole and fakeChatId))))
+
+      Then("the instructions should be reported")
+      assert(result === Right(
+        List(SendText(fakeChatId, "You already got the server, just changing a map"))))
+    }
+
     Scenario("User gives command '/new' when there is no free server") {
+      hldsConsole.reset
+
       Given("console which has no free dedicated servers")
 
       When("/new command received")
       val result = hub.handle(anotherFakeChatId, "/new")
 
       Then("No servers left message should be returned")
+      assert(hldsConsole.getCalledCommands.isEmpty)
       assert(result === Right(
         List(SendText(anotherFakeChatId, "No free server left, contact t.me/turtlebots"))))
     }

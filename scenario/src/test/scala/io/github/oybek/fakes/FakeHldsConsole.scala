@@ -29,4 +29,6 @@ class FakeHldsConsole[F[_]: Applicative] extends HldsConsole[F]:
   def getCalledCommands: List[String] =
     calledCommands.toList
 
+  def reset: Unit = calledCommands.remove(0, calledCommands.size)
+
   private val calledCommands = ListBuffer.empty[String]

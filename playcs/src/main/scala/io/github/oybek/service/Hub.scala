@@ -2,18 +2,11 @@ package io.github.oybek.service
 
 import cats.Monad
 import cats.MonadThrow
+import cats.data.EitherT
 import cats.implicits.*
-import cats.~>
-import io.github.oybek.common.logger.Context
-import io.github.oybek.common.logger.ContextData
-import io.github.oybek.common.time.Clock
-import io.github.oybek.model.Reaction
-import telegramium.bots.ChatIntId
-import cats.Monad
-import cats.MonadThrow
 import cats.implicits.*
+import cats.syntax.apply
 import cats.~>
-import io.github.oybek.common.ListOps.firstSomeF
 import io.github.oybek.common.PoolManager
 import io.github.oybek.common.With
 import io.github.oybek.common.logger.Context
@@ -29,9 +22,10 @@ import io.github.oybek.exception.BusinessException.ZeroBalanceException
 import io.github.oybek.model.Reaction
 import io.github.oybek.model.Reaction.SendText
 import io.github.oybek.model.Reaction.Sleep
-import io.github.oybek.service.Hub
 import io.github.oybek.service.HldsConsole
+import io.github.oybek.service.Hub
 import io.github.oybek.service.PasswordGenerator
+import mouse.foption.FOptionSyntaxMouse
 import telegramium.bots.ChatIntId
 import telegramium.bots.Markdown
 
@@ -39,7 +33,6 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
-import cats.syntax.apply
 
 trait Hub[F[_]]:
   def handle(chatId: ChatIntId, text: String): Context[F[List[Reaction]]]
@@ -68,11 +61,15 @@ object Hub:
 
       private def handleNewCommand(chatId: ChatIntId, map: Option[String]): Context[F[List[Reaction]]] =
         import consolePoolManager.{find, rent}
-        List(find(chatId), rent(chatId)).firstSomeF.flatMap {
-          case None =>
-            List(SendText(chatId, "No free server left, contact t.me/turtlebots")).pure[F]
 
-          case Some(console) =>
+        def caseFind: F[Option[List[Reaction]]] =
+          find(chatId).flatMap(_.traverse(console =>
+            console.changeLevel(map.getOrElse("de_dust2")).as(
+              List(SendText(chatId, "You already got the server, just changing a map")))
+          ))
+
+        def caseRent: F[Option[List[Reaction]]] =
+          rent(chatId).flatMap(_.traverse(console =>
             for
               pass <- passwordGenerator.generate
               _ <- console.svPassword(pass)
@@ -81,9 +78,14 @@ object Hub:
               List(
                 SendText(chatId, "Your server is ready. Copy paste this"),
                 Sleep(200.millis),
-                sendConsole(chatId, console, pass)
-              )
-        }
+                sendConsole(chatId, console, pass
+              ))
+          ))
+
+        val caseNone: List[Reaction] =
+          List(SendText(chatId, "No free server left, contact t.me/turtlebots"))
+
+        caseFind.orElseF(caseRent).getOrElse(caseNone)
 
       private def handleFreeCommand(chatId: ChatIntId): Context[F[List[Reaction]]] =
         consolePoolManager.find(chatId).flatMap {
