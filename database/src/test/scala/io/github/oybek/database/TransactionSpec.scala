@@ -13,7 +13,6 @@ import doobie.*
 import doobie.implicits.*
 import io.github.oybek.database.config.DbConfig
 import io.github.oybek.database.dao.BalanceDao
-import io.github.oybek.database.dao.impl.BalanceDaoImpl
 import io.github.oybek.database.model.Balance
 import org.scalatest.flatspec.AnyFlatSpec
 import org.testcontainers.utility.DockerImageName
@@ -26,7 +25,7 @@ import scala.concurrent.duration.FiniteDuration
 import concurrent.duration.DurationInt
 
 class TransactionSpec extends AnyFlatSpec with PostgresSetup with doobie.free.Instances with doobie.syntax.AllSyntax:
-  val balanceDao: BalanceDao[ConnectionIO] = BalanceDaoImpl
+  val balanceDao: BalanceDao[ConnectionIO] = BalanceDao.create
   val balance = Balance(
     telegramId = ChatIntId(123),
     timeLeft = FiniteDuration(60, TimeUnit.SECONDS)
@@ -40,13 +39,13 @@ class TransactionSpec extends AnyFlatSpec with PostgresSetup with doobie.free.In
       (tx, fk) =>
         for
           _ <- DB.runMigrations(tx)
-          _ <- balanceDao.add(balance).transact(tx)
+          _ <- balanceDao.upsert(balance).transact(tx)
 
           query = for
-            _ <- balanceDao.update(balance.add(5.seconds))
+            _ <- balanceDao.upsert(balance.add(5.seconds))
             balanceOpt <- balanceDao.findBy(balance.telegramId.id)
             _ <- balanceOpt.traverse { b =>
-              balanceDao.update(balance.add(5.seconds))
+              balanceDao.upsert(balance.add(5.seconds))
             }
             _ <- fk(IO.raiseError(new Exception("transaction failed")))
           yield ()

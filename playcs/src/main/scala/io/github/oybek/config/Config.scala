@@ -11,7 +11,7 @@ case class Config(database: DbConfig,
                   serverPoolSize: Int)
 
 object Config:
-  def load[F[_]]: ConfigValue[F, Config] = (
+  def create[F[_]]: ConfigValue[F, Config] = (
     DbConfig.load,
     prop("server.ip").as[String],
     prop("tg.token").as[String],

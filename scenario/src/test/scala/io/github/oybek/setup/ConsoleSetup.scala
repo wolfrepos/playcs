@@ -2,22 +2,20 @@ package io.github.oybek.setup
 
 import cats.Id
 import cats.arrow.FunctionK
-import io.github.oybek.common.With
 import io.github.oybek.common.PoolManager
-import io.github.oybek.common.PoolManagerImpl
+import io.github.oybek.common.With
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
 import io.github.oybek.common.time.Clock
 import io.github.oybek.common.time.Timer
 import io.github.oybek.fakes.*
-import io.github.oybek.service.Console
 import io.github.oybek.service.HldsConsole
-import io.github.oybek.service.impl.ConsoleImpl
+import io.github.oybek.service.Hub
 import io.github.oybek.setup.TestEffect.DB
 import io.github.oybek.setup.TestEffect.F
 import telegramium.bots.ChatIntId
 
-trait ConsoleSetup:
+trait HubSetup:
   given ContextData(1234)
   given fakeTimer: Timer[F] = new FakeTimer[F]
   given fakeClock: Clock[F] = new FakeClock[F]
@@ -30,7 +28,7 @@ trait ConsoleSetup:
   val fakeAdminDao          = new FakeAdminDao[DB]
   val transactor            = new FunctionK[DB, F]:
     override def apply[A](fa: DB[A]): F[A] = Right(fa)
-  val consolePoolManager    = new PoolManagerImpl[F, HldsConsole[F], ChatIntId](
+  val consolePoolManager    = PoolManager.create[F, HldsConsole[F], ChatIntId](
     consolePoolRef,
     hldsConsole =>
       for
@@ -39,5 +37,4 @@ trait ConsoleSetup:
         _ <- hldsConsole.map("de_dust2")
       yield ()
   )
-  def setupConsole: Console[F] = new ConsoleImpl(consolePoolManager, passwordGenerator, fakeAdminDao, transactor, logger)
-  val console: Console[F] = new ConsoleImpl(consolePoolManager, passwordGenerator, fakeAdminDao, transactor, logger)
+  val hub: Hub[F] = Hub.create[F, DB](consolePoolManager, passwordGenerator, fakeAdminDao, transactor, logger)

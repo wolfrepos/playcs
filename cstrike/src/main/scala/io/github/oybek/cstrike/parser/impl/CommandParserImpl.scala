@@ -22,12 +22,6 @@ class CommandParserImpl extends CommandParser:
     (string(NewCommand(None).command) ~> optSuffix ~> opt(ws1 ~> mapNameParser))
       .map(map => NewCommand(map))
 
-  private val mapsCommandParser: Parser[MapsCommand.type] =
-    (string(MapsCommand.command) ~> optSuffix).map(_ => MapsCommand)
-
-  private val joinCommandParser: Parser[JoinCommand.type] =
-    (string(JoinCommand.command) ~> optSuffix).map(_ => JoinCommand)
-
   private val balanceCommandParser: Parser[BalanceCommand.type] =
     (string(BalanceCommand.command) ~> optSuffix).map(_ => BalanceCommand)
 
@@ -49,8 +43,6 @@ class CommandParserImpl extends CommandParser:
   private val commandParser: Parser[Command] =
     ws ~> (
       newCommandParser |
-      mapsCommandParser |
-      joinCommandParser |
       increaseBalanceCommandParser |
       balanceCommandParser |
       helpCommandParser |
