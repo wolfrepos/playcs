@@ -28,5 +28,5 @@ testAll := {
   (cstrike / Test / test).value
   (database / Test / test).value
   (scenario / Test / test).value
-  (Test / test).value
+  (playcs / Test / test).value
 }

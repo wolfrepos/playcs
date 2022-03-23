@@ -8,8 +8,6 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 enum Command(val command: String, val description: String):
   case NewCommand(map: Option[String]) extends Command("/new", "create a server, example: /new de_dust")
   case FreeCommand extends Command("/free", "delete the server")
-  case MapsCommand extends Command("/maps", "list available maps")
-  case JoinCommand extends Command("/join", "remind join command")
   case BalanceCommand extends Command("/balance", "show balance")
   case HelpCommand extends Command("/help", "show this message")
   case SayCommand(text: String) extends Command("/say", "write message to game")
@@ -20,8 +18,6 @@ object Command:
   val all: List[Command] = List(
     NewCommand(None),
     FreeCommand,
-    MapsCommand,
-    JoinCommand,
     BalanceCommand,
     HelpCommand,
     SayCommand("")

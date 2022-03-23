@@ -2,13 +2,12 @@ package io.github.oybek
 
 import io.github.oybek.common.With
 import io.github.oybek.common.and
-import io.github.oybek.exception.BusinessException.NoFreeConsolesException
 import io.github.oybek.fakes.FakeData.anotherFakeChatId
 import io.github.oybek.fakes.FakeData.fakeChatId
 import io.github.oybek.fakes.FakeData.fakePassword
 import io.github.oybek.model.Reaction.SendText
 import io.github.oybek.model.Reaction.Sleep
-import io.github.oybek.setup.ConsoleSetup
+import io.github.oybek.setup.HubSetup
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
 import telegramium.bots.Markdown
@@ -16,7 +15,7 @@ import telegramium.bots.Markdown
 import java.time.Instant
 import scala.concurrent.duration.DurationInt
 
-class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup:
+class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
 
   info("As a user")
   info("I want to be able to create dedicated counter strike server")
@@ -26,7 +25,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
       Given("console which has a free dedicated servers")
 
       When("/new command received")
-      val result = console.handle(fakeChatId, "/new")
+      val result = hub.handle(fakeChatId, "/new")
 
       Then("new dedicated server should be created")
       assert(
@@ -51,7 +50,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
       Given("console which has no free dedicated servers")
 
       When("/new command received")
-      val result = console.handle(anotherFakeChatId, "/new")
+      val result = hub.handle(anotherFakeChatId, "/new")
 
       Then("No servers left message should be returned")
       assert(result === Right(

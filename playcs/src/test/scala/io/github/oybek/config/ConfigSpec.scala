@@ -27,7 +27,7 @@ class ConfigSpec extends AnyFunSuite:
         System.setProperty(key, value)
     }
 
-    val loadedConfig = Config.load[IO].attempt.unsafeRunSync()
+    val loadedConfig = Config.create[IO].attempt.unsafeRunSync()
     val expectedConfig = Right(
       Config(
         DbConfig(

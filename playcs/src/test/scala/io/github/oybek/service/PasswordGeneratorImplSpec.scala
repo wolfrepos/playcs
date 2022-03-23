@@ -1,7 +1,7 @@
 package io.github.oybek.service
 
 import cats.Id
-import io.github.oybek.service.impl.PasswordGeneratorImpl
+import io.github.oybek.service.PasswordGenerator
 import org.scalatest.funsuite.AnyFunSuite
 
 class PasswordGeneratorImplSpec extends AnyFunSuite:
@@ -12,4 +12,4 @@ class PasswordGeneratorImplSpec extends AnyFunSuite:
     assert(password.length == 4)
   }
 
-  private lazy val passwordGenerator = new PasswordGeneratorImpl[Id]
+  private lazy val passwordGenerator = PasswordGenerator.create[Id]

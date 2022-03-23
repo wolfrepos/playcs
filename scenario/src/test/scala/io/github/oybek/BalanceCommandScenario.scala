@@ -3,13 +3,13 @@ package io.github.oybek
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.fakes.FakeData.fakeChatId
 import io.github.oybek.model.Reaction.{SendText, Sleep}
-import io.github.oybek.setup.ConsoleSetup
+import io.github.oybek.setup.HubSetup
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
 
 import scala.concurrent.duration.DurationInt
 
-class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup:
+class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetup:
 
   info("As a user")
   info("I want to be able to see the status of the server pool")
@@ -20,7 +20,7 @@ class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with Cons
       When("/balance command received")
       Then("command to status is returned")
       /*
-      assert(console.handle(fakeChatId, "/balance") ===
+      assert(hub.handle(fakeChatId, "/balance") ===
         Right(List(
           SendText(fakeChatId,
             s"""
@@ -37,11 +37,11 @@ class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with Cons
 
     Scenario("User gives command '/balance' when there is not free servers") {
       Given("console")
-      console.handle(fakeChatId, "/new")
+      hub.handle(fakeChatId, "/new")
       When("/balance command received")
       Then("command to status is returned")
       /*
-      assert(console.handle(fakeChatId, "/balance") ===
+      assert(hub.handle(fakeChatId, "/balance") ===
         Right(List(
           SendText(fakeChatId,
             s"""

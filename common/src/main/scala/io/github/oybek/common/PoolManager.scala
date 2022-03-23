@@ -19,30 +19,31 @@ trait PoolManager[F[_], T, Id]:
   def find(id: Id): F[Option[T]]
   def free(id: Id): F[Unit]
 
-class PoolManagerImpl[F[_]: Monad, T, Id]
-                     (poolRef: Ref[F, (List[T], List[T With Id])],
-                      reset: T => F[Unit]) extends PoolManager[F, T, Id]:
+object PoolManager:
+  def create[F[_]: Monad, T, Id]
+            (poolRef: Ref[F, (List[T], List[T With Id])],
+             reset: T => F[Unit]) =
+    new PoolManager[F, T, Id]:
+     override def rent(id: Id): F[Option[T]] =
+       poolRef.get.flatMap {
+         case (  Nil, busy) => Option.empty[T].pure[F]
+         case (x::xs, busy) =>
+           poolRef.set((xs, (x and id)::busy)) >>
+           reset(x) >>
+           Some(x).pure[F]
+       }
 
-  override def rent(id: Id): F[Option[T]] =
-    poolRef.get.flatMap {
-      case (  Nil, busy) => Option.empty[T].pure[F]
-      case (x::xs, busy) =>
-        poolRef.set((xs, (x and id)::busy)) >>
-        reset(x) >>
-        Some(x).pure[F]
-    }
+     override def find(id: Id): F[Option[T]] =
+       poolRef.get.map {
+         case (_, busy) =>
+           busy.find(_.meta == id).map(_.get)
+       }
 
-  override def find(id: Id): F[Option[T]] =
-    poolRef.get.map {
-      case (_, busy) =>
-        busy.find(_.meta == id).map(_.get)
-    }
-
-  override def free(id: Id): F[Unit] =
-    for
-      (free, busy) <- poolRef.get
-      (toFreeWithId, leftBusy) = busy.partition(_.meta == id)
-      toFree = toFreeWithId.map(_.get)
-      _ <- toFree.traverse(reset)
-      _ <- poolRef.set((free ++ toFree, leftBusy))
-    yield ()
+     override def free(id: Id): F[Unit] =
+       for
+         (free, busy) <- poolRef.get
+         (toFreeWithId, leftBusy) = busy.partition(_.meta == id)
+         toFree = toFreeWithId.map(_.get)
+         _ <- toFree.traverse(reset)
+         _ <- poolRef.set((free ++ toFree, leftBusy))
+       yield ()
