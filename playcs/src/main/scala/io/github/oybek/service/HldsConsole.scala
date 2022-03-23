@@ -15,8 +15,8 @@ trait HldsConsole[F[_]]:
 
 object HldsConsole:
   def create[F[_]](
-    ip: String,
-    port: Int,
+    anIp: String,
+    aPort: Int,
     consoleLow: HldsClient[F]
   ): HldsConsole[F] = new HldsConsole[F]:
     override def map(map: String): F[Unit] =
@@ -34,5 +34,5 @@ object HldsConsole:
     override def say(text: String): F[Unit] =
       consoleLow.execute(s"say $text")
 
-    override val ip = ip
-    override val port = port
+    override val ip = anIp
+    override val port = aPort
