@@ -37,12 +37,12 @@ class BalanceDaoSpec extends AnyFlatSpec with PostgresSetup:
         _ = assert(balanceOpt === Some(balance))
 
         affectedRows <- balanceDao
-          .add(balance)
+          .update(balance)
           .transact(tx)
         _ = assert(affectedRows === 1)
 
         affectedRows <- balanceDao
-          .add(balance)
+          .update(balance)
           .transact(tx)
         _ = assert(affectedRows === 1)
 

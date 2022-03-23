@@ -1,30 +1,41 @@
 package io.github.oybek
 
+import cats.Functor
+import cats.Parallel
 import cats.arrow.FunctionK
 import cats.effect.*
 import cats.implicits.*
-import cats.{Functor, Parallel}
+import doobie.ConnectionIO
+import doobie.ExecutionContexts
 import doobie.hikari.HikariTransactor
 import doobie.implicits.toConnectionIOOps
-import doobie.{ConnectionIO, ExecutionContexts}
+import io.github.oybek.common.PoolManagerImpl
 import io.github.oybek.common.Scheduler.every
-import io.github.oybek.common.logger.{ContextData, ContextLogger}
-import io.github.oybek.common.time.{Timer, Clock as Clockk}
+import io.github.oybek.common.With
+import io.github.oybek.common.logger.ContextData
+import io.github.oybek.common.logger.ContextLogger
+import io.github.oybek.common.time.Timer
+import io.github.oybek.common.time.{Clock as Clockk}
 import io.github.oybek.config.Config
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.database.DB
-import io.github.oybek.database.dao.impl.{AdminDaoImpl, BalanceDaoImpl}
-import io.github.oybek.integration.{HLDSConsoleClient, TGGate}
-import io.github.oybek.model.ConsolePool
+import io.github.oybek.database.dao.impl.AdminDaoImpl
+import io.github.oybek.database.dao.impl.BalanceDaoImpl
+import io.github.oybek.integration.HLDSConsoleClient
+import io.github.oybek.integration.TGGate
 import io.github.oybek.service.HldsConsole
-import io.github.oybek.service.impl.{ConsoleImpl, HldsConsoleImpl, HldsConsolePoolManagerImpl, PasswordGeneratorImpl}
+import io.github.oybek.service.impl.ConsoleImpl
+import io.github.oybek.service.impl.HldsConsoleImpl
+import io.github.oybek.service.impl.PasswordGeneratorImpl
 import org.http4s.blaze.client.BlazeClientBuilder
 import org.http4s.client.Client
 import org.http4s.client.middleware.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import telegramium.bots.BotCommand
+import telegramium.bots.ChatIntId
+import telegramium.bots.high.BotApi
+import telegramium.bots.high.Methods
 import telegramium.bots.high.implicits.methodOps
-import telegramium.bots.high.{BotApi, Methods}
 
 import java.io.File
 import java.time.Instant
@@ -55,24 +66,32 @@ def assembleAndLaunch(config: Config,
                       tx: HikariTransactor[IO]): IO[Unit] =
   val client = Logger(logHeaders = false, logBody = false)(httpClient)
   val api = BotApi[IO](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
-  val consolePool = ConsolePool[IO](free = consoles, busy = Nil)
-  val passwordGen = new PasswordGeneratorImpl[IO]
-  val transactor = new FunctionK[ConnectionIO, IO] {
+  val passwordGenerator = new PasswordGeneratorImpl[IO]
+  val transactor = new FunctionK[ConnectionIO, IO]:
     override def apply[A](a: ConnectionIO[A]): IO[A] =
       a.transact(tx)
-  }
+  val consolePool = (consoles, Nil)
   for
     consolePoolLogger <- ContextLogger.create[IO]("console-pool-manager")
     consoleLogger <- ContextLogger.create[IO]("console")
     tgGateLogger <- ContextLogger.create[IO]("tg-gate")
     _ <- DB.runMigrations[IO](tx)
-    consolePoolRef <- Ref.of[IO, ConsolePool[IO]](consolePool)
-    consolePoolManager = new HldsConsolePoolManagerImpl[IO, ConnectionIO](consolePoolRef, passwordGen, consolePoolLogger)
-    console = new ConsoleImpl[IO, ConnectionIO](consolePoolManager, BalanceDaoImpl, AdminDaoImpl, transactor, consoleLogger)
-    _ <- Spawn[IO].start {
-      given ContextData(1234)
-      console.expireCheck.every(1.minute)
-    }
+    consolePoolRef <- Ref.of[IO, (List[HldsConsole[IO]], List[HldsConsole[IO] With ChatIntId])](consolePool)
+    consolePoolManager = new PoolManagerImpl[IO, HldsConsole[IO], ChatIntId](
+      consolePoolRef,
+      hldsConsole =>
+        for
+          pass <- passwordGenerator.generate
+          _ <- hldsConsole.svPassword(pass)
+          _ <- hldsConsole.map("de_dust2")
+        yield ()
+    )
+    console = new ConsoleImpl[IO, ConnectionIO](
+      consolePoolManager,
+      passwordGenerator,
+      AdminDaoImpl,
+      transactor,
+      consoleLogger)
     tgGate = new TGGate(api, console, tgGateLogger)
     _ <- setCommands(api)
     _ <- tgGate.start()

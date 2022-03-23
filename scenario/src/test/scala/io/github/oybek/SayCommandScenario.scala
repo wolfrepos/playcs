@@ -31,6 +31,7 @@ class SayCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleS
     Scenario("User gives command '/say' after '/new' command") {
       Given("console with created server")
       console.handle(fakeChatId, "/new")
+
       When("/say command received")
       Then("message to dedicated server is sent")
       assert(console.handle(fakeChatId, "/say hello") ===
@@ -40,6 +41,7 @@ class SayCommandScenario extends AnyFeatureSpec with GivenWhenThen with ConsoleS
         hldsConsole.getCalledCommands === List(
           "sv_password 4444",
           "map de_dust2",
+          "sv_password 4444",
           "changelevel de_dust2",
           "say hello"))
     }
