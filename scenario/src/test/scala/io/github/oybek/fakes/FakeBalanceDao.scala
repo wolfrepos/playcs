@@ -13,7 +13,10 @@ class FakeBalanceDao[F[_]: Applicative] extends BalanceDao[F]:
   override def findBy(telegramId: Long): F[Option[Balance]] =
     Option(Balance(ChatIntId(123), FiniteDuration(15*60, TimeUnit.SECONDS))).pure[F]
 
-  override def addOrUpdate(balance: Balance): F[Int] =
+  override def add(balance: Balance): F[Int] =
+    1.pure[F]
+
+  override def update(balance: Balance): F[Int] =
     1.pure[F]
 
   override def addIfNotExists(balance: Balance): F[Int] =

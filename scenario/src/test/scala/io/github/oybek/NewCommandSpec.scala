@@ -1,11 +1,13 @@
 package io.github.oybek
 
-import io.github.oybek.common.WithMeta
-import io.github.oybek.common.withMeta
+import io.github.oybek.common.With
+import io.github.oybek.common.and
 import io.github.oybek.exception.BusinessException.NoFreeConsolesException
-import io.github.oybek.fakes.FakeData.{anotherFakeChatId, fakeChatId, fakePassword}
-import io.github.oybek.model.Reaction.{SendText, Sleep}
-import io.github.oybek.model.{ConsoleMeta, ConsolePool}
+import io.github.oybek.fakes.FakeData.anotherFakeChatId
+import io.github.oybek.fakes.FakeData.fakeChatId
+import io.github.oybek.fakes.FakeData.fakePassword
+import io.github.oybek.model.Reaction.SendText
+import io.github.oybek.model.Reaction.Sleep
 import io.github.oybek.setup.ConsoleSetup
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
@@ -32,16 +34,11 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
           List(
             s"sv_password $fakePassword",
             "map de_dust2",
-            "changelevel de_dust2")
+            s"sv_password $fakePassword",
+            "changelevel de_dust2"
+          )
       )
-      assert(consolePoolRef.get ===
-        Right(ConsolePool(
-          Nil,
-          List(hldsConsole withMeta
-            ConsoleMeta(
-              "4444",
-              fakeChatId,
-              Instant.ofEpochSecond(15*60))))))
+      assert(consolePoolRef.get === Right((Nil, List(hldsConsole and fakeChatId))))
 
       Then("the instructions should be reported")
       assert(result === Right(List(
@@ -57,8 +54,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with ConsoleSetup
       val result = console.handle(anotherFakeChatId, "/new")
 
       Then("No servers left message should be returned")
-      assert(result === Left(
-        NoFreeConsolesException(List(SendText(anotherFakeChatId, "Can't create new server, connect @wolfodav")))
-      ))
+      assert(result === Right(
+        List(SendText(anotherFakeChatId, "No free server left, contact t.me/turtlebots"))))
     }
   }
