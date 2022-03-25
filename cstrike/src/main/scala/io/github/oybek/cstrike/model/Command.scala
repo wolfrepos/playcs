@@ -15,14 +15,12 @@ enum Command(val command: String, val description: String):
 
 object Command:
 
-  val all: List[Command] = List(
+  val visible: List[Command] = List(
     NewCommand(None),
     FreeCommand,
-    BalanceCommand,
     HelpCommand,
-    SayCommand("")
   )
 
-  val helpText: String = all
+  val helpText: String = visible 
     .map(x => x.command + " - " + x.description)
     .mkString("\n")

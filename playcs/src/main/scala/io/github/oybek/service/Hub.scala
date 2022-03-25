@@ -4,7 +4,6 @@ import cats.Monad
 import cats.MonadThrow
 import cats.data.EitherT
 import cats.implicits.*
-import cats.implicits.*
 import cats.syntax.apply
 import cats.~>
 import io.github.oybek.common.PoolManager
@@ -38,11 +37,11 @@ trait Hub[F[_]]:
   def handle(chatId: ChatIntId, text: String): Context[F[List[Reaction]]]
 
 object Hub:
-  def create[F[_]: MonadThrow: Clock, G[_]: Monad](consolePoolManager: PoolManager[F, HldsConsole[F], ChatIntId],
-                                                 passwordGenerator: PasswordGenerator[F],
-                                                 adminDao: AdminDao[G],
-                                                 tx: G ~> F,
-                                                 log: ContextLogger[F]): Hub[F] = 
+  def create[F[_]: MonadThrow: Clock, G[_]: Monad](consolePool: PoolManager[F, HldsConsole[F], ChatIntId],
+                                                   passwordGenerator: PasswordGenerator[F],
+                                                   adminDao: AdminDao[G],
+                                                   tx: G ~> F,
+                                                   log: ContextLogger[F]): Hub[F] = 
     new Hub[F]:
       override def handle(chatId: ChatIntId, text: String): Context[F[List[Reaction]]] =
         log.info(s"Got message $text") >> (
@@ -60,27 +59,29 @@ object Hub:
           case _                => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
 
       private def handleNewCommand(chatId: ChatIntId, map: Option[String]): Context[F[List[Reaction]]] =
-        import consolePoolManager.{find, rent}
 
-        def caseFind: F[Option[List[Reaction]]] =
-          find(chatId).flatMap(_.traverse(console =>
-            console.changeLevel(map.getOrElse("de_dust2")).as(
-              List(SendText(chatId, "You already got the server, just changing a map")))
-          ))
+        val caseFind: F[Option[List[Reaction]]] =
+          for
+            c <- consolePool.find(chatId)
+            _ <- c.traverse(_.changeLevel(map.getOrElse("de_dust2"))).void
+            r =  c.as(List(SendText(chatId, "You already got the server, just changing a map")))
+          yield r
 
-        def caseRent: F[Option[List[Reaction]]] =
-          rent(chatId).flatMap(_.traverse(console =>
-            for
-              pass <- passwordGenerator.generate
-              _ <- console.svPassword(pass)
-              _ <- console.changeLevel(map.getOrElse("de_dust2"))
-            yield 
-              List(
+        val caseRent: F[Option[List[Reaction]]] =
+          for
+            c <- consolePool.rent(chatId)
+            r <- c.traverse { console =>
+              for
+                pass <- passwordGenerator.generate
+                _ <- console.svPassword(pass)
+                _ <- console.changeLevel(map.getOrElse("de_dust2"))
+              yield List(
                 SendText(chatId, "Your server is ready. Copy paste this"),
                 Sleep(200.millis),
-                sendConsole(chatId, console, pass
-              ))
-          ))
+                sendConsole(chatId, console, pass)
+              )
+            }
+          yield r
 
         val caseNone: List[Reaction] =
           List(SendText(chatId, "No free server left, contact t.me/turtlebots"))
@@ -88,9 +89,9 @@ object Hub:
         caseFind.orElseF(caseRent).getOrElse(caseNone)
 
       private def handleFreeCommand(chatId: ChatIntId): Context[F[List[Reaction]]] =
-        consolePoolManager.find(chatId).flatMap {
+        consolePool.find(chatId).flatMap {
           case Some(_) =>
-            consolePoolManager.free(chatId).as(
+            consolePool.free(chatId).as(
               List(SendText(chatId, "Server has been deleted")))
 
           case None =>
@@ -101,7 +102,7 @@ object Hub:
         List(SendText(chatId, helpText): Reaction).pure[F]
 
       private def handleSayCommand(chatId: ChatIntId, text: String): Context[F[List[Reaction]]] =
-        consolePoolManager.find(chatId).flatMap {
+        consolePool.find(chatId).flatMap {
           case None =>
             List(SendText(chatId, "Create a server first (/help)")).pure[F]
           case Some(console) =>

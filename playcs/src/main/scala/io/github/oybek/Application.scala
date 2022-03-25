@@ -115,5 +115,5 @@ def resources(config: Config): Resource[IO, (Client[IO], List[HldsConsole[IO]], 
   yield (client, consoles, transactor)
 
 def setCommands[F[_] : Functor](api: BotApi[F]): F[Unit] =
-  val commands = Command.all.map(x => BotCommand(x.command, x.description))
+  val commands = Command.visible.map(x => BotCommand(x.command, x.description))
   Methods.setMyCommands(commands).exec(api).void
