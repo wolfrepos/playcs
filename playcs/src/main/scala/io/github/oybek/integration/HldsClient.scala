@@ -23,19 +23,20 @@ object HldsClient:
       s"./hlds_run -game cstrike +ip 0.0.0.0 +port $port +maxplayers 12 +map de_dust2 +exec server.cfg",
       hldsDir
     )
-    val processIO = new ProcessIO(Gate.stream, _ => (), _ => ())
+    val gate = new Gate
+    val processIO = new ProcessIO(gate.stream, _ => (), _ => ())
     Resource.make {
       IO(processDesc.run(processIO)).map { p =>
         new HldsClient[IO]:
-          def execute(s: String): IO[Unit] =
-            IO(Gate.push(s)) >> IO.sleep(200.millis)
           override val process = p
+          def execute(s: String): IO[Unit] =
+            IO(gate.push(s)) >> IO.sleep(200.millis)
       }
     } { consoleLow =>
       IO.delay(consoleLow.process.destroy())
     }
 
-  private object Gate:
+  private class Gate:
     private val queue = new ConcurrentLinkedQueue[String]()
 
     def stream(os: OutputStream): Unit = synchronized {
