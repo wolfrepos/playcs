@@ -3,7 +3,7 @@ package io.github.oybek.config
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import io.github.oybek.database.config.DbConfig
+import io.github.oybek.database.DbConfig
 import org.scalatest.funsuite.AnyFunSuite
 import org.testcontainers.shaded.org.apache.commons.lang.SystemUtils
 

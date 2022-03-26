@@ -6,9 +6,9 @@ import com.dimafeng.testcontainers.ForAllTestContainer
 import com.dimafeng.testcontainers.PostgreSQLContainer
 import doobie.*
 import doobie.implicits.*
-import io.github.oybek.database.config.DbConfig
-import io.github.oybek.database.dao.BalanceDao
-import io.github.oybek.database.model.Balance
+import io.github.oybek.database.DbConfig
+import io.github.oybek.database.balance.dao.BalanceDao
+import io.github.oybek.database.balance.model.Balance
 import org.testcontainers.utility.DockerImageName
 import telegramium.bots.ChatIntId
 

@@ -1,9 +1,9 @@
-package io.github.oybek.database.dao
+package io.github.oybek.database.balance.dao
 
 import doobie.*
 import doobie.implicits.*
-import io.github.oybek.database.dao.BalanceDao
-import io.github.oybek.database.model.Balance
+import io.github.oybek.database.balance.dao.BalanceDao
+import io.github.oybek.database.balance.model.Balance
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration

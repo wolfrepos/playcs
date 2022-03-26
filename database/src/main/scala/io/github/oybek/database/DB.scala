@@ -3,7 +3,6 @@ package io.github.oybek.database
 import cats.effect.{Async, Resource, Sync}
 import doobie.hikari.HikariTransactor
 import doobie.util.transactor.Transactor
-import io.github.oybek.database.config.DbConfig
 import org.flywaydb.core.Flyway
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 

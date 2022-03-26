@@ -1,4 +1,4 @@
-package io.github.oybek.database.model
+package io.github.oybek.database.balance.model
 
 import telegramium.bots.ChatIntId
 

@@ -15,7 +15,7 @@ import io.github.oybek.common.time.Clock
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.model.Command.*
 import io.github.oybek.cstrike.parser.CommandParser
-import io.github.oybek.database.dao.AdminDao
+import io.github.oybek.database.admin.dao.AdminDao
 import io.github.oybek.exception.BusinessException.UnathorizedException
 import io.github.oybek.exception.BusinessException.ZeroBalanceException
 import io.github.oybek.model.Reaction
