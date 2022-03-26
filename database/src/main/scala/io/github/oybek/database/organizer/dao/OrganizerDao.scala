@@ -1,4 +1,4 @@
-package io.github.oybek.organizer.service
+package io.github.oybek.organizer.dao
 
 import cats.Applicative
 import cats.implicits.toFunctorOps
@@ -10,33 +10,35 @@ import io.github.oybek.organizer.model.Will
 import java.time.OffsetDateTime
 
 trait OrganizerDao[F[_]]:
-  def save(intervals: Will*): F[Int]
+  def save(wills: Will*): F[Int]
   def selectContains(offsetDateTime: OffsetDateTime): F[List[Will]]
-  def deleteContains(offsetDateTime: OffsetDateTime): F[Unit]
+  def deleteContains(offsetDateTime: OffsetDateTime): F[Int]
 
 object OrganizerDao:
-  given Write[Will] = Write[
-    (Long, Long, OffsetDateTime, OffsetDateTime)
-  ].contramap[Will]{ cc => 
-    (cc.userId, cc.chatId, cc.start, cc.end)
-  }
+  given Write[Will] = Write[(Long, Long, OffsetDateTime, OffsetDateTime)]
+    .contramap[Will] { cc => 
+      (cc.userId, cc.chatId, cc.start, cc.end)
+    }
 
   def create: OrganizerDao[ConnectionIO] =
     new OrganizerDao[ConnectionIO]:
-      override def save(intervals: Will*): ConnectionIO[Int] =
-        Update[Will](
+      override def save(wills: Will*): ConnectionIO[Int] =
+        val sql = 
           """
-          insert into will (user_id, chat_id, start, endd)
+          insert into will (user_id, chat_id, "start", "end")
           values (?, ?, ?, ?)
           """
-        ).updateMany(intervals)
+        Update[Will](sql).updateMany(wills)
 
       override def selectContains(offsetDateTime: OffsetDateTime): ConnectionIO[List[Will]] =
         sql"""
-        select user_id, chat_id, start, end from interval
-        where start <= $offsetDateTime and $offsetDateTime <= end
+        select user_id, chat_id, "start", "end" from will
+        where "start" <= $offsetDateTime and $offsetDateTime <= "end"
         """.query[Will].to[List]
 
-      override def deleteContains(offsetDateTime: OffsetDateTime): ConnectionIO[Unit] =
-        ???
+      override def deleteContains(offsetDateTime: OffsetDateTime): ConnectionIO[Int] =
+        sql"""
+        delete from will
+        where "start" <= $offsetDateTime and $offsetDateTime <= "end"
+        """.update.run
       

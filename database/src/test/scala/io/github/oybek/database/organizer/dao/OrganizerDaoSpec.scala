@@ -7,7 +7,7 @@ import doobie.implicits.*
 import io.github.oybek.database.DB
 import io.github.oybek.database.PostgresSetup
 import io.github.oybek.organizer.model.Will
-import io.github.oybek.organizer.service.OrganizerDao
+import io.github.oybek.organizer.dao.OrganizerDao
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.time.OffsetDateTime
@@ -28,6 +28,17 @@ trait OrganizerDaoSpec extends AnyFunSuite with PostgresSetup:
   )
 
   test("OrganizerDao") {
-    //transactor.use { tx =>
-    //}.unsafeRunTimed(10.seconds)
+    transactor.use { tx =>
+      for
+        _ <- organizerDao.save(will).transact(tx)
+        willRead <- organizerDao.selectContains(will.start).transact(tx)
+        _ = assert(List(will) == willRead)
+        _ <- organizerDao.deleteContains(will.start.minusHours(1)).transact(tx)
+        willRead <- organizerDao.selectContains(will.start).transact(tx)
+        _ = assert(List(will) == willRead)
+        _ <- organizerDao.deleteContains(will.start).transact(tx)
+        willRead <- organizerDao.selectContains(will.start).transact(tx)
+        _ = assert(willRead.isEmpty)
+      yield ()
+    }.unsafeRunTimed(10.seconds)
   } 
