@@ -14,7 +14,6 @@ import doobie.implicits.*
 import io.github.oybek.database.config.DbConfig
 import io.github.oybek.database.dao.BalanceDao
 import io.github.oybek.database.model.Balance
-import org.scalatest.flatspec.AnyFlatSpec
 import org.testcontainers.utility.DockerImageName
 import telegramium.bots.ChatIntId
 
@@ -23,9 +22,10 @@ import scala.concurrent.ExecutionContext.global as globalEc
 import scala.concurrent.duration.FiniteDuration
 
 import concurrent.duration.DurationInt
+import org.scalatest.funsuite.AnyFunSuite
 
-class TransactionSpec extends AnyFlatSpec with PostgresSetup with doobie.free.Instances with doobie.syntax.AllSyntax:
-  val balanceDao: BalanceDao[ConnectionIO] = BalanceDao.create
+trait TransactionSpec extends AnyFunSuite with PostgresSetup with doobie.free.Instances with doobie.syntax.AllSyntax:
+  val someDao: BalanceDao[ConnectionIO] = BalanceDao.create
   val balance = Balance(
     telegramId = ChatIntId(123),
     timeLeft = FiniteDuration(60, TimeUnit.SECONDS)
@@ -34,24 +34,24 @@ class TransactionSpec extends AnyFlatSpec with PostgresSetup with doobie.free.In
     def add(duration: FiniteDuration): Balance =
       balance.copy(timeLeft = balance.timeLeft + duration)
 
-  "transaction".should("fail and rollback") in {
+  test("TransactionSpec") {
     (transactor, WeakAsync.liftK[IO, ConnectionIO]).mapN((x, y) => (x, y)).use {
       (tx, fk) =>
         for
           _ <- DB.runMigrations(tx)
-          _ <- balanceDao.upsert(balance).transact(tx)
+          _ <- someDao.upsert(balance).transact(tx)
 
           query = for
-            _ <- balanceDao.upsert(balance.add(5.seconds))
-            balanceOpt <- balanceDao.findBy(balance.telegramId.id)
+            _ <- someDao.upsert(balance.add(5.seconds))
+            balanceOpt <- someDao.findBy(balance.telegramId.id)
             _ <- balanceOpt.traverse { b =>
-              balanceDao.upsert(balance.add(5.seconds))
+              someDao.upsert(balance.add(5.seconds))
             }
             _ <- fk(IO.raiseError(new Exception("transaction failed")))
           yield ()
           _ <- query.transact(tx).attempt
 
-          balanceOpt <- balanceDao.findBy(balance.telegramId.id).transact(tx)
+          balanceOpt <- someDao.findBy(balance.telegramId.id).transact(tx)
           _ = assert(balanceOpt === Some(balance.copy(timeLeft = 60.seconds)))
         yield ()
     }.unsafeRunSync()

@@ -9,7 +9,7 @@ import doobie.implicits.*
 import io.github.oybek.database.config.DbConfig
 import io.github.oybek.database.dao.AdminDao
 import io.github.oybek.database.model.Balance
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.funsuite.AnyFunSuite
 import org.testcontainers.utility.DockerImageName
 import telegramium.bots.ChatIntId
 
@@ -18,11 +18,11 @@ import scala.concurrent.ExecutionContext.global as globalEc
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
 
-class AdminDaoSpec extends AnyFlatSpec with PostgresSetup:
+trait AdminDaoSpec extends AnyFunSuite with PostgresSetup:
 
   val adminDao: AdminDao[ConnectionIO] = AdminDao.create
 
-  "isAdmin".should("work") in {
+  test("AdminDao") {
     transactor.use { tx =>
       for
         _ <- DB.runMigrations(tx)

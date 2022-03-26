@@ -24,14 +24,19 @@ object OrganizerDao:
   def create: OrganizerDao[ConnectionIO] =
     new OrganizerDao[ConnectionIO]:
       override def save(intervals: Will*): ConnectionIO[Int] =
-        val sql = "insert into interval (user_id, chat_id, start, end) values (?, ?, ?, ?)"
-        Update[Will](sql).updateMany(intervals)
+        Update[Will](
+          """
+          insert into will (user_id, chat_id, start, endd)
+          values (?, ?, ?, ?)
+          """
+        ).updateMany(intervals)
 
       override def selectContains(offsetDateTime: OffsetDateTime): ConnectionIO[List[Will]] =
         sql"""
-            |select user_id, chat_id, start, end from interval
-            |where start <= $offsetDateTime and $offsetDateTime <= end
-            |""".query[Will].to[List]
+        select user_id, chat_id, start, end from interval
+        where start <= $offsetDateTime and $offsetDateTime <= end
+        """.query[Will].to[List]
 
       override def deleteContains(offsetDateTime: OffsetDateTime): ConnectionIO[Unit] =
         ???
+      
