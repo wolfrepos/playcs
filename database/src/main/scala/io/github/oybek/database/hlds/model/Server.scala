@@ -1,4 +1,4 @@
-package io.github.oybek.database.model
+package io.github.oybek.database.hlds.model
 
 import java.time.OffsetDateTime
 

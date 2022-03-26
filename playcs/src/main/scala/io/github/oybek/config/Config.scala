@@ -2,7 +2,7 @@ package io.github.oybek.config
 
 import cats.implicits.*
 import ciris.*
-import io.github.oybek.database.config.DbConfig
+import io.github.oybek.database.DbConfig
 
 case class Config(database: DbConfig,
                   serverIp: String,

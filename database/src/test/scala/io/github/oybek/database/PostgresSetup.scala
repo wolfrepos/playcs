@@ -6,7 +6,7 @@ import com.dimafeng.testcontainers.ForAllTestContainer
 import com.dimafeng.testcontainers.PostgreSQLContainer
 import doobie.ConnectionIO
 import doobie.implicits.toConnectionIOOps
-import io.github.oybek.database.config.DbConfig
+import io.github.oybek.database.DbConfig
 import org.scalatest.Suite
 import org.scalatest.flatspec.AnyFlatSpec
 import org.testcontainers.utility.DockerImageName

@@ -6,22 +6,22 @@ import com.dimafeng.testcontainers.ForAllTestContainer
 import com.dimafeng.testcontainers.PostgreSQLContainer
 import doobie.*
 import doobie.implicits.*
-import io.github.oybek.database.config.DbConfig
-import io.github.oybek.database.dao.BalanceDao
-import io.github.oybek.database.model.Balance
-import org.scalatest.flatspec.AnyFlatSpec
+import io.github.oybek.database.DbConfig
+import io.github.oybek.database.balance.dao.BalanceDao
+import io.github.oybek.database.balance.model.Balance
 import org.testcontainers.utility.DockerImageName
 import telegramium.bots.ChatIntId
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.global as globalEc
 import scala.concurrent.duration.FiniteDuration
+import org.scalatest.funsuite.AnyFunSuite
 
-class BalanceDaoSpec extends AnyFlatSpec with PostgresSetup:
+trait BalanceDaoSpec extends AnyFunSuite with PostgresSetup:
 
   val balanceDao: BalanceDao[ConnectionIO] = BalanceDao.create
 
-  "addOrUpdate".should("work") in {
+  test("BalanceDao") {
     transactor.use { tx =>
       for
         _ <- DB.runMigrations(tx)

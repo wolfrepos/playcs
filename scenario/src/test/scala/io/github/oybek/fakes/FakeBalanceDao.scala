@@ -2,8 +2,8 @@ package io.github.oybek.fakes
 
 import cats.Applicative
 import cats.implicits.catsSyntaxApplicativeId
-import io.github.oybek.database.dao.BalanceDao
-import io.github.oybek.database.model.Balance
+import io.github.oybek.database.balance.dao.BalanceDao
+import io.github.oybek.database.balance.model.Balance
 import telegramium.bots.ChatIntId
 
 import java.util.concurrent.TimeUnit

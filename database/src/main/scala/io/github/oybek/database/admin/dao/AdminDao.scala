@@ -1,8 +1,7 @@
-package io.github.oybek.database.dao
+package io.github.oybek.database.admin.dao
 
 import doobie.*
 import doobie.implicits.*
-import io.github.oybek.database.dao.AdminDao
 
 trait AdminDao[F[_]]:
   def isAdmin(telegramId: Long): F[Boolean]

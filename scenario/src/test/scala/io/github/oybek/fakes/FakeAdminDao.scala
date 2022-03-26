@@ -2,8 +2,8 @@ package io.github.oybek.fakes
 
 import cats.Applicative
 import cats.implicits.catsSyntaxApplicativeId
-import io.github.oybek.database.dao.AdminDao
-import io.github.oybek.database.model.Balance
+import io.github.oybek.database.admin.dao.AdminDao
+import io.github.oybek.database.balance.model.Balance
 import io.github.oybek.fakes.FakeData.adminChatId
 import telegramium.bots.ChatIntId
 

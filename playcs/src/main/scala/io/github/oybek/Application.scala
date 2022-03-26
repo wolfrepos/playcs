@@ -19,7 +19,7 @@ import io.github.oybek.common.time.{Clock as Clockk}
 import io.github.oybek.config.Config
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.database.DB
-import io.github.oybek.database.dao.AdminDao
+import io.github.oybek.database.admin.dao.AdminDao
 import io.github.oybek.integration.HldsClient
 import io.github.oybek.integration.TgGate
 import io.github.oybek.service.HldsConsole

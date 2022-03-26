@@ -1,4 +1,4 @@
-package io.github.oybek.database.config
+package io.github.oybek.database
 
 import cats.implicits.*
 import ciris.*

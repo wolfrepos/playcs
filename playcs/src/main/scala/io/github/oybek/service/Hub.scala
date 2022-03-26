@@ -15,7 +15,7 @@ import io.github.oybek.common.time.Clock
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.model.Command.*
 import io.github.oybek.cstrike.parser.CommandParser
-import io.github.oybek.database.dao.AdminDao
+import io.github.oybek.database.admin.dao.AdminDao
 import io.github.oybek.exception.BusinessException.UnathorizedException
 import io.github.oybek.exception.BusinessException.ZeroBalanceException
 import io.github.oybek.model.Reaction
@@ -45,7 +45,7 @@ object Hub:
     new Hub[F]:
       override def handle(chatId: ChatIntId, text: String): Context[F[List[Reaction]]] =
         log.info(s"Got message $text") >> (
-          CommandParser.parse(text) match
+          CommandParser.parse(text, 2022) match
             case _: String => confusedMessage(chatId)
             case command: Command => handleCommand(chatId, command)
         )

@@ -1,12 +1,22 @@
 
-create table payment (
-  id bigserial primary key,
-  rubles bigint not null,
-  telegram_id bigint not null,
-  charge_time timestamp with time zone not null
+create table admin (
+  chat_id bigint primary key
+);
+
+create table server (
+  chat_id bigint primary key,
+  pass varchar not null,
+  map varchar not null
 );
 
 create table balance (
-  telegram_id bigint primary key,
-  seconds bigint not null
+  chat_id bigint primary key,
+  minutes bigint not null
+);
+
+create table will (
+  user_id bigint not null,
+  chat_id bigint not null,
+  "start" timestamp with time zone not null,
+  "end" timestamp with time zone not null
 );

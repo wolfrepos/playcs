@@ -1,16 +1,21 @@
 package io.github.oybek.cstrike.parser.impl
 
-import atto.*
 import atto.Atto.*
+import atto.Parser.ParserMonad
+import atto.*
+import cats.implicits.catsSyntaxOptionId
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.model.Command.*
 import io.github.oybek.cstrike.parser.CommandParser
 
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.duration.DurationLong
+import scala.util.Try
 
 class CommandParserImpl extends CommandParser:
-  override def parse(text: String): String | Command =
-    commandParser.parseOnly(text).either match {
+  override def parse(text: String, year: Int): String | Command =
+    commandParser(year).parseOnly(text).either match {
       case Left(error) => error
       case Right(command) => command
     }
@@ -40,7 +45,38 @@ class CommandParserImpl extends CommandParser:
       case (telegramId, duration) => IncreaseBalanceCommand(telegramId, duration.minutes)
     }
 
-  private val commandParser: Parser[Command] =
+  private def willCommandParser(year: Int): Parser[WillCommand] = (
+    for
+      _  <- string(WillCommand(None, None).command) <~ optSuffix <~ ws1
+      args <- opt(
+        for
+          dd <- int 
+          _  <- char('.')
+          mm <- int
+          _  <- ws1
+          h1 <- int
+          _  <- char('-')
+          h2 <- int
+          _  <- ws1
+          os <- int
+        yield (dd, mm, h1, h2, os)
+      )
+    yield args
+  ).flatMap {
+    case Some(dd, mm, h1, h2, offset) =>
+      List(h1, h2).flatMap { hh =>
+        Try(OffsetDateTime.of(year, mm, dd, hh, 0, 0, 0, ZoneOffset.ofHours(offset))).toOption
+      } match {
+        case start::end::Nil if start.isBefore(end) =>
+          ParserMonad.pure[WillCommand](WillCommand(start.some, end.some))
+        case _ =>
+          ParserMonad.pure[WillCommand](WillCommand(None, None))
+      }
+    case None =>
+      ParserMonad.pure[WillCommand](WillCommand(None, None))
+  }
+
+  private def commandParser(year: Int): Parser[Command] =
     ws ~> (
       newCommandParser |
       increaseBalanceCommandParser |
@@ -48,6 +84,7 @@ class CommandParserImpl extends CommandParser:
       helpCommandParser |
       freeCommandParser |
       sayCommandParser |
+      willCommandParser(year) |
       err[Command]("Unknown command")
     ) <~ ws <~ endOfInput
 

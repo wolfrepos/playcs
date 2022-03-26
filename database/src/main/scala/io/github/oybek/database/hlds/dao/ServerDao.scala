@@ -1,6 +1,6 @@
-package io.github.oybek.database.dao
+package io.github.oybek.database.hlds.dao
 
-import io.github.oybek.database.model.Server
+import io.github.oybek.database.hlds.model.Server
 
 trait ServerDao[F[_]]:
   def add(server: Server): F[Unit]
