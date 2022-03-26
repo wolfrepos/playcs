@@ -45,7 +45,7 @@ object Hub:
     new Hub[F]:
       override def handle(chatId: ChatIntId, text: String): Context[F[List[Reaction]]] =
         log.info(s"Got message $text") >> (
-          CommandParser.parse(text) match
+          CommandParser.parse(text, 2022) match
             case _: String => confusedMessage(chatId)
             case command: Command => handleCommand(chatId, command)
         )
