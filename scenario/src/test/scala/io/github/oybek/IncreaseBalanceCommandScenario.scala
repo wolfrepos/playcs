@@ -2,7 +2,7 @@ package io.github.oybek
 
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.exception.BusinessException.UnathorizedException
-import io.github.oybek.fakes.FakeData.{adminChatId, fakeChatId}
+import io.github.oybek.fakes.FakeData.{adminChatId, fakeChatId, fakeUser}
 import io.github.oybek.model.Reaction.{SendText, Sleep}
 import io.github.oybek.setup.HubSetup
 import org.scalatest.GivenWhenThen
@@ -31,7 +31,7 @@ class IncreaseBalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen w
 
     Scenario("User gives command '/balance'") {
       Given("console")
-      hub.handle(fakeChatId, "/new")
+      hub.handle(fakeChatId, fakeUser, "/new")
       When("/balance command received")
       Then("nothing happens")
       /*

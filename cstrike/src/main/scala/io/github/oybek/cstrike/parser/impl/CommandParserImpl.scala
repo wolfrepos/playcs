@@ -47,10 +47,10 @@ class CommandParserImpl extends CommandParser:
 
   private def willCommandParser(year: Int): Parser[WillCommand] = (
     for
-      _  <- string(WillCommand(None, None).command) <~ optSuffix <~ ws1
+      _  <- string(WillCommand(None, None).command) <~ optSuffix
       args <- opt(
         for
-          dd <- int 
+          dd <- ws1 ~> int 
           _  <- char('.')
           mm <- int
           _  <- ws1

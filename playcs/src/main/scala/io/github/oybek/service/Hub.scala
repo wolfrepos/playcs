@@ -32,9 +32,15 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
+import java.time.OffsetDateTime
+import telegramium.bots.User
+import telegramium.bots.Markdown2
 
 trait Hub[F[_]]:
-  def handle(chatId: ChatIntId, text: String): Context[F[List[Reaction]]]
+  def duty(offsetDateTime: OffsetDateTime): F[List[Reaction]]
+  def handle(chatId: ChatIntId,
+             user: User,
+             text: String): Context[F[List[Reaction]]]
 
 object Hub:
   def create[F[_]: MonadThrow: Clock, G[_]: Monad](consolePool: PoolManager[F, HldsConsole[F], ChatIntId],
@@ -43,20 +49,48 @@ object Hub:
                                                    tx: G ~> F,
                                                    log: ContextLogger[F]): Hub[F] = 
     new Hub[F]:
-      override def handle(chatId: ChatIntId, text: String): Context[F[List[Reaction]]] =
-        log.info(s"Got message $text") >> (
-          CommandParser.parse(text, 2022) match
-            case _: String => confusedMessage(chatId)
-            case command: Command => handleCommand(chatId, command)
-        )
+      override def duty(offsetDateTime: OffsetDateTime): F[List[Reaction]] =
+        ???
 
-      private def handleCommand(chatId: ChatIntId, command: Command): Context[F[List[Reaction]]] =
+      override def handle(chatId: ChatIntId,
+                          user: User,
+                          text: String): Context[F[List[Reaction]]] =
+        log.info(s"Got message $text") >> {
+          CommandParser.parse(text, 2022) match
+            case       _: String  => confusedMessage(chatId)
+            case command: Command => handleCommand(chatId, user, command)
+        }
+
+      private def handleCommand(chatId: ChatIntId,
+                                user: User,
+                                command: Command): Context[F[List[Reaction]]] =
         command match
-          case NewCommand(map)  => handleNewCommand(chatId, map)
-          case FreeCommand      => handleFreeCommand(chatId)
-          case HelpCommand      => handleHelpCommand(chatId)
-          case SayCommand(text) => handleSayCommand(chatId, text)
-          case _                => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
+          case NewCommand(map)         => handleNewCommand(chatId, map)
+          case FreeCommand             => handleFreeCommand(chatId)
+          case HelpCommand             => handleHelpCommand(chatId)
+          case SayCommand(text)        => handleSayCommand(chatId, text)
+          case WillCommand(start, end) => handleWillCommand(chatId, user, start, end)
+          case _                       => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
+
+      private def handleWillCommand(chatId: ChatIntId,
+                                    user: User,
+                                    startOpt: Option[OffsetDateTime],
+                                    endOpt: Option[OffsetDateTime]): Context[F[List[Reaction]]] =
+        (startOpt, endOpt) match {
+          case (Some(start), Some(end)) =>
+            ???
+          case _ =>
+            List(SendText(
+              chatId,
+              """
+                |If you want to create a will, follow the example:
+                |`/will 26.03 19-20 +5`
+                |Means that you willing to play on 26th of march
+                |from 19 to 20 o clock at UTC+5
+                |""".stripMargin,
+              Markdown.some
+            )).pure[F]
+        }
 
       private def handleNewCommand(chatId: ChatIntId, map: Option[String]): Context[F[List[Reaction]]] =
 

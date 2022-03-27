@@ -36,6 +36,7 @@ class CommandParserSpec extends AnyFlatSpec:
     ("   /say@playcs_bot hello"         , SayCommand("hello")),
     ("   /say hello"                    , SayCommand("hello")),
     (" /will@playcs_bot "               , WillCommand(None, None)),
+    ("/will"                            , WillCommand(None, None)),
     (" /will@playcs_bot 26.03 19-20 +5" , {
       val start = OffsetDateTime.parse("2022-03-26T19:00:00+05:00")
       val end = OffsetDateTime.parse("2022-03-26T20:00:00+05:00")

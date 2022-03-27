@@ -4,6 +4,7 @@ import io.github.oybek.common.With
 import io.github.oybek.common.and
 import io.github.oybek.fakes.FakeData.anotherFakeChatId
 import io.github.oybek.fakes.FakeData.fakeChatId
+import io.github.oybek.fakes.FakeData.fakeUser
 import io.github.oybek.fakes.FakeData.fakePassword
 import io.github.oybek.model.Reaction.SendText
 import io.github.oybek.model.Reaction.Sleep
@@ -27,7 +28,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
       Given("console which has a free dedicated servers")
 
       When("/new command received")
-      val result = hub.handle(fakeChatId, "/new")
+      val result = hub.handle(fakeChatId, fakeUser, "/new")
 
       Then("new dedicated server should be created")
       assert(
@@ -54,7 +55,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
       Given("user who already has the server")
 
       When("/new command received")
-      val result = hub.handle(fakeChatId, "/new")
+      val result = hub.handle(fakeChatId, fakeUser, "/new")
 
       Then("new dedicated server should be created")
       assert(hldsConsole.getCalledCommands === List("changelevel de_dust2"))
@@ -71,7 +72,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
       Given("console which has no free dedicated servers")
 
       When("/new command received")
-      val result = hub.handle(anotherFakeChatId, "/new")
+      val result = hub.handle(anotherFakeChatId, fakeUser, "/new")
 
       Then("No servers left message should be returned")
       assert(hldsConsole.getCalledCommands.isEmpty)

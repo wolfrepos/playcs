@@ -1,0 +1,10 @@
+#!/bin/bash
+
+sbt -Ddatabase.driver=org.postgresql.Driver \
+    -Ddatabase.url=jdbc:postgresql://localhost:5432/playcs \
+    -Ddatabase.user=playcs \
+    -Ddatabase.pass="" \
+    -Dserver.ip="127.0.0.1" \
+    -Dtg.token="814745401:AAHzKiQvqKBrgYOsDtucxvE3cO010uSKlxw" \
+    -Dhlds.dir="/home/bender/steam_cmd/hlds" \
+    -Dpool.size=0 playcs/run

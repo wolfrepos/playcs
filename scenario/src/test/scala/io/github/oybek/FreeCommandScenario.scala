@@ -1,6 +1,7 @@
 package io.github.oybek
 
 import io.github.oybek.fakes.FakeData.fakeChatId
+import io.github.oybek.fakes.FakeData.fakeUser
 import io.github.oybek.model.Reaction.SendText
 import io.github.oybek.setup.HubSetup
 import org.scalatest.GivenWhenThen
@@ -18,18 +19,18 @@ class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetu
       When("/free command received")
 
       Then("server is free and returned back to pool and appropriate message returned")
-      assert(hub.handle(fakeChatId, "/free") ===
+      assert(hub.handle(fakeChatId, fakeUser, "/free") ===
         Right(List(SendText(fakeChatId, "No created servers"))))
     }
 
     Scenario("User gives command '/free'") {
       Given("console with allocated server")
-      hub.handle(fakeChatId, "/new")
+      hub.handle(fakeChatId, fakeUser, "/new")
 
       When("/free command received")
 
       Then("server is free and returned back to pool and appropriate message returned")
-      assert(hub.handle(fakeChatId, "/free") ===
+      assert(hub.handle(fakeChatId, fakeUser, "/free") ===
         Right(List(SendText(fakeChatId, "Server has been deleted"))))
     }
   }
