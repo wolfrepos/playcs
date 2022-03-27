@@ -2,6 +2,7 @@ package io.github.oybek
 
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.fakes.FakeData.fakeChatId
+import io.github.oybek.fakes.FakeData.fakeUser
 import io.github.oybek.model.Reaction.{SendText, Sleep}
 import io.github.oybek.setup.HubSetup
 import org.scalatest.GivenWhenThen
@@ -37,7 +38,7 @@ class BalanceCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubS
 
     Scenario("User gives command '/balance' when there is not free servers") {
       Given("console")
-      hub.handle(fakeChatId, "/new")
+      hub.handle(fakeChatId, fakeUser, "/new")
       When("/balance command received")
       Then("command to status is returned")
       /*

@@ -39,6 +39,8 @@ import java.io.File
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.*
+import io.github.oybek.organizer.dao.OrganizerDao
+import io.github.oybek.service.Organizer
 
 given timer: Timer[IO] = (duration: FiniteDuration) => IO.sleep(duration)
 given clock: Clockk[IO] = new Clockk[IO]:
@@ -69,6 +71,8 @@ def assembleAndLaunch(config: Config,
       a.transact(tx)
   val consolePool = (consoles, Nil)
   val adminDao = AdminDao.create
+  val organizerDao = OrganizerDao.create
+  val organizer = Organizer.create[IO, ConnectionIO](organizerDao, transactor)
   for
     consolePoolLogger <- ContextLogger.create[IO]("console-pool-manager")
     consoleLogger <- ContextLogger.create[IO]("console")
@@ -88,10 +92,12 @@ def assembleAndLaunch(config: Config,
       consolePoolManager,
       passwordGenerator,
       adminDao,
+      organizer,
       transactor,
       consoleLogger)
+    tgGate = TgGate.create(api, hub, tgGateLogger)
     _ <- setCommands(api)
-    _ <- TgGate.create(api, hub, tgGateLogger).start()
+    _ <- tgGate.start()
   yield ()
 
 def resources(config: Config): Resource[IO, (Client[IO], List[HldsConsole[IO]], HikariTransactor[IO])] =

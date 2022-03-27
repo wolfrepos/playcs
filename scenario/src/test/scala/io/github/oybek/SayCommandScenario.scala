@@ -3,6 +3,7 @@ package io.github.oybek
 import cats.implicits.catsSyntaxOptionId
 import io.github.oybek.cstrike.model.Command.helpText
 import io.github.oybek.fakes.FakeData.fakeChatId
+import io.github.oybek.fakes.FakeData.fakeUser
 import io.github.oybek.model.Reaction
 import io.github.oybek.model.Reaction.SendText
 import io.github.oybek.service.Hub
@@ -23,18 +24,18 @@ class SayCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetup
       Given("console without created server")
       When("/say command received")
       Then("message about server creation is returned")
-      assert(hub.handle(fakeChatId, "/say hello") ===
+      assert(hub.handle(fakeChatId, fakeUser, "/say hello") ===
         Right(List(SendText(fakeChatId, "Create a server first (/help)"))))
     }
 
     Scenario("User gives command '/say' after '/new' command") {
       hldsConsole.reset
       Given("console with created server")
-      hub.handle(fakeChatId, "/new")
+      hub.handle(fakeChatId, fakeUser, "/new")
 
       When("/say command received")
       Then("message to dedicated server is sent")
-      assert(hub.handle(fakeChatId, "/say hello") ===
+      assert(hub.handle(fakeChatId, fakeUser, "/say hello") ===
         Right(List.empty[Reaction]))
 
       assert(

@@ -15,14 +15,14 @@ enum Command(val command: String, val description: String):
   case HelpCommand extends Command("/help", "show this message")
   case SayCommand(text: String) extends Command("/say", "write message to game")
   case IncreaseBalanceCommand(telegramId: Long, duration: FiniteDuration) extends Command("/balance", "increase balance [admin]")
-  case WillCommand(start: Option[OffsetDateTime], end: Option[OffsetDateTime]) extends Command("/will", "create a will")
+  case WillCommand(hours: List[OffsetDateTime]) extends Command("/will", "create a will")
 
 object Command:
 
   val visible: List[Command] = List(
     NewCommand(None),
     FreeCommand,
-    WillCommand(None, None),
+    WillCommand(List.empty[OffsetDateTime]),
     HelpCommand,
   )
 

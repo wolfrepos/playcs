@@ -3,7 +3,7 @@ package io.github.oybek.cstrike.parser.impl
 import atto.Atto.*
 import atto.Parser.ParserMonad
 import atto.*
-import cats.implicits.catsSyntaxOptionId
+import cats.implicits.*
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.model.Command.*
 import io.github.oybek.cstrike.parser.CommandParser
@@ -47,33 +47,26 @@ class CommandParserImpl extends CommandParser:
 
   private def willCommandParser(year: Int): Parser[WillCommand] = (
     for
-      _  <- string(WillCommand(None, None).command) <~ optSuffix <~ ws1
+      _  <- string(WillCommand(Nil).command) <~ optSuffix
       args <- opt(
         for
-          dd <- int 
-          _  <- char('.')
-          mm <- int
-          _  <- ws1
-          h1 <- int
-          _  <- char('-')
-          h2 <- int
-          _  <- ws1
-          os <- int
-        yield (dd, mm, h1, h2, os)
+          (dd, mm) <- (ws1 ~> int) ~ (char('.') ~> int) <~ ws1
+          hs       <- many(int <~ ws1)
+          offset   <- int
+        yield (dd, mm, hs, offset)
       )
     yield args
   ).flatMap {
-    case Some(dd, mm, h1, h2, offset) =>
-      List(h1, h2).flatMap { hh =>
-        Try(OffsetDateTime.of(year, mm, dd, hh, 0, 0, 0, ZoneOffset.ofHours(offset))).toOption
-      } match {
-        case start::end::Nil if start.isBefore(end) =>
-          ParserMonad.pure[WillCommand](WillCommand(start.some, end.some))
-        case _ =>
-          ParserMonad.pure[WillCommand](WillCommand(None, None))
-      }
+    case Some(dd, mm, hs, offset) =>
+      val hours =
+        hs.flatMap(hh =>
+          Try(
+            OffsetDateTime.of(year, mm, dd, hh, 0, 0, 0, ZoneOffset.ofHours(offset))
+          ).toOption
+        )
+      ParserMonad.pure[WillCommand](WillCommand(hours))
     case None =>
-      ParserMonad.pure[WillCommand](WillCommand(None, None))
+      ParserMonad.pure[WillCommand](WillCommand(Nil))
   }
 
   private def commandParser(year: Int): Parser[Command] =
