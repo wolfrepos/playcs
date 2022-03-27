@@ -23,6 +23,7 @@ import io.github.oybek.model.Reaction.SendText
 import io.github.oybek.model.Reaction.Sleep
 import io.github.oybek.service.HldsConsole
 import io.github.oybek.service.Hub
+import io.github.oybek.organizer.model.Will
 import io.github.oybek.service.PasswordGenerator
 import mouse.foption.FOptionSyntaxMouse
 import telegramium.bots.ChatIntId
@@ -35,6 +36,8 @@ import scala.concurrent.duration.FiniteDuration
 import java.time.OffsetDateTime
 import telegramium.bots.User
 import telegramium.bots.Markdown2
+import io.github.oybek.organizer.model.Will
+import cats.data.NonEmptyList
 
 trait Hub[F[_]]:
   def duty(offsetDateTime: OffsetDateTime): F[List[Reaction]]
@@ -46,11 +49,12 @@ object Hub:
   def create[F[_]: MonadThrow: Clock, G[_]: Monad](consolePool: PoolManager[F, HldsConsole[F], ChatIntId],
                                                    passwordGenerator: PasswordGenerator[F],
                                                    adminDao: AdminDao[G],
+                                                   organizer: Organizer[F],
                                                    tx: G ~> F,
                                                    log: ContextLogger[F]): Hub[F] = 
     new Hub[F]:
       override def duty(offsetDateTime: OffsetDateTime): F[List[Reaction]] =
-        ???
+        organizer.duty(offsetDateTime)
 
       override def handle(chatId: ChatIntId,
                           user: User,
@@ -69,27 +73,36 @@ object Hub:
           case FreeCommand             => handleFreeCommand(chatId)
           case HelpCommand             => handleHelpCommand(chatId)
           case SayCommand(text)        => handleSayCommand(chatId, text)
-          case WillCommand(start, end) => handleWillCommand(chatId, user, start, end)
+          case WillCommand(hours)      => handleWillCommand(chatId, user, hours)
           case _                       => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
 
       private def handleWillCommand(chatId: ChatIntId,
                                     user: User,
-                                    startOpt: Option[OffsetDateTime],
-                                    endOpt: Option[OffsetDateTime]): Context[F[List[Reaction]]] =
-        (startOpt, endOpt) match {
-          case (Some(start), Some(end)) =>
-            ???
-          case _ =>
+                                    hours: List[OffsetDateTime]): Context[F[List[Reaction]]] =
+        hours match {
+          case Nil =>
             List(SendText(
               chatId,
               """
                 |If you want to create a will, follow the example:
-                |`/will 26.03 19-20 +5`
+                |`/will 26.03 19 20 +5`
                 |Means that you willing to play on 26th of march
-                |from 19 to 20 o clock at UTC+5
+                |at 19 or 20 o clock at UTC+5
                 |""".stripMargin,
               Markdown.some
             )).pure[F]
+          case h::hs =>
+            val hours1 = NonEmptyList.of(h, hs*)
+            organizer.save(
+              hours1.map { hour =>
+                Will(
+                  userId = user.id,
+                  userName = user.firstName,
+                  chatId = chatId.id,
+                  hour = hour
+                )
+              }
+            )
         }
 
       private def handleNewCommand(chatId: ChatIntId, map: Option[String]): Context[F[List[Reaction]]] =

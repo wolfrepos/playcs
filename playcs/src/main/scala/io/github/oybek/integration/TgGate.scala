@@ -5,6 +5,7 @@ import cats.effect.Async
 import cats.effect.IO
 import cats.effect.Temporal
 import cats.implicits.*
+import cats.instances.finiteDuration
 import io.github.oybek.common.logger.Context
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
@@ -21,8 +22,13 @@ import telegramium.bots.high.LongPollBot
 import telegramium.bots.high.Methods
 import telegramium.bots.high.implicits.methodOps
 
+import java.time.Duration
 import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
+
+import concurrent.duration.DurationInt
 
 object TgGate:
   def create(api: Api[IO],
@@ -48,19 +54,35 @@ object TgGate:
               .flatMap(interpret)
         ).getOrElse(IO.unit)
 
-      def every(duration: FiniteDuration): IO[Unit] =
+      override def start(): IO[Unit] =
+        super.start().both(everyHour).void
+
+      private def everyHour: IO[Unit] =
+        import fs2.Stream
         given ContextData(7777)
-        fs2.Stream
-          .awakeEvery[IO](duration)
-          .foreach { _ =>
-            for
-              now       <- IO { OffsetDateTime.now }
-              reactions <- console.duty(now)
-              _         <- interpret(reactions)
-            yield ()
+        val task = 
+          for
+            now       <- IO { OffsetDateTime.now }
+            _         <- logger.info(s"time: $now, duty started")
+            reactions <- console.duty(now)
+            _         <- interpret(reactions)
+          yield ()
+        Stream
+          .eval(IO(OffsetDateTime.now))
+          .map { now =>
+            val nextHour = now.truncatedTo(ChronoUnit.HOURS).plusHours(1)
+            val duration = Duration.between(now, nextHour)
+            FiniteDuration(duration.toSeconds, TimeUnit.SECONDS)
           }
-          .compile
-          .drain
+          .flatMap { finiteDuration =>
+            Stream.sleep[IO](finiteDuration) ++
+            Stream.awakeEvery[IO](1.hour).foreach { _ =>
+              task.recoverWith { th =>
+                logger.info(s"Something went wrong $th")
+              }
+            }
+          }
+          .compile.drain
 
       private def interpret(reactions: List[Reaction]): Context[IO[Unit]] =
         reactions.traverse {

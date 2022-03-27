@@ -14,6 +14,7 @@ import io.github.oybek.service.Hub
 import io.github.oybek.setup.TestEffect.DB
 import io.github.oybek.setup.TestEffect.F
 import telegramium.bots.ChatIntId
+import io.github.oybek.service.Organizer
 
 trait HubSetup:
   given ContextData(1234)
@@ -26,6 +27,7 @@ trait HubSetup:
   val passwordGenerator     = new FakePasswordGenerator[F]
   val fakeBalanceDao        = new FakeBalanceDao[DB]
   val fakeAdminDao          = new FakeAdminDao[DB]
+  val organizer             = Organizer.fake[F]
   val transactor            = new FunctionK[DB, F]:
     override def apply[A](fa: DB[A]): F[A] = Right(fa)
   val consolePoolManager    = PoolManager.create[F, HldsConsole[F], ChatIntId](
@@ -37,4 +39,11 @@ trait HubSetup:
         _ <- hldsConsole.map("de_dust2")
       yield ()
   )
-  val hub: Hub[F] = Hub.create[F, DB](consolePoolManager, passwordGenerator, fakeAdminDao, transactor, logger)
+  val hub: Hub[F] = Hub.create[F, DB](
+    consolePoolManager,
+    passwordGenerator,
+    fakeAdminDao,
+    organizer,
+    transactor,
+    logger
+  )
