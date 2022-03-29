@@ -1,8 +1,11 @@
 import Settings.module
 
+Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
+
 ThisBuild / version := "0.1"
 ThisBuild / organization := "io.github.oybek"
 ThisBuild / scalaVersion := "3.1.1"
+ThisBuild / parallelExecution := false
 ThisBuild / scalacOptions ++= Seq(
  "-encoding", "utf8",
  "-Xfatal-warnings",
@@ -18,16 +21,12 @@ ThisBuild / scalacOptions ++= Seq(
 lazy val common   = module("common",   file("common"))
 lazy val cstrike  = module("cstrike",  file("cstrike"))
 lazy val database = module("database", file("database"))
-lazy val playcs   = module("playcs",   file("playcs"), cstrike, common, database)
 lazy val scenario = module("scenario", file("scenario"), common, playcs)
-
-Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
-
-lazy val testAll = taskKey[Unit]("Run all tests")
-testAll := {
-  (common   / Test / test).value
-  (cstrike  / Test / test).value
-  (database / Test / test).value
-  (playcs   / Test / test).value
-  (scenario / Test / test).value
-}
+lazy val playcs   = module("playcs",   file("playcs"), cstrike, common, database)
+  .enablePlugins(JacocoCoverallsPlugin)
+  .settings(
+    jacocoCoverallsServiceName := "github-actions", 
+    jacocoCoverallsBranch := sys.env.get("GITHUB_REF_NAME"),
+    jacocoCoverallsPullRequest := sys.env.get("GITHUB_EVENT_NAME"),
+    jacocoCoverallsRepoToken := sys.env.get("COVERALLS_REPO_TOKEN")
+  )

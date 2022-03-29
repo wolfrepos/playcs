@@ -25,8 +25,12 @@ jobs:
       with:
         java-version: '11'
     - name: test
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        sbt "clean; testAll"
+        export CI_BRANCH="${GITHUB_REF_NAME}"
+        sbt clean jacocoAggregate jacocoCoveralls
 
   BuildAndDeploy:
     if: ${{ github.ref == 'refs/heads/master' }}

@@ -9,4 +9,5 @@ object Settings {
       .settings(libraryDependencies ++= Dependencies.common)
       .settings(libraryDependencies ~= { _.map(_.exclude("org.slf4j", "slf4j-simple")) })
       .dependsOn(deps : _*)
+      .aggregate(deps.map(_.project) : _*)
 }
