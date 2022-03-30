@@ -1,4 +1,4 @@
-package io.github.oybek.service
+package io.github.oybek.organizer
 
 import cats.~>
 import cats.implicits.*

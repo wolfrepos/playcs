@@ -1,8 +1,7 @@
-package io.github.oybek.service
+package io.github.oybek.password
 
 import cats.Applicative
 import cats.implicits.catsSyntaxApplicativeId
-import io.github.oybek.service.PasswordGenerator
 import scala.util.Random
 
 trait PasswordGenerator[F[_]]:

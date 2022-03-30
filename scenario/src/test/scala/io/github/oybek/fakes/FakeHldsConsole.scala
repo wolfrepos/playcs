@@ -3,7 +3,7 @@ package io.github.oybek.fakes
 import cats.Applicative
 import cats.implicits.{catsSyntaxApplicativeId, toFunctorOps}
 import io.github.oybek.fakes.FakeData.{fakeIp, fakePort}
-import io.github.oybek.service.HldsConsole
+import io.github.oybek.hlds.HldsConsole
 
 import scala.collection.mutable.ListBuffer
 

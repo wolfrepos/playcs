@@ -16,15 +16,14 @@ import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
 import io.github.oybek.common.time.Timer
 import io.github.oybek.common.time.{Clock as Clockk}
-import io.github.oybek.config.Config
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.database.DB
 import io.github.oybek.database.admin.dao.AdminDao
-import io.github.oybek.integration.HldsClient
-import io.github.oybek.integration.TgGate
-import io.github.oybek.service.HldsConsole
-import io.github.oybek.service.Hub
-import io.github.oybek.service.PasswordGenerator
+import io.github.oybek.hlds.HldsClient
+import io.github.oybek.tg.Tg
+import io.github.oybek.hlds.HldsConsole
+import io.github.oybek.hub.Hub
+import io.github.oybek.password.PasswordGenerator
 import org.http4s.blaze.client.BlazeClientBuilder
 import org.http4s.client.Client
 import org.http4s.client.middleware.Logger
@@ -40,16 +39,16 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.*
 import io.github.oybek.organizer.dao.OrganizerDao
-import io.github.oybek.service.Organizer
+import io.github.oybek.organizer.Organizer
 
 given timer: Timer[IO] = (duration: FiniteDuration) => IO.sleep(duration)
 given clock: Clockk[IO] = new Clockk[IO]:
   def instantNow: IO[Instant] = IO.realTimeInstant
 
-object Application extends IOApp:
+object App extends IOApp:
   def run(args: List[String]): IO[ExitCode] =
     for
-      config <- Config.create[IO].load[IO]
+      config <- AppConfig.create[IO].load[IO]
       _ <- log.info(s"loaded config: $config")
       _ <- resources(config).use {
         (httpClient, consoles, tx) =>
@@ -57,9 +56,8 @@ object Application extends IOApp:
       }
     yield ExitCode.Success
   private val log = Slf4jLogger.getLoggerFromName[IO]("application")
-end Application
 
-def assembleAndLaunch(config: Config,
+def assembleAndLaunch(config: AppConfig,
                       httpClient: Client[IO],
                       consoles: List[HldsConsole[IO]],
                       tx: HikariTransactor[IO]): IO[Unit] =
@@ -74,9 +72,9 @@ def assembleAndLaunch(config: Config,
   val organizerDao = OrganizerDao.create
   val organizer = Organizer.create[IO, ConnectionIO](organizerDao, transactor)
   for
-    consolePoolLogger <- ContextLogger.create[IO]("console-pool-manager")
-    consoleLogger <- ContextLogger.create[IO]("console")
-    tgGateLogger <- ContextLogger.create[IO]("tg-gate")
+    contextLogger <- ContextLogger.create[IO]
+    given ContextLogger[IO] = contextLogger
+
     _ <- DB.runMigrations[IO](tx)
     consolePoolRef <- Ref.of[IO, (List[HldsConsole[IO]], List[HldsConsole[IO] With ChatIntId])](consolePool)
     consolePoolManager = PoolManager.create[IO, HldsConsole[IO], ChatIntId](
@@ -91,16 +89,14 @@ def assembleAndLaunch(config: Config,
     hub = Hub.create[IO, ConnectionIO](
       consolePoolManager,
       passwordGenerator,
-      adminDao,
       organizer,
-      transactor,
-      consoleLogger)
-    tgGate = TgGate.create(api, hub, tgGateLogger)
+      transactor)
+    tg= Tg.create(api, hub)
     _ <- setCommands(api)
-    _ <- tgGate.start()
+    _ <- tg.start()
   yield ()
 
-def resources(config: Config): Resource[IO, (Client[IO], List[HldsConsole[IO]], HikariTransactor[IO])] =
+def resources(config: AppConfig): Resource[IO, (Client[IO], List[HldsConsole[IO]], HikariTransactor[IO])] =
   val initialPort = 27015
   val telegramResponseWaitTime = 60L
   for

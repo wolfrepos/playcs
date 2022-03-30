@@ -1,4 +1,4 @@
-package io.github.oybek.config
+package io.github.oybek
 
 import cats.data.NonEmptyList
 import cats.effect.IO
@@ -9,7 +9,7 @@ import org.testcontainers.shaded.org.apache.commons.lang.SystemUtils
 
 import java.util.Properties
 
-class ConfigSpec extends AnyFunSuite:
+class AppConfigSpec extends AnyFunSuite:
 
   test("Config load") {
     val properties = List(
@@ -27,9 +27,9 @@ class ConfigSpec extends AnyFunSuite:
         System.setProperty(key, value)
     }
 
-    val loadedConfig = Config.create[IO].attempt.unsafeRunSync()
+    val loadedConfig = AppConfig.create[IO].attempt.unsafeRunSync()
     val expectedConfig = Right(
-      Config(
+      AppConfig(
         DbConfig(
           driver = "org.postgresql.Driver",
           url = "url",

@@ -1,4 +1,4 @@
-package io.github.oybek.service
+package io.github.oybek.hub
 
 import cats.Monad
 import cats.MonadThrow
@@ -15,16 +15,13 @@ import io.github.oybek.common.time.Clock
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.model.Command.*
 import io.github.oybek.cstrike.parser.CommandParser
-import io.github.oybek.database.admin.dao.AdminDao
-import io.github.oybek.exception.BusinessException.UnathorizedException
-import io.github.oybek.exception.BusinessException.ZeroBalanceException
 import io.github.oybek.model.Reaction
 import io.github.oybek.model.Reaction.SendText
 import io.github.oybek.model.Reaction.Sleep
-import io.github.oybek.service.HldsConsole
-import io.github.oybek.service.Hub
+import io.github.oybek.hlds.HldsConsole
+import io.github.oybek.hub.Hub
 import io.github.oybek.organizer.model.Will
-import io.github.oybek.service.PasswordGenerator
+import io.github.oybek.password.PasswordGenerator
 import mouse.foption.FOptionSyntaxMouse
 import telegramium.bots.ChatIntId
 import telegramium.bots.Markdown
@@ -37,6 +34,7 @@ import java.time.OffsetDateTime
 import telegramium.bots.User
 import telegramium.bots.Markdown2
 import io.github.oybek.organizer.model.Will
+import io.github.oybek.organizer.Organizer
 import cats.data.NonEmptyList
 
 trait Hub[F[_]]:
@@ -46,12 +44,11 @@ trait Hub[F[_]]:
              text: String): Context[F[List[Reaction]]]
 
 object Hub:
-  def create[F[_]: MonadThrow: Clock, G[_]: Monad](consolePool: PoolManager[F, HldsConsole[F], ChatIntId],
-                                                   passwordGenerator: PasswordGenerator[F],
-                                                   adminDao: AdminDao[G],
-                                                   organizer: Organizer[F],
-                                                   tx: G ~> F,
-                                                   log: ContextLogger[F]): Hub[F] = 
+  def create[F[_]: MonadThrow: ContextLogger: Clock, G[_]: Monad]
+            (consolePool: PoolManager[F, HldsConsole[F], ChatIntId],
+             passwordGenerator: PasswordGenerator[F],
+             organizer: Organizer[F],
+             tx: G ~> F): Hub[F] = 
     new Hub[F]:
       override def duty(offsetDateTime: OffsetDateTime): F[List[Reaction]] =
         organizer.duty(offsetDateTime)
@@ -59,7 +56,7 @@ object Hub:
       override def handle(chatId: ChatIntId,
                           user: User,
                           text: String): Context[F[List[Reaction]]] =
-        log.info(s"Got message $text") >> {
+        ContextLogger[F].info(s"Got message $text") >> {
           CommandParser.parse(text, 2022) match
             case       _: String  => confusedMessage(chatId)
             case command: Command => handleCommand(chatId, user, command)

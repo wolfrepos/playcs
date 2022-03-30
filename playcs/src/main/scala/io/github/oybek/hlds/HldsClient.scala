@@ -1,4 +1,4 @@
-package io.github.oybek.integration
+package io.github.oybek.hlds
 
 import cats.effect.IO
 import cats.effect.{Resource, Sync}
