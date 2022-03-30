@@ -1,8 +1,4 @@
-package io.github.oybek.service
-
-// Half Life Dedicated Server Console
-import io.github.oybek.integration.HldsClient
-import io.github.oybek.service.HldsConsole
+package io.github.oybek.hlds
 
 trait HldsConsole[F[_]]:
   def map(map: String): F[Unit]

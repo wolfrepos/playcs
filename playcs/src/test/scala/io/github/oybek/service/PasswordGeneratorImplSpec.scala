@@ -1,7 +1,7 @@
 package io.github.oybek.service
 
 import cats.Id
-import io.github.oybek.service.PasswordGenerator
+import io.github.oybek.password.PasswordGenerator
 import org.scalatest.funsuite.AnyFunSuite
 
 class PasswordGeneratorImplSpec extends AnyFunSuite:

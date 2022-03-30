@@ -12,8 +12,7 @@ trait BalanceDao[F[_]]:
   def findBy(telegramId: Long): F[Option[Balance]]
   def upsert(balance: Balance): F[Int]
 
-given getFiniteDuration: Get[FiniteDuration] =
-  Get[Long].map(FiniteDuration(_, TimeUnit.MINUTES))
+given Get[FiniteDuration] = Get[Long].map(FiniteDuration(_, TimeUnit.MINUTES))
 
 object BalanceDao:
   def create = new BalanceDao[ConnectionIO]:

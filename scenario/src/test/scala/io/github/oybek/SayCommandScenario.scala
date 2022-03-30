@@ -6,7 +6,7 @@ import io.github.oybek.fakes.FakeData.fakeChatId
 import io.github.oybek.fakes.FakeData.fakeUser
 import io.github.oybek.model.Reaction
 import io.github.oybek.model.Reaction.SendText
-import io.github.oybek.service.Hub
+import io.github.oybek.hub.Hub
 import io.github.oybek.setup.HubSetup
 import io.github.oybek.setup.TestEffect.F
 import org.scalatest.GivenWhenThen

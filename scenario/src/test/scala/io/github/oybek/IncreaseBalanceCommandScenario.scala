@@ -1,7 +1,6 @@
 package io.github.oybek
 
 import io.github.oybek.common.logger.ContextData
-import io.github.oybek.exception.BusinessException.UnathorizedException
 import io.github.oybek.fakes.FakeData.{adminChatId, fakeChatId, fakeUser}
 import io.github.oybek.model.Reaction.{SendText, Sleep}
 import io.github.oybek.setup.HubSetup
