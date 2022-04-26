@@ -50,7 +50,7 @@ jobs:
     - name: deploy
       uses: garygrossgarten/github-action-scp@release
       with:
-        local: playcs/target/scala-3.1.1/playcs-assembly-0.1.jar
+        local: playcs/target/scala-3.1.2/playcs-assembly-0.1.jar
         remote: /tmp/${{ github.sha }}.jar
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}

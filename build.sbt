@@ -2,7 +2,7 @@ import Settings.module
 
 ThisBuild / version := "0.1"
 ThisBuild / organization := "io.github.oybek"
-ThisBuild / scalaVersion := "3.1.1"
+ThisBuild / scalaVersion := "3.1.2"
 ThisBuild / scalacOptions ++= Seq(
  "-encoding", "utf8",
  "-Xfatal-warnings",

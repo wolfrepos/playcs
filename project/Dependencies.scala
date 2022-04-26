@@ -5,14 +5,14 @@ object Dependencies {
   object V {
     val atto           = "0.9.5"
     val catsCore       = "2.7.0"
-    val catsEffect     = "3.3.7"
+    val catsEffect     = "3.3.11"
     val ciris          = "2.3.2"
     val doobie         = "1.0.0-RC2"
-    val flyway         = "8.5.4"
+    val flyway         = "8.5.9"
     val mouse          = "1.0.10"
-    val scalaTest      = "3.2.11"
-    val telegramium    = "7.57.0"
-    val testContainers = "0.40.3"
+    val scalaTest      = "3.2.12"
+    val telegramium    = "7.60.0"
+    val testContainers = "0.40.6"
   }
 
   val common: Seq[ModuleID] =
