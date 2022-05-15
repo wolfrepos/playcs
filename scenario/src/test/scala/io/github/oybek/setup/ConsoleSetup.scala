@@ -6,8 +6,6 @@ import io.github.oybek.common.PoolManager
 import io.github.oybek.common.With
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
-import io.github.oybek.common.time.Clock
-import io.github.oybek.common.time.Timer
 import io.github.oybek.fakes.*
 import io.github.oybek.hlds.HldsConsole
 import io.github.oybek.hub.Hub
@@ -17,8 +15,6 @@ import telegramium.bots.ChatIntId
 
 trait HubSetup:
   given ContextData(1234)
-  given Timer[F]         = new FakeTimer[F]
-  given Clock[F]         = new FakeClock[F]
   given ContextLogger[F] = new ContextLogger[F](new FakeMessageLogger[F])
   val hldsConsole        = new FakeHldsConsole[F]
   val consolePool        = (List(hldsConsole), Nil)

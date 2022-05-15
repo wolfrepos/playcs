@@ -4,7 +4,6 @@ import cats.effect.IO
 import cats.effect.{Resource, Sync}
 import cats.implicits.catsSyntaxFlatMapOps
 import cats.syntax.functor.*
-import io.github.oybek.common.time.Timer
 
 import java.io.{File, InputStream, OutputStream, PrintWriter}
 import java.util.concurrent.ConcurrentLinkedQueue

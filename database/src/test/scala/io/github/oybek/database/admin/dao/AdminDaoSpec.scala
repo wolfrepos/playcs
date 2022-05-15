@@ -15,7 +15,6 @@ import org.testcontainers.utility.DockerImageName
 import telegramium.bots.ChatIntId
 
 import java.util.concurrent.TimeUnit
-import scala.concurrent.ExecutionContext.global as globalEc
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
 

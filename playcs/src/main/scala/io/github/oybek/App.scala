@@ -10,12 +10,9 @@ import doobie.ExecutionContexts
 import doobie.hikari.HikariTransactor
 import doobie.implicits.toConnectionIOOps
 import io.github.oybek.common.PoolManager
-import io.github.oybek.common.Scheduler.every
 import io.github.oybek.common.With
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
-import io.github.oybek.common.time.Timer
-import io.github.oybek.common.time.{Clock as Clockk}
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.database.DB
 import io.github.oybek.database.admin.dao.AdminDao
@@ -38,10 +35,6 @@ import java.io.File
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.*
-
-given timer: Timer[IO] = (duration: FiniteDuration) => IO.sleep(duration)
-given clock: Clockk[IO] = new Clockk[IO]:
-  def instantNow: IO[Instant] = IO.realTimeInstant
 
 object App extends IOApp:
   def run(args: List[String]): IO[ExitCode] =

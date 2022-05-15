@@ -12,7 +12,6 @@ import io.github.oybek.common.With
 import io.github.oybek.common.logger.Context
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
-import io.github.oybek.common.time.Clock
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.model.Command.*
 import io.github.oybek.cstrike.parser.CommandParser
@@ -40,7 +39,7 @@ trait Hub[F[_]]:
              text: String): Context[F[List[Reaction]]]
 
 object Hub:
-  def create[F[_]: MonadThrow: ContextLogger: Clock, G[_]: Monad]
+  def create[F[_]: MonadThrow: ContextLogger, G[_]: Monad]
             (consolePool: PoolManager[F, HldsConsole[F], ChatIntId],
              passwordGenerator: PasswordGenerator[F],
              tx: G ~> F): Hub[F] = 
