@@ -17,21 +17,24 @@ import telegramium.bots.ChatIntId
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
+import doobie.scalatest.IOChecker
+import io.github.oybek.database.DoobieSuite
 
-trait AdminDaoSpec extends AnyFunSuite with PostgresSetup:
+trait AdminDaoSpec extends AnyFunSuite with IOChecker with DoobieSuite:
 
   val adminDao: AdminDao[ConnectionIO] = AdminDao.create
 
+  test("AdminDao.isAdminQuery") {
+    check(AdminDao.isAdminQuery(123L))
+  }
+
   test("AdminDao") {
-    transactor.use { tx =>
-      for
-        _ <- DB.runMigrations(tx)
-        _ <- sql"insert into admin (chat_id) values (123)".update.run.transact(tx)
-        isAdmin <- adminDao.isAdmin(123L).transact(tx)
-        _ = assert(isAdmin)
-        isAdmin <- adminDao.isAdmin(124L).transact(tx)
-        _ = assert(!isAdmin)
-      yield ()
-    }.unsafeRunTimed(10.seconds)
+    for
+      _ <- sql"insert into admin (chat_id) values (123)".update.run.transact(transactor)
+      isAdmin <- adminDao.isAdmin(123L).transact(transactor)
+      _ = assert(isAdmin)
+      isAdmin <- adminDao.isAdmin(124L).transact(transactor)
+      _ = assert(!isAdmin)
+    yield ()
   }
 

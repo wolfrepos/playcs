@@ -29,6 +29,7 @@ object Dependencies {
       "org.tpolecat"          %% "doobie-core"                     % V.doobie,
       "org.tpolecat"          %% "doobie-hikari"                   % V.doobie,
       "org.tpolecat"          %% "doobie-postgres"                 % V.doobie,
+      "org.tpolecat"          %% "doobie-scalatest"                % V.doobie,
       "org.typelevel"         %% "cats-core"                       % V.catsCore,
       "org.typelevel"         %% "cats-effect"                     % V.catsEffect,
       "org.typelevel"         %% "mouse"                           % V.mouse,
