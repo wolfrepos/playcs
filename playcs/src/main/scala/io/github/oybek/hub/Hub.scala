@@ -49,7 +49,7 @@ object Hub:
                           user: User,
                           text: String): Context[F[List[Reaction]]] =
         ContextLogger[F].info(s"Got message $text") >> {
-          CommandParser.parse(text, 2022) match
+          CommandParser.parse(text) match
             case       _: String  => confusedMessage(chatId)
             case command: Command => handleCommand(chatId, user, command)
         }

@@ -14,7 +14,6 @@ enum Command(val command: String, val description: String):
   case BalanceCommand extends Command("/balance", "show balance")
   case HelpCommand extends Command("/help", "show this message")
   case SayCommand(text: String) extends Command("/say", "write message to game")
-  case IncreaseBalanceCommand(telegramId: Long, duration: FiniteDuration) extends Command("/balance", "increase balance [admin]")
 
 object Command:
 

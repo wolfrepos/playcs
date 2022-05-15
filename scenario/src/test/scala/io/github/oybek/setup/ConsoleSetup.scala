@@ -24,7 +24,6 @@ trait HubSetup:
   val consolePool        = (List(hldsConsole), Nil)
   val consolePoolRef     = new FakeRef[F, (List[HldsConsole[F]], List[HldsConsole[F] With ChatIntId])](consolePool)
   val passwordGenerator  = new FakePasswordGenerator[F]
-  val fakeBalanceDao     = new FakeBalanceDao[DB]
   val transactor         = new FunctionK[DB, F]:
     override def apply[A](fa: DB[A]): F[A] = Right(fa)
   val consolePoolManager = PoolManager.create[F, HldsConsole[F], ChatIntId](

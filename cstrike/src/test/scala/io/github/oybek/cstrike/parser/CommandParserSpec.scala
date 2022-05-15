@@ -3,7 +3,6 @@ package io.github.oybek.cstrike.parser
 import cats.implicits.*
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.cstrike.model.Command.*
-import io.github.oybek.cstrike.parser.impl.CommandParserImpl
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.prop.TableDrivenPropertyChecks.*
@@ -31,8 +30,6 @@ class CommandParserSpec extends AnyFlatSpec:
     ("   /help@playcs_bot   "           , HelpCommand),
     ("/balance"                         , BalanceCommand),
     ("   /balance@playcs_bot   "        , BalanceCommand),
-    ("/balance 123 32"                  , IncreaseBalanceCommand(123, 32.minutes)),
-    ("/balance@playcs_bot 12 3"         , IncreaseBalanceCommand(12, 3.minutes)),
     ("   /say@playcs_bot hello"         , SayCommand("hello")),
     ("   /say hello"                    , SayCommand("hello")),
     ("   /map@playcs_bot   "            , "Unknown command"),
@@ -40,8 +37,6 @@ class CommandParserSpec extends AnyFlatSpec:
 
   "translator".should("be tested") in {
     forAll(tests) {
-      (text, command) => assert(translator.parse(text, 2022) === command)
+      (text, command) => assert(CommandParser.parse(text) === command)
     }
   }
-
-  private lazy val translator = new CommandParserImpl

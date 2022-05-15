@@ -12,8 +12,6 @@ import com.dimafeng.testcontainers.PostgreSQLContainer
 import doobie.*
 import doobie.implicits.*
 import io.github.oybek.database.DbConfig
-import io.github.oybek.database.balance.dao.BalanceDao
-import io.github.oybek.database.balance.model.Balance
 import org.testcontainers.utility.DockerImageName
 import telegramium.bots.ChatIntId
 
@@ -23,36 +21,27 @@ import scala.concurrent.duration.FiniteDuration
 
 import concurrent.duration.DurationInt
 import org.scalatest.funsuite.AnyFunSuite
+import io.github.oybek.database.hlds.dao.HldsDao
+import io.github.oybek.database.hlds.model.Hlds
 
 trait TransactionSpec extends AnyFunSuite with PostgresSetup with doobie.free.Instances with doobie.syntax.AllSyntax:
-  val someDao: BalanceDao[ConnectionIO] = BalanceDao.create
-  val balance = Balance(
-    telegramId = ChatIntId(123),
-    timeLeft = FiniteDuration(60, TimeUnit.SECONDS)
-  )
-  extension (balance: Balance)
-    def add(duration: FiniteDuration): Balance =
-      balance.copy(timeLeft = balance.timeLeft + duration)
+  val someDao: HldsDao[ConnectionIO] = ???
 
   test("TransactionSpec") {
     (transactor, WeakAsync.liftK[IO, ConnectionIO]).mapN((x, y) => (x, y)).use {
       (tx, fk) =>
         for
           _ <- DB.runMigrations(tx)
-          _ <- someDao.upsert(balance).transact(tx)
+          _ <- someDao.add(Hlds(123, "0983", "de_dust")).transact(tx)
 
           query = for
-            _ <- someDao.upsert(balance.add(5.seconds))
-            balanceOpt <- someDao.findBy(balance.telegramId.id)
-            _ <- balanceOpt.traverse { b =>
-              someDao.upsert(balance.add(5.seconds))
-            }
+            _ <- someDao.add(Hlds(124, "0983", "de_dust"))
             _ <- fk(IO.raiseError(new Exception("transaction failed")))
           yield ()
           _ <- query.transact(tx).attempt
 
-          balanceOpt <- someDao.findBy(balance.telegramId.id).transact(tx)
-          _ = assert(balanceOpt === Some(balance.copy(timeLeft = 60.seconds)))
+          hldss <- someDao.all.transact(tx)
+          _ = assert(hldss === List(Hlds(123, "0983", "de_dust")))
         yield ()
     }.unsafeRunSync()
   }
