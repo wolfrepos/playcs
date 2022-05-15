@@ -64,18 +64,17 @@ object Hub:
           case _                       => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
 
       private def handleNewCommand(chatId: ChatIntId, map: Option[String]): Context[F[List[Reaction]]] =
-
         val caseFind: F[Option[List[Reaction]]] =
           for
-            c <- consolePool.find(chatId)
-            _ <- c.traverse(_.changeLevel(map.getOrElse("de_dust2"))).void
-            r =  c.as(List(SendText(chatId, "You already got the server, just changing a map")))
-          yield r
+            consoleOpt  <- consolePool.find(chatId)
+            _           <- consoleOpt.traverse(_.changeLevel(map.getOrElse("de_dust2"))).void
+            reactionOpt  = consoleOpt.as(List(SendText(chatId, "You already got the server, just changing a map")))
+          yield reactionOpt
 
-        val caseRent: F[Option[List[Reaction]]] =
-          for
-            c <- consolePool.rent(chatId)
-            r <- c.traverse { console =>
+        val caseRent: F[List[Reaction]] =
+          consolePool.rent(chatId).flatMap {
+            case None => List(SendText(chatId, "No free server left, contact t.me/turtlebots")).pure[F]
+            case Some(console) =>
               for
                 pass <- passwordGenerator.generate
                 _ <- console.svPassword(pass)
@@ -85,13 +84,9 @@ object Hub:
                 Sleep(200.millis),
                 sendConsole(chatId, console, pass)
               )
-            }
-          yield r
+          }
 
-        val caseNone: List[Reaction] =
-          List(SendText(chatId, "No free server left, contact t.me/turtlebots"))
-
-        caseFind.orElseF(caseRent).getOrElse(caseNone)
+        caseFind.getOrElseF(caseRent)
 
       private def handleFreeCommand(chatId: ChatIntId): Context[F[List[Reaction]]] =
         consolePool.find(chatId).flatMap {
