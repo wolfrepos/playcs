@@ -10,12 +10,9 @@ import doobie.ExecutionContexts
 import doobie.hikari.HikariTransactor
 import doobie.implicits.toConnectionIOOps
 import io.github.oybek.common.PoolManager
-import io.github.oybek.common.Scheduler.every
 import io.github.oybek.common.With
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
-import io.github.oybek.common.time.Timer
-import io.github.oybek.common.time.{Clock as Clockk}
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.database.DB
 import io.github.oybek.database.admin.dao.AdminDao
@@ -38,12 +35,6 @@ import java.io.File
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.*
-import io.github.oybek.organizer.dao.OrganizerDao
-import io.github.oybek.organizer.Organizer
-
-given timer: Timer[IO] = (duration: FiniteDuration) => IO.sleep(duration)
-given clock: Clockk[IO] = new Clockk[IO]:
-  def instantNow: IO[Instant] = IO.realTimeInstant
 
 object App extends IOApp:
   def run(args: List[String]): IO[ExitCode] =
@@ -69,8 +60,6 @@ def assembleAndLaunch(config: AppConfig,
       a.transact(tx)
   val consolePool = (consoles, Nil)
   val adminDao = AdminDao.create
-  val organizerDao = OrganizerDao.create
-  val organizer = Organizer.create[IO, ConnectionIO](organizerDao, transactor)
   for
     contextLogger <- ContextLogger.create[IO]
     given ContextLogger[IO] = contextLogger
@@ -89,7 +78,6 @@ def assembleAndLaunch(config: AppConfig,
     hub = Hub.create[IO, ConnectionIO](
       consolePoolManager,
       passwordGenerator,
-      organizer,
       transactor)
     tg= Tg.create(api, hub)
     _ <- setCommands(api)

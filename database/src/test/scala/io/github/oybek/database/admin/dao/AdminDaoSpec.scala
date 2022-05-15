@@ -10,13 +10,11 @@ import io.github.oybek.database.DB
 import io.github.oybek.database.DbConfig
 import io.github.oybek.database.PostgresSetup
 import io.github.oybek.database.admin.dao.AdminDao
-import io.github.oybek.database.balance.model.Balance
 import org.scalatest.funsuite.AnyFunSuite
 import org.testcontainers.utility.DockerImageName
 import telegramium.bots.ChatIntId
 
 import java.util.concurrent.TimeUnit
-import scala.concurrent.ExecutionContext.global as globalEc
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
 
