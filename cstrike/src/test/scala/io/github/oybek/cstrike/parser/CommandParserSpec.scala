@@ -35,13 +35,6 @@ class CommandParserSpec extends AnyFlatSpec:
     ("/balance@playcs_bot 12 3"         , IncreaseBalanceCommand(12, 3.minutes)),
     ("   /say@playcs_bot hello"         , SayCommand("hello")),
     ("   /say hello"                    , SayCommand("hello")),
-    (" /will@playcs_bot "               , WillCommand(Nil)),
-    ("/will"                            , WillCommand(Nil)),
-    (" /will@playcs_bot 26.03 19 20 +5" , {
-      val h1 = OffsetDateTime.parse("2022-03-26T19:00:00+05:00")
-      val h2 = OffsetDateTime.parse("2022-03-26T20:00:00+05:00")
-      WillCommand(List(h1, h2))
-    }),
     ("   /map@playcs_bot   "            , "Unknown command"),
   )
 

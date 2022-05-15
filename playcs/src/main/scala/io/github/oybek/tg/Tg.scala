@@ -50,22 +50,7 @@ object Tg:
         ).getOrElse(IO.unit).start.void
 
       override def start(): IO[Unit] =
-        super.start().both(everyHour).void
-
-      private def everyHour: IO[Unit] =
-        import fs2.Stream
-        given ContextData(7777)
-        (
-          Stream.eval(toNearestHour).flatMap(Stream.sleep[IO]) >>
-          Stream.awakeEvery[IO](1.hour).foreach { _ =>
-            for
-              now       <- IO { OffsetDateTime.now }
-              _         <- logger.info(s"time: $now, duty started")
-              reactions <- console.duty(now)
-              _         <- interpret(reactions)
-            yield ()
-          }
-        ).compile.drain
+        super.start().void
 
       private def interpret(reactions: List[Reaction]): Context[IO[Unit]] =
         reactions.traverse {

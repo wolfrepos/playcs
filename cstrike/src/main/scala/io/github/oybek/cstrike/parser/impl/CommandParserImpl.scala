@@ -45,30 +45,6 @@ class CommandParserImpl extends CommandParser:
       case (telegramId, duration) => IncreaseBalanceCommand(telegramId, duration.minutes)
     }
 
-  private def willCommandParser(year: Int): Parser[WillCommand] = (
-    for
-      _  <- string(WillCommand(Nil).command) <~ optSuffix
-      args <- opt(
-        for
-          (dd, mm) <- (ws1 ~> int) ~ (char('.') ~> int) <~ ws1
-          hs       <- many(int <~ ws1)
-          offset   <- int
-        yield (dd, mm, hs, offset)
-      )
-    yield args
-  ).flatMap {
-    case Some(dd, mm, hs, offset) =>
-      val hours =
-        hs.flatMap(hh =>
-          Try(
-            OffsetDateTime.of(year, mm, dd, hh, 0, 0, 0, ZoneOffset.ofHours(offset))
-          ).toOption
-        )
-      ParserMonad.pure[WillCommand](WillCommand(hours))
-    case None =>
-      ParserMonad.pure[WillCommand](WillCommand(Nil))
-  }
-
   private def commandParser(year: Int): Parser[Command] =
     ws ~> (
       newCommandParser |
@@ -77,7 +53,6 @@ class CommandParserImpl extends CommandParser:
       helpCommandParser |
       freeCommandParser |
       sayCommandParser |
-      willCommandParser(year) |
       err[Command]("Unknown command")
     ) <~ ws <~ endOfInput
 
