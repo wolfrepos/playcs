@@ -63,7 +63,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
 
       Then("the instructions should be reported")
       assert(result === Right(
-        List(SendText(fakeChatId, "You already got the server, just changing a map"))))
+        List(SendText(fakeChatId, "You already have the server, just changing a map"))))
     }
 
     Scenario("User gives command '/new' when there is no free server") {
