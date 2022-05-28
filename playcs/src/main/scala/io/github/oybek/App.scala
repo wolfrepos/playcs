@@ -15,7 +15,6 @@ import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.database.DB
-import io.github.oybek.database.admin.dao.AdminDao
 import io.github.oybek.hlds.HldsClient
 import io.github.oybek.tg.Tg
 import io.github.oybek.hlds.HldsConsole
@@ -35,6 +34,9 @@ import java.io.File
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.*
+import doobie.WeakAsync
+import io.github.oybek.database.hlds.dao.HldsDao
+import io.github.oybek.database.hlds.model.Hlds
 
 object App extends IOApp:
   def run(args: List[String]): IO[ExitCode] =
@@ -59,11 +61,10 @@ def assembleAndLaunch(config: AppConfig,
     override def apply[A](a: ConnectionIO[A]): IO[A] =
       a.transact(tx)
   val consolePool = (consoles, Nil)
-  val adminDao = AdminDao.create
+  val hldsDao = HldsDao.create
   for
     contextLogger <- ContextLogger.create[IO]
     given ContextLogger[IO] = contextLogger
-
     _ <- DB.runMigrations[IO](tx)
     consolePoolRef <- Ref.of[IO, (List[HldsConsole[IO]], List[HldsConsole[IO] With ChatIntId])](consolePool)
     consolePoolManager = PoolManager.create[IO, HldsConsole[IO], ChatIntId](
@@ -78,13 +79,18 @@ def assembleAndLaunch(config: AppConfig,
     hub = Hub.create[IO, ConnectionIO](
       consolePoolManager,
       passwordGenerator,
-      transactor)
-    tg= Tg.create(api, hub)
+      hldsDao,
+      transactor
+    )
+    hlds <- transactor(hldsDao.all)
+    tg = Tg.create(api, hub)
     _ <- setCommands(api)
     _ <- tg.start()
   yield ()
 
-def resources(config: AppConfig): Resource[IO, (Client[IO], List[HldsConsole[IO]], HikariTransactor[IO])] =
+def resources(config: AppConfig): Resource[IO, (Client[IO],
+                                                List[HldsConsole[IO]],
+                                                HikariTransactor[IO])] =
   val initialPort = 27015
   val telegramResponseWaitTime = 60L
   for

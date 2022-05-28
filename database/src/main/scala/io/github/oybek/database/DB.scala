@@ -5,7 +5,6 @@ import doobie.hikari.HikariTransactor
 import doobie.util.transactor.Transactor
 import org.flywaydb.core.Flyway
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-
 import scala.concurrent.ExecutionContext
 
 object DB:

@@ -14,3 +14,8 @@ object PasswordGenerator:
         (Random.nextInt(passwordUpperBorder) + passwordOffset).toString.pure[F]
       private val passwordUpperBorder = 9000
       private val passwordOffset = 1000
+
+  def fake[F[_]: Applicative](password: String): PasswordGenerator[F] =
+    new PasswordGenerator[F]:
+      override def generate: F[String] =
+        password.pure[F]

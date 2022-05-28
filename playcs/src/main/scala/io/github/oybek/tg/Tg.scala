@@ -4,16 +4,16 @@ import cats.Parallel
 import cats.effect.Async
 import cats.effect.IO
 import cats.effect.Temporal
-import org.typelevel.log4cats.Logger
 import cats.implicits.*
 import cats.instances.finiteDuration
 import io.github.oybek.common.logger.Context
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
+import io.github.oybek.hub.Hub
 import io.github.oybek.model.Reaction
 import io.github.oybek.model.Reaction.SendText
 import io.github.oybek.model.Reaction.Sleep
-import io.github.oybek.hub.Hub
+import org.typelevel.log4cats.Logger
 import telegramium.bots.ChatIntId
 import telegramium.bots.Message
 import telegramium.bots.User
@@ -31,14 +31,14 @@ import scala.concurrent.duration.FiniteDuration
 import concurrent.duration.DurationInt
 
 object Tg:
-  def create(api: Api[IO], console: Hub[IO])(using logger: ContextLogger[IO]) =
+  def create(api: Api[IO], hub: Hub[IO])(using logger: ContextLogger[IO]) =
     new LongPollBot[IO](api):
       override def onMessage(message: Message): IO[Unit] =
         given ContextData(message.chat.id)
         (message.text, message.from).mapN(
           (text, user) =>
             val chatId = ChatIntId(message.chat.id)
-            console
+            hub
               .handle(chatId, user, text)
               .recoverWith {
                 th =>

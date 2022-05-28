@@ -19,7 +19,7 @@ lazy val common   = module("common",   file("common"))
 lazy val cstrike  = module("cstrike",  file("cstrike"))
 lazy val database = module("database", file("database"))
 lazy val playcs   = module("playcs",   file("playcs"), cstrike, common, database)
-lazy val scenario = module("scenario", file("scenario"), common, playcs)
+lazy val scenario = module("scenario", file("scenario"), common, database, playcs)
 
 Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
 

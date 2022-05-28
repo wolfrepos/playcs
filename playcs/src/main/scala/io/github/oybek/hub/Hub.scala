@@ -32,6 +32,8 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
 import cats.data.OptionT
+import io.github.oybek.database.hlds.dao.HldsDao
+import io.github.oybek.database.hlds.model.Hlds
 
 trait Hub[F[_]]:
   def handle(chatId: ChatIntId,
@@ -39,10 +41,13 @@ trait Hub[F[_]]:
              text: String): Context[F[List[Reaction]]]
 
 object Hub:
-  def create[F[_]: MonadThrow: ContextLogger, G[_]: Monad]
+  case object NoFreeServerLeft extends Throwable
+
+  def create[F[_]: MonadThrow: ContextLogger, G[_]: MonadThrow]
             (consolePool: PoolManager[F, HldsConsole[F], ChatIntId],
              passwordGenerator: PasswordGenerator[F],
-             tx: G ~> F): Hub[F] = 
+             hldsDao: HldsDao[G],
+             runG: G ~> F): Hub[F] =
     new Hub[F]:
       override def handle(chatId: ChatIntId,
                           user: User,
@@ -57,40 +62,40 @@ object Hub:
                                 user: User,
                                 command: Command): Context[F[List[Reaction]]] =
         command match
-          case NewCommand(map)         => handleNewCommand(chatId, map)
+          case NewCommand(map)         => handleNewCommand(chatId, map.getOrElse("de_dust2"))
           case FreeCommand             => handleFreeCommand(chatId)
           case HelpCommand             => handleHelpCommand(chatId)
           case SayCommand(text)        => handleSayCommand(chatId, text)
           case _                       => List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
 
-      private def handleNewCommand(chatId: ChatIntId, map: Option[String]): Context[F[List[Reaction]]] =
-        val caseHave: OptionT[F, List[Reaction]] =
-          for
-            console <- OptionT(consolePool.find(chatId))
-            _       <- OptionT.liftF(console.changeLevel(map.getOrElse("de_dust2")))
-          yield List(SendText(chatId, "You already have the server, just changing a map"))
-
-        val caseRent: OptionT[F, List[Reaction]] =
-          for
-            console <- OptionT(consolePool.rent(chatId))
-            pass    <- OptionT.liftF(passwordGenerator.generate)
-            _       <- OptionT.liftF(console.svPassword(pass))
-            _       <- OptionT.liftF(console.changeLevel(map.getOrElse("de_dust2")))
-            actions = List(
-              SendText(chatId, "Your server is ready. Copy paste this"),
-              Sleep(200.millis),
-              sendConsole(chatId, console, pass)
-            )
-          yield actions
-
-        val noFreeServerLeft =
-          List(SendText(chatId, "No free server left, contact t.me/turtlebots"))
-
-        caseHave.orElse(caseRent).getOrElse(noFreeServerLeft)
+      private def handleNewCommand(chatId: ChatIntId,
+                                   map: String,
+                                   pass: Option[String] = None): Context[F[List[Reaction]]] = {
+        for
+          console <- OptionT(consolePool.find(chatId))
+          _       <- OptionT.liftF(console.changeLevel(map))
+        yield List(SendText(chatId, "You already have the server, just changing a map"))
+      } orElse {
+        for
+          console  <- OptionT(consolePool.rent(chatId))
+          password <- OptionT.liftF(pass.fold(passwordGenerator.generate)(_.pure[F]))
+          _        <- OptionT.liftF(console.svPassword(password))
+          _        <- OptionT.liftF(console.changeLevel(map))
+          _        <- OptionT.liftF(runG(hldsDao.add(Hlds(chatId.id, password, map))))
+          reaction = List(
+            SendText(chatId, "Your server is ready. Copy paste this"),
+            Sleep(200.millis),
+            sendConsole(chatId, console, password)
+          )
+        yield reaction
+      } getOrElse {
+        List(SendText(chatId, "No free server left, contact t.me/turtlebots"))
+      }
 
       private def handleFreeCommand(chatId: ChatIntId): Context[F[List[Reaction]]] =
         consolePool.find(chatId).flatMap {
           case Some(_) =>
+            runG(hldsDao.delete(chatId.id)) >>
             consolePool.free(chatId).as(
               List(SendText(chatId, "Server has been deleted")))
 
