@@ -39,17 +39,12 @@ object CommandParser extends CommandParser:
   private val freeCommandParser: Parser[FreeCommand.type] =
     (string(FreeCommand.command) ~> optSuffix).map(_ => FreeCommand)
 
-  private val sayCommandParser: Parser[SayCommand] =
-    (string(SayCommand("").command) ~> optSuffix ~> ws1 ~> stringOf1(anyChar))
-      .map(text => SayCommand(text))
-
   private def commandParser: Parser[Command] =
     ws ~> (
       newCommandParser |
       balanceCommandParser |
       helpCommandParser |
       freeCommandParser |
-      sayCommandParser |
       err[Command]("Unknown command")
     ) <~ ws <~ endOfInput
 

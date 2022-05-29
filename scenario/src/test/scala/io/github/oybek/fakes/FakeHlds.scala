@@ -3,11 +3,11 @@ package io.github.oybek.fakes
 import cats.Applicative
 import cats.implicits.{catsSyntaxApplicativeId, toFunctorOps}
 import io.github.oybek.fakes.FakeData.{fakeIp, fakePort}
-import io.github.oybek.hlds.HldsConsole
+import io.github.oybek.hlds.Hlds
 
 import scala.collection.mutable.ListBuffer
 
-class FakeHldsConsole[F[_]: Applicative] extends HldsConsole[F]:
+class FakeHlds[F[_]: Applicative] extends Hlds[F]:
   override def map(map: String): F[Unit] =
     calledCommands.addOne(s"map $map").pure[F].void
 

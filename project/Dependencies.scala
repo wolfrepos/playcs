@@ -9,7 +9,6 @@ object Dependencies {
     val ciris          = "2.3.2"
     val doobie         = "1.0.0-RC2"
     val flyway         = "8.5.9"
-    val mouse          = "1.0.10"
     val scalaTest      = "3.2.12"
     val telegramium    = "7.60.0"
     val testContainers = "0.40.6"
@@ -30,7 +29,6 @@ object Dependencies {
       "org.tpolecat"          %% "doobie-hikari"                   % V.doobie,
       "org.tpolecat"          %% "doobie-postgres"                 % V.doobie,
       "org.typelevel"         %% "cats-core"                       % V.catsCore,
-      "org.typelevel"         %% "cats-effect"                     % V.catsEffect,
-      "org.typelevel"         %% "mouse"                           % V.mouse,
+      "org.typelevel"         %% "cats-effect"                     % V.catsEffect
     )
 }
