@@ -42,10 +42,19 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
       )
 
       Then("the instructions should be reported")
-      assert(result === Right(List(
-        SendText(fakeChatId, "Your server is ready. Copy paste this"),
-        Sleep(200.millis),
-        SendText(fakeChatId, "`connect 127.0.0.1:27015; password 4444`",Some(Markdown)))))
+      assert(
+        result === Right(
+          List(
+            SendText(fakeChatId, "Your server is ready. Copy paste this"),
+            Sleep(200.millis),
+            SendText(
+              fakeChatId,
+              "`connect 127.0.0.1:27015; password 4444`",
+              Some(Markdown)
+            )
+          )
+        )
+      )
     }
 
     Scenario("User gives command '/new' already having the server") {
@@ -60,8 +69,16 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
       assert(fakeHlds.getCalledCommands === List("changelevel de_dust2"))
 
       Then("the instructions should be reported")
-      assert(result === Right(
-        List(SendText(fakeChatId, "You already got the server, just changing a map"))))
+      assert(
+        result === Right(
+          List(
+            SendText(
+              fakeChatId,
+              "You already got the server, just changing a map"
+            )
+          )
+        )
+      )
     }
 
     Scenario("User gives command '/new' when there is no free server") {
@@ -74,7 +91,15 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
 
       Then("No servers left message should be returned")
       assert(fakeHlds.getCalledCommands.isEmpty)
-      assert(result === Right(
-        List(SendText(anotherFakeChatId, "No free server left, contact t.me/turtlebots"))))
+      assert(
+        result === Right(
+          List(
+            SendText(
+              anotherFakeChatId,
+              "No free server left, contact t.me/turtlebots"
+            )
+          )
+        )
+      )
     }
   }

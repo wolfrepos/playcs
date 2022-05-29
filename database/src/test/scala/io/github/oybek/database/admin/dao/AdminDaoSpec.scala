@@ -23,15 +23,17 @@ trait AdminDaoSpec extends AnyFunSuite with PostgresSetup:
   val adminDao: AdminDao[ConnectionIO] = AdminDao.create
 
   test("AdminDao") {
-    transactor.use { tx =>
-      for
-        _ <- DB.runMigrations(tx)
-        _ <- sql"insert into admin (chat_id) values (123)".update.run.transact(tx)
-        isAdmin <- adminDao.isAdmin(123L).transact(tx)
-        _ = assert(isAdmin)
-        isAdmin <- adminDao.isAdmin(124L).transact(tx)
-        _ = assert(!isAdmin)
-      yield ()
-    }.unsafeRunTimed(10.seconds)
+    transactor
+      .use { tx =>
+        for
+          _ <- DB.runMigrations(tx)
+          _ <- sql"insert into admin (chat_id) values (123)".update.run
+            .transact(tx)
+          isAdmin <- adminDao.isAdmin(123L).transact(tx)
+          _ = assert(isAdmin)
+          isAdmin <- adminDao.isAdmin(124L).transact(tx)
+          _ = assert(!isAdmin)
+        yield ()
+      }
+      .unsafeRunTimed(10.seconds)
   }
-

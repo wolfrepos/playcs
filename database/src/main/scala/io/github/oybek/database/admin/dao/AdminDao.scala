@@ -10,4 +10,6 @@ object AdminDao:
   def create =
     new AdminDao[ConnectionIO]:
       override def isAdmin(telegramId: Long): ConnectionIO[Boolean] =
-        sql"select exists(select 1 from admin where chat_id = $telegramId)".query[Boolean].unique
+        sql"select exists(select 1 from admin where chat_id = $telegramId)"
+          .query[Boolean]
+          .unique

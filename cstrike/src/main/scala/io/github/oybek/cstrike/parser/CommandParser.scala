@@ -19,7 +19,7 @@ trait CommandParser:
 object CommandParser extends CommandParser:
   override def parse(text: String): String | Command =
     commandParser.parseOnly(text).either match {
-      case Left(error) => error
+      case Left(error)    => error
       case Right(command) => command
     }
 
@@ -42,12 +42,12 @@ object CommandParser extends CommandParser:
   private def commandParser: Parser[Command] =
     ws ~> (
       newCommandParser |
-      balanceCommandParser |
-      helpCommandParser |
-      freeCommandParser |
-      err[Command]("Unknown command")
+        balanceCommandParser |
+        helpCommandParser |
+        freeCommandParser |
+        err[Command]("Unknown command")
     ) <~ ws <~ endOfInput
 
   private lazy val optSuffix = opt(string("@playcs_bot"))
-  private lazy val ws1 = many1(whitespace)
-  private lazy val ws = many(whitespace)
+  private lazy val ws1       = many1(whitespace)
+  private lazy val ws        = many(whitespace)

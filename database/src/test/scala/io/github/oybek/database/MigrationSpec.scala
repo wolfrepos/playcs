@@ -14,4 +14,3 @@ trait MigrationSpec extends AnyFunSuite with PostgresSetup:
   test("Migrations") {
     transactor.use(DB.runMigrations(_)).unsafeRunSync()
   }
-

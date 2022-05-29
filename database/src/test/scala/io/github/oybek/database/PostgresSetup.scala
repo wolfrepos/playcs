@@ -16,7 +16,9 @@ import scala.concurrent.ExecutionContext.global
 trait PostgresSetup extends ForAllTestContainer:
   self: Suite =>
 
-  override val container: PostgreSQLContainer = PostgreSQLContainer(DockerImageName.parse("postgres:10.10"))
+  override val container: PostgreSQLContainer = PostgreSQLContainer(
+    DockerImageName.parse("postgres:10.10")
+  )
 
   lazy val transactor = DB.createTransactor[IO](
     DbConfig(

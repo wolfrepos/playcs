@@ -7,7 +7,10 @@ import io.github.oybek.setup.HubSetup
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
 
-class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetup:
+class FreeCommandScenario
+    extends AnyFeatureSpec
+    with GivenWhenThen
+    with HubSetup:
 
   info("As a user")
   info("I want to be able to free the server used by us")
@@ -18,9 +21,13 @@ class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetu
 
       When("/free command received")
 
-      Then("server is free and returned back to pool and appropriate message returned")
-      assert(hub.handle(fakeChatId, fakeUser, "/free") ===
-        Right(List(SendText(fakeChatId, "No created servers"))))
+      Then(
+        "server is free and returned back to pool and appropriate message returned"
+      )
+      assert(
+        hub.handle(fakeChatId, fakeUser, "/free") ===
+          Right(List(SendText(fakeChatId, "No created servers")))
+      )
     }
 
     Scenario("User gives command '/free'") {
@@ -29,8 +36,12 @@ class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetu
 
       When("/free command received")
 
-      Then("server is free and returned back to pool and appropriate message returned")
-      assert(hub.handle(fakeChatId, fakeUser, "/free") ===
-        Right(List(SendText(fakeChatId, "Server has been deleted"))))
+      Then(
+        "server is free and returned back to pool and appropriate message returned"
+      )
+      assert(
+        hub.handle(fakeChatId, fakeUser, "/free") ===
+          Right(List(SendText(fakeChatId, "Server has been deleted")))
+      )
     }
   }
