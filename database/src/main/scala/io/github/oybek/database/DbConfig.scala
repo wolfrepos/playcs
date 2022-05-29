@@ -3,10 +3,7 @@ package io.github.oybek.database
 import cats.implicits.*
 import ciris.*
 
-case class DbConfig(driver: String,
-                    url: String,
-                    user: String,
-                    pass: String)
+case class DbConfig(driver: String, url: String, user: String, pass: String)
 
 object DbConfig:
   def load[F[_]]: ConfigValue[F, DbConfig] = (

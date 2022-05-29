@@ -13,4 +13,4 @@ object PasswordGenerator:
       override def generate: F[String] =
         (Random.nextInt(passwordUpperBorder) + passwordOffset).toString.pure[F]
       private val passwordUpperBorder = 9000
-      private val passwordOffset = 1000
+      private val passwordOffset      = 1000

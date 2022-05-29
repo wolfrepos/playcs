@@ -26,7 +26,7 @@ jobs:
         java-version: '11'
     - name: test
       run: |
-        sbt "clean; testAll"
+        sbt "clean; scalafmtCheckAll; testAll"
 
   BuildAndDeploy:
     if: ${{ github.ref == 'refs/heads/master' }}

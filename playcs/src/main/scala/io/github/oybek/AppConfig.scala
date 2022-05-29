@@ -4,11 +4,13 @@ import cats.implicits.*
 import ciris.*
 import io.github.oybek.database.DbConfig
 
-case class AppConfig(database: DbConfig,
-                     serverIp: String,
-                     tgBotApiToken: String,
-                     hldsDir: String,
-                     serverPoolSize: Int)
+case class AppConfig(
+  database: DbConfig,
+  serverIp: String,
+  tgBotApiToken: String,
+  hldsDir: String,
+  serverPoolSize: Int
+)
 
 object AppConfig:
   def create[F[_]]: ConfigValue[F, AppConfig] = (

@@ -16,27 +16,25 @@ class CommandParserSpec extends AnyFlatSpec:
 
   val tests: TableFor2[String, String | Command] = Table(
     ("String", "Command"),
-    ("/new@playcs_bot de_dust2"         , NewCommand("de_dust2".some)),
-    (" /new@playcs_bot  de_dust2"       , NewCommand("de_dust2".some)),
-    ("/new@playcs_bot de_dust2"         , NewCommand("de_dust2".some)),
-    ("/new@playcs_bot"                  , NewCommand(None)),
-    ("/new"                             , NewCommand(None)),
-    ("/new@playcs_bot de_dust2 hello"   , "endOfInput"),
-    ("/new de_dust2"                    , NewCommand("de_dust2".some)),
-    (" /new  de_dust2 "                 , NewCommand("de_dust2".some)),
-    ("/new de_dust2"                    , NewCommand("de_dust2".some)),
-    ("/new de_dust2 hello"              , "endOfInput"),
-    ("/help"                            , HelpCommand),
-    ("   /help@playcs_bot   "           , HelpCommand),
-    ("/balance"                         , BalanceCommand),
-    ("   /balance@playcs_bot   "        , BalanceCommand),
-    ("   /say@playcs_bot hello"         , SayCommand("hello")),
-    ("   /say hello"                    , SayCommand("hello")),
-    ("   /map@playcs_bot   "            , "Unknown command"),
+    ("/new@playcs_bot de_dust2", NewCommand("de_dust2".some)),
+    (" /new@playcs_bot  de_dust2", NewCommand("de_dust2".some)),
+    ("/new@playcs_bot de_dust2", NewCommand("de_dust2".some)),
+    ("/new@playcs_bot", NewCommand(None)),
+    ("/new", NewCommand(None)),
+    ("/new@playcs_bot de_dust2 hello", "endOfInput"),
+    ("/new de_dust2", NewCommand("de_dust2".some)),
+    (" /new  de_dust2 ", NewCommand("de_dust2".some)),
+    ("/new de_dust2", NewCommand("de_dust2".some)),
+    ("/new de_dust2 hello", "endOfInput"),
+    ("/help", HelpCommand),
+    ("   /help@playcs_bot   ", HelpCommand),
+    ("/balance", BalanceCommand),
+    ("   /balance@playcs_bot   ", BalanceCommand),
+    ("   /map@playcs_bot   ", "Unknown command")
   )
 
   "translator".should("be tested") in {
-    forAll(tests) {
-      (text, command) => assert(CommandParser.parse(text) === command)
+    forAll(tests) { (text, command) =>
+      assert(CommandParser.parse(text) === command)
     }
   }

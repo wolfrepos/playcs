@@ -35,19 +35,23 @@ object Tg:
     new LongPollBot[IO](api):
       override def onMessage(message: Message): IO[Unit] =
         given ContextData(message.chat.id)
-        (message.text, message.from).mapN(
-          (text, user) =>
+        (message.text, message.from)
+          .mapN((text, user) =>
             val chatId = ChatIntId(message.chat.id)
             console
               .handle(chatId, user, text)
-              .recoverWith {
-                th =>
-                  logger.info(s"Something went wrong $th").as(
+              .recoverWith { th =>
+                logger
+                  .info(s"Something went wrong $th")
+                  .as(
                     List(SendText(chatId, "Что-то пошло не так"): Reaction)
                   )
               }
               .flatMap(interpret)
-        ).getOrElse(IO.unit).start.void
+          )
+          .getOrElse(IO.unit)
+          .start
+          .void
 
       override def start(): IO[Unit] =
         super.start().void
@@ -56,19 +60,22 @@ object Tg:
         reactions.traverse {
           case SendText(chatId, text, parseMode) =>
             logger.info(s"Sending message $text") >>
-            Methods.sendMessage(
-              chatId = chatId,
-              text = text,
-              parseMode = parseMode
-            ).exec(api).void
+              Methods
+                .sendMessage(
+                  chatId = chatId,
+                  text = text,
+                  parseMode = parseMode
+                )
+                .exec(api)
+                .void
 
           case Sleep(finiteDuration) =>
             logger.info(s"Sleeping $finiteDuration") >>
-            Temporal[IO].sleep(finiteDuration)
+              Temporal[IO].sleep(finiteDuration)
         }.void
 
       private def toNearestHour = IO {
-        val now = OffsetDateTime.now
+        val now      = OffsetDateTime.now
         val nextHour = now.truncatedTo(ChronoUnit.HOURS).plusHours(1)
         val duration = Duration.between(now, nextHour)
         FiniteDuration(duration.getSeconds, TimeUnit.SECONDS)
