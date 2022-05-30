@@ -35,22 +35,22 @@ import scala.concurrent.duration.FiniteDuration
 
 trait Hub[F[_]]:
   def handle(
-    chatId: ChatIntId,
-    user: User,
-    text: String
+      chatId: ChatIntId,
+      user: User,
+      text: String
   ): Context[F[List[Reaction]]]
 
 object Hub:
   def create[F[_]: MonadThrow: ContextLogger, G[_]: Monad](
-    hldsPool: Pool[F, Long, Hlds[F]],
-    passwordGenerator: PasswordGenerator[F],
-    tx: G ~> F
+      hldsPool: Pool[F, Long, Hlds[F]],
+      passwordGenerator: PasswordGenerator[F],
+      tx: G ~> F
   ): Hub[F] =
     new Hub[F]:
       override def handle(
-        chatId: ChatIntId,
-        user: User,
-        text: String
+          chatId: ChatIntId,
+          user: User,
+          text: String
       ): Context[F[List[Reaction]]] =
         ContextLogger[F].info(s"Got message $text") >> {
           CommandParser.parse(text) match
@@ -59,9 +59,9 @@ object Hub:
         }
 
       private def handleCommand(
-        chatId: ChatIntId,
-        user: User,
-        command: Command
+          chatId: ChatIntId,
+          user: User,
+          command: Command
       ): Context[F[List[Reaction]]] =
         command match
           case NewCommand(map) =>
@@ -73,12 +73,12 @@ object Hub:
             List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
 
       private def handleNewCommand(
-        chatId: ChatIntId,
-        map: String
+          chatId: ChatIntId,
+          map: String
       ): Context[F[List[Reaction]]] = {
         for
           hlds <- OptionT(hldsPool.find(chatId.id))
-          _    <- OptionT.liftF(hlds.changeLevel(map))
+          _ <- OptionT.liftF(hlds.changeLevel(map))
         yield List(
           SendText(chatId, "You already got the server, just changing a map")
         )
@@ -86,8 +86,8 @@ object Hub:
         for
           hlds <- OptionT(hldsPool.rent(chatId.id))
           pass <- OptionT.liftF(passwordGenerator.generate)
-          _    <- OptionT.liftF(hlds.svPassword(pass))
-          _    <- OptionT.liftF(hlds.changeLevel(map))
+          _ <- OptionT.liftF(hlds.svPassword(pass))
+          _ <- OptionT.liftF(hlds.changeLevel(map))
         yield List(
           SendText(chatId, "Your server is ready. Copy paste this"),
           Sleep(200.millis),
@@ -98,7 +98,7 @@ object Hub:
       }
 
       private def handleFreeCommand(
-        chatId: ChatIntId
+          chatId: ChatIntId
       ): Context[F[List[Reaction]]] =
         hldsPool.find(chatId.id).flatMap {
           case Some(_) =>
@@ -114,8 +114,8 @@ object Hub:
         List(SendText(chatId, helpText): Reaction).pure[F]
 
       private def handleSayCommand(
-        chatId: ChatIntId,
-        text: String
+          chatId: ChatIntId,
+          text: String
       ): Context[F[List[Reaction]]] =
         hldsPool.find(chatId.id).flatMap {
           case None =>
@@ -125,9 +125,9 @@ object Hub:
         }
 
       private def sendConsole(
-        chatId: ChatIntId,
-        console: Hlds[F],
-        password: String
+          chatId: ChatIntId,
+          console: Hlds[F],
+          password: String
       ): SendText =
         SendText(
           chatId,

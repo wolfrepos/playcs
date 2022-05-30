@@ -23,8 +23,8 @@ trait HubSetup:
     def refOf[A](a: A): F[Ref[F, A]] =
       (new FakeRef[F, A](a)).pure[F]
 
-  val fakeHlds          = new FakeHlds[F]
-  val pool              = (List(fakeHlds), List.empty[Hlds[F] With Long])
+  val fakeHlds = new FakeHlds[F]
+  val pool = (List(fakeHlds), List.empty[Hlds[F] With Long])
   val passwordGenerator = new FakePasswordGenerator[F]
   val transact = new FunctionK[DB, F]:
     override def apply[A](fa: DB[A]): F[A] = Right(fa)
@@ -35,8 +35,8 @@ trait HubSetup:
         hldsConsole =>
           for
             pass <- passwordGenerator.generate
-            _    <- hldsConsole.svPassword(pass)
-            _    <- hldsConsole.map("de_dust2")
+            _ <- hldsConsole.svPassword(pass)
+            _ <- hldsConsole.map("de_dust2")
           yield ()
       )
       .map(pool => Hub.create[F, DB](pool, passwordGenerator, transact))

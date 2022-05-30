@@ -22,8 +22,8 @@ trait Pool[F[_], Id, T]:
 
 object Pool:
   def create[F[_]: Monad: Make, Id, T](
-    pool: (List[T], List[T With Id]),
-    reset: T => F[Unit]
+      pool: (List[T], List[T With Id]),
+      reset: T => F[Unit]
   ): F[Pool[F, Id, T]] =
     Ref.of[F, (List[T], List[T With Id])](pool).map { poolRef =>
       new Pool[F, Id, T]:
@@ -45,7 +45,7 @@ object Pool:
           for
             (free, busy) <- poolRef.get
             (toFreeWithId, leftBusy) = busy.partition(_.meta == id)
-            toFree                   = toFreeWithId.map(_.get)
+            toFree = toFreeWithId.map(_.get)
             _ <- toFree.traverse(reset)
             _ <- poolRef.set((free ++ toFree, leftBusy))
           yield ()

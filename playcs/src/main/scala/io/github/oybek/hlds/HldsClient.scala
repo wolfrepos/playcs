@@ -22,7 +22,7 @@ object HldsClient:
       s"./hlds_run -game cstrike +ip 0.0.0.0 +port $port +maxplayers 12 +map de_dust2 +exec server.cfg",
       hldsDir
     )
-    val gate      = new Gate
+    val gate = new Gate
     val processIO = new ProcessIO(gate.stream, _ => (), _ => ())
     Resource.make {
       IO(processDesc.run(processIO)).map { p =>

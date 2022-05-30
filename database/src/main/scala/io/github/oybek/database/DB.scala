@@ -10,8 +10,8 @@ import scala.concurrent.ExecutionContext
 
 object DB:
   def createTransactor[F[_]: Async](
-    config: DbConfig,
-    ec: ExecutionContext
+      config: DbConfig,
+      ec: ExecutionContext
   ): Resource[F, HikariTransactor[F]] =
     HikariTransactor.newHikariTransactor[F](
       driverClassName = config.driver,

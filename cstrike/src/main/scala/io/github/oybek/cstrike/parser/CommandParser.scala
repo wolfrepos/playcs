@@ -49,5 +49,5 @@ object CommandParser extends CommandParser:
     ) <~ ws <~ endOfInput
 
   private lazy val optSuffix = opt(string("@playcs_bot"))
-  private lazy val ws1       = many1(whitespace)
-  private lazy val ws        = many(whitespace)
+  private lazy val ws1 = many1(whitespace)
+  private lazy val ws = many(whitespace)

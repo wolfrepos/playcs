@@ -5,11 +5,11 @@ import ciris.*
 import io.github.oybek.database.DbConfig
 
 case class AppConfig(
-  database: DbConfig,
-  serverIp: String,
-  tgBotApiToken: String,
-  hldsDir: String,
-  serverPoolSize: Int
+    database: DbConfig,
+    serverIp: String,
+    tgBotApiToken: String,
+    hldsDir: String,
+    serverPoolSize: Int
 )
 
 object AppConfig:

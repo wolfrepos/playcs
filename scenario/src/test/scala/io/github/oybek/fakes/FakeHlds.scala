@@ -24,7 +24,7 @@ class FakeHlds[F[_]: Applicative] extends Hlds[F]:
     calledCommands.addOne(s"say $text").pure[F].void
 
   override def ip: String = fakeIp
-  override def port: Int  = fakePort
+  override def port: Int = fakePort
 
   def getCalledCommands: List[String] =
     calledCommands.toList

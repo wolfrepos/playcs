@@ -40,7 +40,7 @@ object App extends IOApp:
   def run(args: List[String]): IO[ExitCode] =
     for
       config <- AppConfig.create[IO].load[IO]
-      _      <- log.info(s"loaded config: $config")
+      _ <- log.info(s"loaded config: $config")
       _ <- resources(config).use { (httpClient, consoles, tx) =>
         assembleAndLaunch(config, httpClient, consoles, tx)
       }
@@ -48,10 +48,10 @@ object App extends IOApp:
   private val log = Slf4jLogger.getLoggerFromName[IO]("application")
 
 def assembleAndLaunch(
-  config: AppConfig,
-  httpClient: Client[IO],
-  consoles: List[Hlds[IO]],
-  tx: HikariTransactor[IO]
+    config: AppConfig,
+    httpClient: Client[IO],
+    consoles: List[Hlds[IO]],
+    tx: HikariTransactor[IO]
 ): IO[Unit] =
   val client = Logger(logHeaders = false, logBody = false)(httpClient)
   val api =
@@ -61,7 +61,7 @@ def assembleAndLaunch(
     override def apply[A](a: ConnectionIO[A]): IO[A] =
       a.transact(tx)
   val consolePool = (consoles, Nil)
-  val adminDao    = AdminDao.create
+  val adminDao = AdminDao.create
   for
     contextLogger <- ContextLogger.create[IO]
     given ContextLogger[IO] = contextLogger
@@ -71,8 +71,8 @@ def assembleAndLaunch(
       hldsConsole =>
         for
           pass <- passwordGenerator.generate
-          _    <- hldsConsole.svPassword(pass)
-          _    <- hldsConsole.map("de_dust2")
+          _ <- hldsConsole.svPassword(pass)
+          _ <- hldsConsole.map("de_dust2")
         yield ()
     )
     hub = Hub.create[IO, ConnectionIO](
@@ -86,9 +86,9 @@ def assembleAndLaunch(
   yield ()
 
 def resources(
-  config: AppConfig
+    config: AppConfig
 ): Resource[IO, (Client[IO], List[Hlds[IO]], HikariTransactor[IO])] =
-  val initialPort              = 27015
+  val initialPort = 27015
   val telegramResponseWaitTime = 60L
   for
     connEc <- ExecutionContexts.fixedThreadPool[IO](10)
