@@ -30,5 +30,5 @@ object Hlds:
     override def say(text: String): F[Unit] =
       consoleLow.execute(s"say $text")
 
-    override val ip = anIp
+    override val ip   = anIp
     override val port = aPort

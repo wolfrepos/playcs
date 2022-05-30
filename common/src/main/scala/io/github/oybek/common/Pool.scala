@@ -45,7 +45,7 @@ object Pool:
           for
             (free, busy) <- poolRef.get
             (toFreeWithId, leftBusy) = busy.partition(_.meta == id)
-            toFree = toFreeWithId.map(_.get)
+            toFree                   = toFreeWithId.map(_.get)
             _ <- toFree.traverse(reset)
             _ <- poolRef.set((free ++ toFree, leftBusy))
           yield ()

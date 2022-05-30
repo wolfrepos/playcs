@@ -9,5 +9,5 @@ enum Reaction:
       chatId: ChatIntId,
       text: String,
       parseMode: Option[ParseMode] = None
-  ) extends Reaction
+  )                                          extends Reaction
   case Sleep(finiteDuration: FiniteDuration) extends Reaction

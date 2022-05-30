@@ -1,4 +1,4 @@
-package io.github.oybek.database.admin.dao
+package io.github.oybek.database.admin
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
@@ -9,7 +9,7 @@ import doobie.implicits.*
 import io.github.oybek.database.DB
 import io.github.oybek.database.DbConfig
 import io.github.oybek.database.PostgresSetup
-import io.github.oybek.database.admin.dao.AdminDao
+import io.github.oybek.database.admin.AdminDao
 import org.scalatest.funsuite.AnyFunSuite
 import org.testcontainers.utility.DockerImageName
 import telegramium.bots.ChatIntId

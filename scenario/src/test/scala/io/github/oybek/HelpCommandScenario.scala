@@ -8,10 +8,7 @@ import io.github.oybek.setup.HubSetup
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
 
-class HelpCommandScenario
-    extends AnyFeatureSpec
-    with GivenWhenThen
-    with HubSetup:
+class HelpCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetup:
 
   info("As a user")
   info("I want to be able to get help message")

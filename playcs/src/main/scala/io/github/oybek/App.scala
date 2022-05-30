@@ -15,7 +15,7 @@ import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
 import io.github.oybek.cstrike.model.Command
 import io.github.oybek.database.DB
-import io.github.oybek.database.admin.dao.AdminDao
+import io.github.oybek.database.admin.AdminDao
 import io.github.oybek.hlds.Hlds
 import io.github.oybek.hlds.HldsClient
 import io.github.oybek.hub.Hub
@@ -40,7 +40,7 @@ object App extends IOApp:
   def run(args: List[String]): IO[ExitCode] =
     for
       config <- AppConfig.create[IO].load[IO]
-      _ <- log.info(s"loaded config: $config")
+      _      <- log.info(s"loaded config: $config")
       _ <- resources(config).use { (httpClient, consoles, tx) =>
         assembleAndLaunch(config, httpClient, consoles, tx)
       }
@@ -61,7 +61,7 @@ def assembleAndLaunch(
     override def apply[A](a: ConnectionIO[A]): IO[A] =
       a.transact(tx)
   val consolePool = (consoles, Nil)
-  val adminDao = AdminDao.create
+  val adminDao    = AdminDao.create
   for
     contextLogger <- ContextLogger.create[IO]
     given ContextLogger[IO] = contextLogger
@@ -71,11 +71,11 @@ def assembleAndLaunch(
       hldsConsole =>
         for
           pass <- passwordGenerator.generate
-          _ <- hldsConsole.svPassword(pass)
-          _ <- hldsConsole.map("de_dust2")
+          _    <- hldsConsole.svPassword(pass)
+          _    <- hldsConsole.map("de_dust2")
         yield ()
     )
-    hub = Hub.create[IO, ConnectionIO](
+    hub = Hub.create[ConnectionIO, IO](
       consolePoolManager,
       passwordGenerator,
       transactor
@@ -88,7 +88,7 @@ def assembleAndLaunch(
 def resources(
     config: AppConfig
 ): Resource[IO, (Client[IO], List[Hlds[IO]], HikariTransactor[IO])] =
-  val initialPort = 27015
+  val initialPort              = 27015
   val telegramResponseWaitTime = 60L
   for
     connEc <- ExecutionContexts.fixedThreadPool[IO](10)

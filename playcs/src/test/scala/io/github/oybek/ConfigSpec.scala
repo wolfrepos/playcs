@@ -14,13 +14,13 @@ class AppConfigSpec extends AnyFunSuite:
   test("Config load") {
     val properties = List(
       "database.driver" -> "org.postgresql.Driver",
-      "database.url" -> "url",
-      "database.user" -> "user",
-      "database.pass" -> "pass",
-      "server.ip" -> "SERVER_IP",
-      "tg.token" -> "BOT_TOKEN",
-      "hlds.dir" -> "HLDS_DIR",
-      "pool.size" -> "2"
+      "database.url"    -> "url",
+      "database.user"   -> "user",
+      "database.pass"   -> "pass",
+      "server.ip"       -> "SERVER_IP",
+      "tg.token"        -> "BOT_TOKEN",
+      "hlds.dir"        -> "HLDS_DIR",
+      "pool.size"       -> "2"
     )
     properties.map { case (key, value) =>
       System.setProperty(key, value)

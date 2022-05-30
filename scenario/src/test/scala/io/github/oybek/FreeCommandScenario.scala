@@ -7,10 +7,7 @@ import io.github.oybek.setup.HubSetup
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
 
-class FreeCommandScenario
-    extends AnyFeatureSpec
-    with GivenWhenThen
-    with HubSetup:
+class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetup:
 
   info("As a user")
   info("I want to be able to free the server used by us")

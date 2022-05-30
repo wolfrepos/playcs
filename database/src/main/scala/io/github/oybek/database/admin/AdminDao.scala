@@ -1,4 +1,4 @@
-package io.github.oybek.database.admin.dao
+package io.github.oybek.database.admin
 
 import doobie.*
 import doobie.implicits.*

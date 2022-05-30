@@ -75,7 +75,7 @@ object Tg:
         }.void
 
       private def toNearestHour = IO {
-        val now = OffsetDateTime.now
+        val now      = OffsetDateTime.now
         val nextHour = now.truncatedTo(ChronoUnit.HOURS).plusHours(1)
         val duration = Duration.between(now, nextHour)
         FiniteDuration(duration.getSeconds, TimeUnit.SECONDS)
