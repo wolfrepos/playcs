@@ -26,8 +26,6 @@ trait HubSetup:
   val fakeHlds = new FakeHlds[F]
   val pool = (List(fakeHlds), List.empty[Hlds[F] With Long])
   val passwordGenerator = new FakePasswordGenerator[F]
-  val transact = new FunctionK[DB, F]:
-    override def apply[A](fa: DB[A]): F[A] = Right(fa)
   val hub: Hub[F] =
     Pool
       .create[F, Long, Hlds[F]](
@@ -39,6 +37,6 @@ trait HubSetup:
             _ <- hldsConsole.map("de_dust2")
           yield ()
       )
-      .map(pool => Hub.create[F, DB](pool, passwordGenerator, transact))
+      .map(pool => Hub.create[F, DB](pool, passwordGenerator))
       .toOption
       .get

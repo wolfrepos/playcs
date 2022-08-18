@@ -14,8 +14,6 @@ import io.github.oybek.common.With
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
 import io.github.oybek.cstrike.model.Command
-import io.github.oybek.database.DB
-import io.github.oybek.database.admin.dao.AdminDao
 import io.github.oybek.hlds.Hlds
 import io.github.oybek.hlds.HldsClient
 import io.github.oybek.hub.Hub
@@ -41,8 +39,8 @@ object App extends IOApp:
     for
       config <- AppConfig.create[IO].load[IO]
       _ <- log.info(s"loaded config: $config")
-      _ <- resources(config).use { (httpClient, consoles, tx) =>
-        assembleAndLaunch(config, httpClient, consoles, tx)
+      _ <- resources(config).use { (httpClient, consoles) =>
+        assembleAndLaunch(config, httpClient, consoles)
       }
     yield ExitCode.Success
   private val log = Slf4jLogger.getLoggerFromName[IO]("application")
@@ -50,22 +48,16 @@ object App extends IOApp:
 def assembleAndLaunch(
     config: AppConfig,
     httpClient: Client[IO],
-    consoles: List[Hlds[IO]],
-    tx: HikariTransactor[IO]
+    consoles: List[Hlds[IO]]
 ): IO[Unit] =
   val client = Logger(logHeaders = false, logBody = false)(httpClient)
   val api =
     BotApi[IO](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
   val passwordGenerator = PasswordGenerator.create[IO]
-  val transactor = new FunctionK[ConnectionIO, IO]:
-    override def apply[A](a: ConnectionIO[A]): IO[A] =
-      a.transact(tx)
   val consolePool = (consoles, Nil)
-  val adminDao = AdminDao.create
   for
     contextLogger <- ContextLogger.create[IO]
     given ContextLogger[IO] = contextLogger
-    _ <- DB.runMigrations[IO](tx)
     consolePoolManager <- Pool.create[IO, Long, Hlds[IO]](
       consolePool,
       hldsConsole =>
@@ -77,8 +69,7 @@ def assembleAndLaunch(
     )
     hub = Hub.create[IO, ConnectionIO](
       consolePoolManager,
-      passwordGenerator,
-      transactor
+      passwordGenerator
     )
     tg = Tg.create(api, hub)
     _ <- setCommands(api)
@@ -87,7 +78,7 @@ def assembleAndLaunch(
 
 def resources(
     config: AppConfig
-): Resource[IO, (Client[IO], List[Hlds[IO]], HikariTransactor[IO])] =
+): Resource[IO, (Client[IO], List[Hlds[IO]])] =
   val initialPort = 27015
   val telegramResponseWaitTime = 60L
   for
@@ -99,7 +90,6 @@ def resources(
         FiniteDuration(telegramResponseWaitTime, TimeUnit.SECONDS)
       )
       .resource
-    transactor <- DB.createTransactor[IO](config.database, tranEc)
     consoles <- (0 until config.serverPoolSize).toList
       .traverse { offset =>
         val port = initialPort + offset
@@ -107,7 +97,7 @@ def resources(
           Hlds.create[IO](config.serverIp, port, _)
         }
       }
-  yield (client, consoles, transactor)
+  yield (client, consoles)
 
 def setCommands[F[_]: Functor](api: BotApi[F]): F[Unit] =
   val commands = Command.visible.map(x => BotCommand(x.command, x.description))

@@ -43,8 +43,7 @@ trait Hub[F[_]]:
 object Hub:
   def create[F[_]: MonadThrow: ContextLogger, G[_]: Monad](
       hldsPool: Pool[F, Long, Hlds[F]],
-      passwordGenerator: PasswordGenerator[F],
-      tx: G ~> F
+      passwordGenerator: PasswordGenerator[F]
   ): Hub[F] =
     new Hub[F]:
       override def handle(
