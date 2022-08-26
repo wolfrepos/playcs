@@ -5,10 +5,6 @@ import cats.Parallel
 import cats.arrow.FunctionK
 import cats.effect.*
 import cats.implicits.*
-import doobie.ConnectionIO
-import doobie.ExecutionContexts
-import doobie.hikari.HikariTransactor
-import doobie.implicits.toConnectionIOOps
 import io.github.oybek.common.Pool
 import io.github.oybek.common.With
 import io.github.oybek.common.logger.ContextData
@@ -32,7 +28,9 @@ import telegramium.bots.high.implicits.methodOps
 import java.io.File
 import java.time.Instant
 import java.util.concurrent.TimeUnit
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
+import java.util.concurrent.Executors
 
 object App extends IOApp:
   def run(args: List[String]): IO[ExitCode] =
@@ -67,7 +65,7 @@ def assembleAndLaunch(
           _ <- hldsConsole.map("de_dust2")
         yield ()
     )
-    hub = Hub.create[IO, ConnectionIO](
+    hub = Hub.create[IO](
       consolePoolManager,
       passwordGenerator
     )
@@ -76,14 +74,11 @@ def assembleAndLaunch(
     _ <- tg.start()
   yield ()
 
-def resources(
-    config: AppConfig
-): Resource[IO, (Client[IO], List[Hlds[IO]])] =
+def resources(config: AppConfig): Resource[IO, (Client[IO], List[Hlds[IO]])] =
   val initialPort = 27015
   val telegramResponseWaitTime = 60L
+  val connEc = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
   for
-    connEc <- ExecutionContexts.fixedThreadPool[IO](10)
-    tranEc <- ExecutionContexts.cachedThreadPool[IO]
     client <- BlazeClientBuilder[IO]
       .withExecutionContext(connEc)
       .withResponseHeaderTimeout(

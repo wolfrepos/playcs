@@ -37,6 +37,6 @@ trait HubSetup:
             _ <- hldsConsole.map("de_dust2")
           yield ()
       )
-      .map(pool => Hub.create[F, DB](pool, passwordGenerator))
+      .map(pool => Hub.create[F](pool, passwordGenerator))
       .toOption
       .get

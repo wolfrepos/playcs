@@ -41,7 +41,7 @@ trait Hub[F[_]]:
   ): Context[F[List[Reaction]]]
 
 object Hub:
-  def create[F[_]: MonadThrow: ContextLogger, G[_]: Monad](
+  def create[F[_]: MonadThrow: ContextLogger](
       hldsPool: Pool[F, Long, Hlds[F]],
       passwordGenerator: PasswordGenerator[F]
   ): Hub[F] =

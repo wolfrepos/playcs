@@ -12,64 +12,64 @@ jobs:
   LintAndTest:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: cache ivy
-      uses: actions/cache@v2
-      env:
-        cache-name: cache-ivy
-      with:
-        path: ~/.ivy2/cache
-        key: ${{ runner.os }}-build-${{ env.cache-name }}
-    - name: set up JDK 11
-      uses: actions/setup-java@v1
-      with:
-        java-version: '11'
-    - name: test
-      run: |
-        sbt "clean; scalafmtCheckAll; testAll"
+      - uses: actions/checkout@v1
+      - name: cache ivy
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-ivy
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
+      - name: set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - name: test
+        run: |
+          sbt "clean; scalafmtCheckAll; testAll"
 
   BuildAndDeploy:
     if: ${{ github.ref == 'refs/heads/master' }}
     needs: LintAndTest
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: cache ivy
-      uses: actions/cache@v2
-      env:
-        cache-name: cache-ivy
-      with:
-        path: ~/.ivy2/cache
-        key: ${{ runner.os }}-build-${{ env.cache-name }}
-    - name: set up JDK 11
-      uses: actions/setup-java@v1
-      with:
-        java-version: '11'
-    - name: assembly
-      run: sbt "clean; set (assembly / test) := {}; assembly"
-    - name: deploy
-      uses: garygrossgarten/github-action-scp@release
-      with:
-        local: playcs/target/scala-3.1.2/playcs-assembly-0.1.jar
-        remote: /tmp/${{ github.sha }}.jar
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PASS }}
-    - name: update app
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PASS }}
-        script: |
-          cp /tmp/${{ github.sha }}.jar ~/playcs/app.jar
-          sudo systemctl restart playcs
-    - name: inform command
-      if: ${{ github.ref == 'refs/heads/master' }}
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.INFORM_CHAT_ID }}
-        token: ${{ secrets.TG_BOT_API_TOKEN }}
-        message: |
-          New release is deployed 🚀
-          Commit SHA = ${{ github.sha }}
+      - uses: actions/checkout@v1
+      - name: cache ivy
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-ivy
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
+      - name: set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - name: assembly
+        run: sbt "clean; set (assembly / test) := {}; assembly"
+      - name: deploy
+        uses: garygrossgarten/github-action-scp@release
+        with:
+          local: playcs/target/scala-3.2.0/app.jar
+          remote: /tmp/${{ github.sha }}.jar
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+      - name: update app
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            cp /tmp/${{ github.sha }}.jar ~/playcs/app.jar
+            sudo systemctl restart playcs
+      - name: inform command
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.INFORM_CHAT_ID }}
+          token: ${{ secrets.TG_BOT_API_TOKEN }}
+          message: |
+            New release is deployed 🚀
+            Commit SHA = ${{ github.sha }}
