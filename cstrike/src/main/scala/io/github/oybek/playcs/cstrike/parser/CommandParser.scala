@@ -30,9 +30,6 @@ object CommandParser extends CommandParser:
     (string(NewCommand(None).command) ~> optSuffix ~> opt(ws1 ~> mapNameParser))
       .map(map => NewCommand(map))
 
-  private val balanceCommandParser: Parser[BalanceCommand.type] =
-    (string(BalanceCommand.command) ~> optSuffix).map(_ => BalanceCommand)
-
   private val helpCommandParser: Parser[HelpCommand.type] =
     (string(HelpCommand.command) ~> optSuffix).map(_ => HelpCommand)
 
@@ -42,7 +39,6 @@ object CommandParser extends CommandParser:
   private def commandParser: Parser[Command] =
     ws ~> (
       newCommandParser |
-        balanceCommandParser |
         helpCommandParser |
         freeCommandParser |
         err[Command]("Unknown command")

@@ -28,8 +28,6 @@ class CommandParserSpec extends AnyFlatSpec:
     ("/new de_dust2 hello", "endOfInput"),
     ("/help", HelpCommand),
     ("   /help@playcs_bot   ", HelpCommand),
-    ("/balance", BalanceCommand),
-    ("   /balance@playcs_bot   ", BalanceCommand),
     ("   /map@playcs_bot   ", "Unknown command")
   )
 

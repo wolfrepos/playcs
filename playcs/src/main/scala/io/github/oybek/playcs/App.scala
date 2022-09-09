@@ -5,15 +5,15 @@ import cats.Parallel
 import cats.arrow.FunctionK
 import cats.effect.*
 import cats.implicits.*
+import io.github.oybek.playcs.client.HldsClient
+import io.github.oybek.playcs.client.HldsClientLow
+import io.github.oybek.playcs.client.TgClient
 import io.github.oybek.playcs.common.Pool
 import io.github.oybek.playcs.common.logger.ContextData
 import io.github.oybek.playcs.common.logger.ContextLogger
 import io.github.oybek.playcs.cstrike.model.Command
-import io.github.oybek.playcs.hlds.Hlds
-import io.github.oybek.playcs.hlds.HldsClient
-import io.github.oybek.playcs.hub.Hub
-import io.github.oybek.playcs.password.PasswordGenerator
-import io.github.oybek.playcs.tg.Tg
+import io.github.oybek.playcs.service.Hub
+import io.github.oybek.playcs.service.PasswordService
 import org.http4s.blaze.client.BlazeClientBuilder
 import org.http4s.client.Client
 import org.http4s.client.middleware.Logger
@@ -26,10 +26,10 @@ import telegramium.bots.high.implicits.methodOps
 
 import java.io.File
 import java.time.Instant
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
-import java.util.concurrent.Executors
 
 object App extends IOApp:
   def run(args: List[String]): IO[ExitCode] =
@@ -45,17 +45,17 @@ object App extends IOApp:
 def assembleAndLaunch(
     config: AppConfig,
     httpClient: Client[IO],
-    consoles: List[Hlds[IO]]
+    consoles: List[HldsClient[IO]]
 ): IO[Unit] =
   val client = Logger(logHeaders = false, logBody = false)(httpClient)
   val api =
     BotApi[IO](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
-  val passwordGenerator = PasswordGenerator.create[IO]
+  val passwordGenerator = PasswordService.create[IO]
   val consolePool = (consoles, Nil)
   for
     contextLogger <- ContextLogger.create[IO]
     given ContextLogger[IO] = contextLogger
-    consolePoolManager <- Pool.create[IO, Hlds[IO]](
+    consolePoolManager <- Pool.create[IO, HldsClient[IO]](
       consolePool,
       hldsConsole =>
         for
@@ -68,12 +68,12 @@ def assembleAndLaunch(
       consolePoolManager,
       passwordGenerator
     )
-    tg = Tg.create(api, hub)
+    tgClient = TgClient.create(api, hub)
     _ <- setCommands(api)
-    _ <- tg.start()
+    _ <- tgClient.start()
   yield ()
 
-def resources(config: AppConfig): Resource[IO, (Client[IO], List[Hlds[IO]])] =
+def resources(config: AppConfig): Resource[IO, (Client[IO], List[HldsClient[IO]])] =
   val initialPort = 27015
   val telegramResponseWaitTime = 60L
   val connEc = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
@@ -87,8 +87,8 @@ def resources(config: AppConfig): Resource[IO, (Client[IO], List[Hlds[IO]])] =
     consoles <- (0 until config.serverPoolSize).toList
       .traverse { offset =>
         val port = initialPort + offset
-        HldsClient.create(port, new File(config.hldsDir)).map {
-          Hlds.create[IO](config.serverIp, port, _)
+        HldsClientLow.create(port, new File(config.hldsDir)).map {
+          HldsClient.create[IO](config.serverIp, port, _)
         }
       }
   yield (client, consoles)

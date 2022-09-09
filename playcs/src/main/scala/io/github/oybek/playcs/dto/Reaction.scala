@@ -1,4 +1,4 @@
-package io.github.oybek.playcs.model
+package io.github.oybek.playcs.dto
 
 import telegramium.bots.{ChatIntId, ParseMode}
 

@@ -6,8 +6,8 @@ import io.github.oybek.playcs.common.Pool
 import io.github.oybek.playcs.common.logger.ContextData
 import io.github.oybek.playcs.common.logger.ContextLogger
 import io.github.oybek.playcs.fakes.*
-import io.github.oybek.playcs.hlds.Hlds
-import io.github.oybek.playcs.hub.Hub
+import io.github.oybek.playcs.client.HldsClient
+import io.github.oybek.playcs.service.Hub
 import io.github.oybek.playcs.setup.TestEffect.DB
 import io.github.oybek.playcs.setup.TestEffect.F
 import telegramium.bots.ChatIntId
@@ -23,11 +23,11 @@ trait HubSetup:
       (new FakeRef[F, A](a)).pure[F]
 
   val fakeHlds = new FakeHlds[F]
-  val pool = (List(fakeHlds), List.empty[(Long, Hlds[F])])
+  val pool = (List(fakeHlds), List.empty[(Long, HldsClient[F])])
   val passwordGenerator = new FakePasswordGenerator[F]
   val hub: Hub[F] =
     Pool
-      .create[F, Hlds[F]](
+      .create[F, HldsClient[F]](
         pool,
         hldsConsole =>
           for

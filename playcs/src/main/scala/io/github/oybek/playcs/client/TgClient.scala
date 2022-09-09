@@ -1,4 +1,4 @@
-package io.github.oybek.playcs.tg
+package io.github.oybek.playcs.client
 
 import cats.Parallel
 import cats.effect.Async
@@ -10,10 +10,10 @@ import cats.instances.finiteDuration
 import io.github.oybek.playcs.common.logger.Context
 import io.github.oybek.playcs.common.logger.ContextData
 import io.github.oybek.playcs.common.logger.ContextLogger
-import io.github.oybek.playcs.model.Reaction
-import io.github.oybek.playcs.model.Reaction.SendText
-import io.github.oybek.playcs.model.Reaction.Sleep
-import io.github.oybek.playcs.hub.Hub
+import io.github.oybek.playcs.dto.Reaction
+import io.github.oybek.playcs.dto.Reaction.SendText
+import io.github.oybek.playcs.dto.Reaction.Sleep
+import io.github.oybek.playcs.service.Hub
 import telegramium.bots.ChatIntId
 import telegramium.bots.Message
 import telegramium.bots.User
@@ -30,7 +30,7 @@ import scala.concurrent.duration.FiniteDuration
 
 import concurrent.duration.DurationInt
 
-object Tg:
+object TgClient:
   def create(api: Api[IO], console: Hub[IO])(using logger: ContextLogger[IO]) =
     new LongPollBot[IO](api):
       override def onMessage(message: Message): IO[Unit] =

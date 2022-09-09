@@ -4,8 +4,8 @@ import io.github.oybek.playcs.fakes.FakeData.anotherFakeChatId
 import io.github.oybek.playcs.fakes.FakeData.fakeChatId
 import io.github.oybek.playcs.fakes.FakeData.fakeUser
 import io.github.oybek.playcs.fakes.FakeData.fakePassword
-import io.github.oybek.playcs.model.Reaction.SendText
-import io.github.oybek.playcs.model.Reaction.Sleep
+import io.github.oybek.playcs.dto.Reaction.SendText
+import io.github.oybek.playcs.dto.Reaction.Sleep
 import io.github.oybek.playcs.setup.HubSetup
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec

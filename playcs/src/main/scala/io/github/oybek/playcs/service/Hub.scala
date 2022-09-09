@@ -1,4 +1,4 @@
-package io.github.oybek.playcs.hub
+package io.github.oybek.playcs.service
 
 import cats.Monad
 import cats.MonadThrow
@@ -8,6 +8,7 @@ import cats.data.OptionT
 import cats.implicits.*
 import cats.syntax.apply
 import cats.~>
+import io.github.oybek.playcs.client.HldsClient
 import io.github.oybek.playcs.common.Pool
 import io.github.oybek.playcs.common.logger.Context
 import io.github.oybek.playcs.common.logger.ContextData
@@ -15,12 +16,11 @@ import io.github.oybek.playcs.common.logger.ContextLogger
 import io.github.oybek.playcs.cstrike.model.Command
 import io.github.oybek.playcs.cstrike.model.Command.*
 import io.github.oybek.playcs.cstrike.parser.CommandParser
-import io.github.oybek.playcs.hlds.Hlds
-import io.github.oybek.playcs.hub.Hub
-import io.github.oybek.playcs.model.Reaction
-import io.github.oybek.playcs.model.Reaction.SendText
-import io.github.oybek.playcs.model.Reaction.Sleep
-import io.github.oybek.playcs.password.PasswordGenerator
+import io.github.oybek.playcs.dto.Reaction
+import io.github.oybek.playcs.dto.Reaction.SendText
+import io.github.oybek.playcs.dto.Reaction.Sleep
+import io.github.oybek.playcs.service.Hub
+import io.github.oybek.playcs.service.PasswordService
 import telegramium.bots.ChatIntId
 import telegramium.bots.Markdown
 import telegramium.bots.Markdown2
@@ -41,8 +41,8 @@ trait Hub[F[_]]:
 
 object Hub:
   def create[F[_]: MonadThrow: ContextLogger](
-      hldsPool: Pool[F, Hlds[F]],
-      passwordGenerator: PasswordGenerator[F]
+      hldsPool: Pool[F, HldsClient[F]],
+      passwordGenerator: PasswordService[F]
   ): Hub[F] =
     new Hub[F]:
       override def handle(
@@ -113,7 +113,7 @@ object Hub:
 
       private def sendConsole(
           chatId: ChatIntId,
-          console: Hlds[F],
+          console: HldsClient[F],
           password: String
       ): SendText =
         SendText(

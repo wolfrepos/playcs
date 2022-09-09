@@ -1,6 +1,6 @@
-package io.github.oybek.playcs.hlds
+package io.github.oybek.playcs.client
 
-trait Hlds[F[_]]:
+trait HldsClient[F[_]]:
   def map(map: String): F[Unit]
   def svPassword(password: String): F[Unit]
   def hostname(name: String): F[Unit]
@@ -9,12 +9,12 @@ trait Hlds[F[_]]:
   def ip: String
   def port: Int
 
-object Hlds:
+object HldsClient:
   def create[F[_]](
       anIp: String,
       aPort: Int,
-      consoleLow: HldsClient[F]
-  ): Hlds[F] = new Hlds[F]:
+      consoleLow: HldsClientLow[F]
+  ): HldsClient[F] = new HldsClient[F]:
     override def map(map: String): F[Unit] =
       consoleLow.execute(s"map $map")
 
