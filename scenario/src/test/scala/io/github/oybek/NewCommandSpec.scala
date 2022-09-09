@@ -1,7 +1,5 @@
 package io.github.oybek
 
-import io.github.oybek.common.With
-import io.github.oybek.common.and
 import io.github.oybek.fakes.FakeData.anotherFakeChatId
 import io.github.oybek.fakes.FakeData.fakeChatId
 import io.github.oybek.fakes.FakeData.fakeUser

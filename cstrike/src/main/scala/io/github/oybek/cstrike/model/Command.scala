@@ -9,8 +9,7 @@ import scala.concurrent.duration.FiniteDuration
 import concurrent.duration.DurationInt
 
 enum Command(val command: String, val description: String):
-  case NewCommand(map: Option[String])
-      extends Command("/new", "create a server, example: /new de_dust")
+  case NewCommand(map: Option[String]) extends Command("/new", "create a server, example: /new de_dust")
   case FreeCommand extends Command("/free", "delete the server")
   case BalanceCommand extends Command("/balance", "show balance")
   case HelpCommand extends Command("/help", "show this message")

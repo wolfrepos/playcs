@@ -3,7 +3,6 @@ package io.github.oybek.setup
 import cats.Id
 import cats.arrow.FunctionK
 import io.github.oybek.common.Pool
-import io.github.oybek.common.With
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
 import io.github.oybek.fakes.*
@@ -24,11 +23,11 @@ trait HubSetup:
       (new FakeRef[F, A](a)).pure[F]
 
   val fakeHlds = new FakeHlds[F]
-  val pool = (List(fakeHlds), List.empty[Hlds[F] With Long])
+  val pool = (List(fakeHlds), List.empty[(Long, Hlds[F])])
   val passwordGenerator = new FakePasswordGenerator[F]
   val hub: Hub[F] =
     Pool
-      .create[F, Long, Hlds[F]](
+      .create[F, Hlds[F]](
         pool,
         hldsConsole =>
           for

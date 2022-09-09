@@ -6,7 +6,6 @@ import cats.arrow.FunctionK
 import cats.effect.*
 import cats.implicits.*
 import io.github.oybek.common.Pool
-import io.github.oybek.common.With
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
 import io.github.oybek.cstrike.model.Command
@@ -56,7 +55,7 @@ def assembleAndLaunch(
   for
     contextLogger <- ContextLogger.create[IO]
     given ContextLogger[IO] = contextLogger
-    consolePoolManager <- Pool.create[IO, Long, Hlds[IO]](
+    consolePoolManager <- Pool.create[IO, Hlds[IO]](
       consolePool,
       hldsConsole =>
         for

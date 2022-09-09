@@ -9,7 +9,6 @@ import cats.implicits.*
 import cats.syntax.apply
 import cats.~>
 import io.github.oybek.common.Pool
-import io.github.oybek.common.With
 import io.github.oybek.common.logger.Context
 import io.github.oybek.common.logger.ContextData
 import io.github.oybek.common.logger.ContextLogger
@@ -42,7 +41,7 @@ trait Hub[F[_]]:
 
 object Hub:
   def create[F[_]: MonadThrow: ContextLogger](
-      hldsPool: Pool[F, Long, Hlds[F]],
+      hldsPool: Pool[F, Hlds[F]],
       passwordGenerator: PasswordGenerator[F]
   ): Hub[F] =
     new Hub[F]:
@@ -51,25 +50,14 @@ object Hub:
           user: User,
           text: String
       ): Context[F[List[Reaction]]] =
-        ContextLogger[F].info(s"Got message $text") >> {
+        ContextLogger[F].info(s"Got message $text") >> (
           CommandParser.parse(text) match
-            case _: String        => confusedMessage(chatId)
-            case command: Command => handleCommand(chatId, user, command)
-        }
-
-      private def handleCommand(
-          chatId: ChatIntId,
-          user: User,
-          command: Command
-      ): Context[F[List[Reaction]]] =
-        command match
-          case NewCommand(map) =>
-            handleNewCommand(chatId, map.getOrElse("de_dust2"))
-          case FreeCommand      => handleFreeCommand(chatId)
-          case HelpCommand      => handleHelpCommand(chatId)
-          case SayCommand(text) => handleSayCommand(chatId, text)
-          case _ =>
-            List(SendText(chatId, "Еще не реализовано"): Reaction).pure[F]
+            case NewCommand(map)  => handleNewCommand(chatId, map.getOrElse("de_dust2"))
+            case FreeCommand      => handleFreeCommand(chatId)
+            case HelpCommand      => handleHelpCommand(chatId)
+            case SayCommand(text) => handleSayCommand(chatId, text)
+            case _                => confusedMessage(chatId)
+        )
 
       private def handleNewCommand(
           chatId: ChatIntId,
