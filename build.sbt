@@ -1,7 +1,7 @@
 import Settings.module
 
 ThisBuild / version := "0.1"
-ThisBuild / organization := "io.github.oybek"
+ThisBuild / organization := "io.github.oybek.playcs"
 ThisBuild / scalaVersion := "3.2.0"
 ThisBuild / scalacOptions ++= Seq(
   "-encoding",
