@@ -4,7 +4,6 @@ import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import org.scalatest.funsuite.AnyFunSuite
-import org.testcontainers.shaded.org.apache.commons.lang.SystemUtils
 
 import java.util.Properties
 

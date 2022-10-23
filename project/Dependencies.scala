@@ -1,16 +1,17 @@
-import sbt.*
+import sbt._
 
 object Dependencies {
 
   object V {
     val atto           = "0.9.5"
-    val catsCore       = "2.7.0"
-    val catsEffect     = "3.3.11"
-    val ciris          = "2.3.2"
-    val flyway         = "8.5.9"
-    val scalaTest      = "3.2.12"
-    val telegramium    = "7.60.0"
-    val testContainers = "0.40.6"
+    val catsCore       = "2.8.0"
+    val catsEffect     = "3.3.14"
+    val ciris          = "2.4.0"
+    val flyway         = "9.4.0"
+    val scalaTest      = "3.2.14"
+    val telegramium    = "7.62.0"
+    val testContainers = "0.40.11"
+    val mouse          = "1.2.0"
   }
 
   val common: Seq[ModuleID] =
@@ -25,6 +26,7 @@ object Dependencies {
       "org.tpolecat"          %% "atto-core"                       % V.atto,
       "org.tpolecat"          %% "atto-refined"                    % V.atto,
       "org.typelevel"         %% "cats-core"                       % V.catsCore,
-      "org.typelevel"         %% "cats-effect"                     % V.catsEffect
-    )
+      "org.typelevel"         %% "cats-effect"                     % V.catsEffect,
+      "org.typelevel"         %% "mouse"                           % V.mouse
+  )
 }
