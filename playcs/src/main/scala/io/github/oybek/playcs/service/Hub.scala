@@ -17,10 +17,10 @@ import io.github.oybek.playcs.cstrike.model.Command
 import io.github.oybek.playcs.cstrike.model.Command.*
 import io.github.oybek.playcs.cstrike.parser.CommandParser
 import io.github.oybek.playcs.dto.Reaction
-import io.github.oybek.playcs.dto.Reaction.SendText
-import io.github.oybek.playcs.dto.Reaction.Sleep
+import io.github.oybek.playcs.dto.Reaction.*
 import io.github.oybek.playcs.service.Hub
 import io.github.oybek.playcs.service.PasswordService
+import mouse.all.*
 import telegramium.bots.ChatIntId
 import telegramium.bots.Markdown
 import telegramium.bots.Markdown2
@@ -35,19 +35,18 @@ import scala.concurrent.duration.FiniteDuration
 trait Hub[F[_]]:
   def handle(
       chatId: ChatIntId,
-      user: User,
       text: String
   ): Context[F[List[Reaction]]]
 
 object Hub:
   def create[F[_]: MonadThrow: ContextLogger](
+      hldsTimeout: FiniteDuration,
       hldsPool: Pool[F, HldsClient[F]],
       passwordGenerator: PasswordService[F]
   ): Hub[F] =
     new Hub[F]:
       override def handle(
           chatId: ChatIntId,
-          user: User,
           text: String
       ): Context[F[List[Reaction]]] =
         ContextLogger[F].info(s"Got message $text") >> (
@@ -64,21 +63,28 @@ object Hub:
           map: String
       ): Context[F[List[Reaction]]] = {
         for
-          hlds <- OptionT(hldsPool.find(chatId.id))
-          _ <- OptionT.liftF(hlds.changeLevel(map))
+          hlds <- hldsPool.find(chatId.id) |> (OptionT(_))
+          _ <- hlds.changeLevel(map) |> (OptionT.liftF(_))
         yield List(
           SendText(chatId, "You already got the server, just changing a map")
         )
       } orElse {
         for
-          hlds <- OptionT(hldsPool.rent(chatId.id))
-          pass <- OptionT.liftF(passwordGenerator.generate)
-          _ <- OptionT.liftF(hlds.svPassword(pass))
-          _ <- OptionT.liftF(hlds.changeLevel(map))
+          hlds <- hldsPool.rent(chatId.id) |> (OptionT(_))
+          pass <- passwordGenerator.generate |> (OptionT.liftF(_))
+          _ <- hlds.svPassword(pass) |> (OptionT.liftF(_))
+          _ <- hlds.changeLevel(map) |> (OptionT.liftF(_))
         yield List(
-          SendText(chatId, "Your server is ready. Copy paste this"),
+          SendText(
+            chatId,
+            "Your server is created " +
+              s"(after ${hldsTimeout.toMinutes} minutes it will be deleted). " +
+              "Copy paste next line to game console"
+          ),
           Sleep(200.millis),
-          sendConsole(chatId, hlds, pass)
+          sendConsole(chatId, hlds, pass),
+          Sleep(hldsTimeout),
+          Receive(chatId, "/free")
         )
       } getOrElse {
         List(SendText(chatId, "No free server left, contact t.me/turtlebots"))

@@ -11,3 +11,4 @@ enum Reaction:
       parseMode: Option[ParseMode] = None
   ) extends Reaction
   case Sleep(finiteDuration: FiniteDuration) extends Reaction
+  case Receive(chatId: ChatIntId, text: String) extends Reaction

@@ -22,14 +22,14 @@ class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetu
         "server is free and returned back to pool and appropriate message returned"
       )
       assert(
-        hub.handle(fakeChatId, fakeUser, "/free") ===
+        hub.handle(fakeChatId, "/free") ===
           Right(List(SendText(fakeChatId, "No created servers")))
       )
     }
 
     Scenario("User gives command '/free'") {
       Given("console with allocated server")
-      hub.handle(fakeChatId, fakeUser, "/new")
+      hub.handle(fakeChatId, "/new")
 
       When("/free command received")
 
@@ -37,7 +37,7 @@ class FreeCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetu
         "server is free and returned back to pool and appropriate message returned"
       )
       assert(
-        hub.handle(fakeChatId, fakeUser, "/free") ===
+        hub.handle(fakeChatId, "/free") ===
           Right(List(SendText(fakeChatId, "Server has been deleted")))
       )
     }

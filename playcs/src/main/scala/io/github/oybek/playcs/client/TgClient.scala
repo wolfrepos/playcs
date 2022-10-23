@@ -11,8 +11,7 @@ import io.github.oybek.playcs.common.logger.Context
 import io.github.oybek.playcs.common.logger.ContextData
 import io.github.oybek.playcs.common.logger.ContextLogger
 import io.github.oybek.playcs.dto.Reaction
-import io.github.oybek.playcs.dto.Reaction.SendText
-import io.github.oybek.playcs.dto.Reaction.Sleep
+import io.github.oybek.playcs.dto.Reaction.*
 import io.github.oybek.playcs.service.Hub
 import telegramium.bots.ChatIntId
 import telegramium.bots.Message
@@ -36,16 +35,14 @@ object TgClient:
       override def onMessage(message: Message): IO[Unit] =
         given ContextData(message.chat.id)
         (message.text, message.from)
-          .mapN((text, user) =>
+          .mapN((text, _) =>
             val chatId = ChatIntId(message.chat.id)
             console
-              .handle(chatId, user, text)
+              .handle(chatId, text)
               .recoverWith { th =>
                 logger
                   .info(s"Something went wrong $th")
-                  .as(
-                    List(SendText(chatId, "Что-то пошло не так"): Reaction)
-                  )
+                  .as(List(SendText(chatId, "Что-то пошло не так"): Reaction))
               }
               .flatMap(interpret)
           )
@@ -72,6 +69,16 @@ object TgClient:
           case Sleep(finiteDuration) =>
             logger.info(s"Sleeping $finiteDuration") >>
               Temporal[IO].sleep(finiteDuration)
+
+          case Receive(chatId, text) =>
+            console
+              .handle(chatId, text)
+              .recoverWith { th =>
+                logger
+                  .info(s"Something went wrong $th")
+                  .as(List(SendText(chatId, "Что-то пошло не так"): Reaction))
+              }
+              .flatMap(interpret)
         }.void
 
       private def toNearestHour = IO {

@@ -34,7 +34,7 @@ import scala.concurrent.duration.*
 object App extends IOApp:
   def run(args: List[String]): IO[ExitCode] =
     for
-      config <- AppConfig.create[IO].load[IO]
+      config <- Config.create[IO].load[IO]
       _ <- log.info(s"loaded config: $config")
       _ <- resources(config).use { (httpClient, consoles) =>
         assembleAndLaunch(config, httpClient, consoles)
@@ -43,7 +43,7 @@ object App extends IOApp:
   private val log = Slf4jLogger.getLoggerFromName[IO]("application")
 
 def assembleAndLaunch(
-    config: AppConfig,
+    config: Config,
     httpClient: Client[IO],
     consoles: List[HldsClient[IO]]
 ): IO[Unit] =
@@ -65,6 +65,7 @@ def assembleAndLaunch(
         yield ()
     )
     hub = Hub.create[IO](
+      config.hldsTimeout,
       consolePoolManager,
       passwordGenerator
     )
@@ -73,7 +74,7 @@ def assembleAndLaunch(
     _ <- tgClient.start()
   yield ()
 
-def resources(config: AppConfig): Resource[IO, (Client[IO], List[HldsClient[IO]])] =
+def resources(config: Config): Resource[IO, (Client[IO], List[HldsClient[IO]])] =
   val initialPort = 27015
   val telegramResponseWaitTime = 60L
   val connEc = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))

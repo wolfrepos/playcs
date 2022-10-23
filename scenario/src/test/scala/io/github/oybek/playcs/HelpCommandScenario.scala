@@ -19,7 +19,7 @@ class HelpCommandScenario extends AnyFeatureSpec with GivenWhenThen with HubSetu
       When("/help command received")
       Then("help message is returned")
       assert(
-        hub.handle(fakeChatId, fakeUser, "/help") === Right(
+        hub.handle(fakeChatId, "/help") === Right(
           List(SendText(fakeChatId, helpText))
         )
       )

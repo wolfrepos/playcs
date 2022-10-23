@@ -14,6 +14,7 @@ import telegramium.bots.ChatIntId
 import cats.effect.kernel.Ref.Make
 import cats.effect.kernel.Ref
 import cats.implicits.catsSyntaxApplicativeId
+import scala.concurrent.duration.DurationInt
 
 trait HubSetup:
   given ContextData(1234)
@@ -25,6 +26,7 @@ trait HubSetup:
   val fakeHlds = new FakeHlds[F]
   val pool = (List(fakeHlds), List.empty[(Long, HldsClient[F])])
   val passwordGenerator = new FakePasswordGenerator[F]
+  val hldsTimeout = 40.minutes
   val hub: Hub[F] =
     Pool
       .create[F, HldsClient[F]](
@@ -36,6 +38,6 @@ trait HubSetup:
             _ <- hldsConsole.map("de_dust2")
           yield ()
       )
-      .map(pool => Hub.create[F](pool, passwordGenerator))
+      .map(pool => Hub.create[F](hldsTimeout, pool, passwordGenerator))
       .toOption
       .get

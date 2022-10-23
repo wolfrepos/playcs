@@ -1,11 +1,10 @@
 package io.github.oybek.playcs
 
+import io.github.oybek.playcs.dto.Reaction.*
 import io.github.oybek.playcs.fakes.FakeData.anotherFakeChatId
 import io.github.oybek.playcs.fakes.FakeData.fakeChatId
-import io.github.oybek.playcs.fakes.FakeData.fakeUser
 import io.github.oybek.playcs.fakes.FakeData.fakePassword
-import io.github.oybek.playcs.dto.Reaction.SendText
-import io.github.oybek.playcs.dto.Reaction.Sleep
+import io.github.oybek.playcs.fakes.FakeData.fakeUser
 import io.github.oybek.playcs.setup.HubSetup
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
@@ -26,7 +25,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
       Given("console which has a free dedicated servers")
 
       When("/new command received")
-      val result = hub.handle(fakeChatId, fakeUser, "/new")
+      val result = hub.handle(fakeChatId, "/new")
 
       Then("new dedicated server should be created")
       assert(
@@ -43,13 +42,20 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
       assert(
         result === Right(
           List(
-            SendText(fakeChatId, "Your server is ready. Copy paste this"),
+            SendText(
+              fakeChatId,
+              "Your server is created " +
+                s"(after ${hldsTimeout.toMinutes} minutes it will be deleted). " +
+                "Copy paste next line to game console"
+            ),
             Sleep(200.millis),
             SendText(
               fakeChatId,
               "`connect 127.0.0.1:27015; password 4444`",
               Some(Markdown)
-            )
+            ),
+            Sleep(hldsTimeout),
+            Receive(fakeChatId, "/free")
           )
         )
       )
@@ -61,7 +67,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
       Given("user who already has the server")
 
       When("/new command received")
-      val result = hub.handle(fakeChatId, fakeUser, "/new")
+      val result = hub.handle(fakeChatId, "/new")
 
       Then("new dedicated server should be created")
       assert(fakeHlds.getCalledCommands === List("changelevel de_dust2"))
@@ -85,7 +91,7 @@ class NewCommandSpec extends AnyFeatureSpec with GivenWhenThen with HubSetup:
       Given("console which has no free dedicated servers")
 
       When("/new command received")
-      val result = hub.handle(anotherFakeChatId, fakeUser, "/new")
+      val result = hub.handle(anotherFakeChatId, "/new")
 
       Then("No servers left message should be returned")
       assert(fakeHlds.getCalledCommands.isEmpty)
