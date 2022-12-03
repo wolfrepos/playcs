@@ -6,7 +6,7 @@ import cats.arrow.FunctionK
 import cats.effect.*
 import cats.implicits.*
 import io.github.oybek.playcs.client.HldsClient
-import io.github.oybek.playcs.client.HldsClientLow
+import io.github.oybek.playcs.client.HldsDriver
 import io.github.oybek.playcs.client.TgClient
 import io.github.oybek.playcs.common.Pool
 import io.github.oybek.playcs.domain.Command
@@ -77,7 +77,7 @@ def resources(config: Config): Resource[IO, (Client[IO], List[HldsClient])] =
     consoles <- (0 until config.serverPoolSize).toList
       .traverse { offset =>
         val port = initialPort + offset
-        HldsClientLow.create(port, new File(config.hldsDir)).map {
+        HldsDriver.create(port, new File(config.hldsDir)).map {
           HldsClient.create(config.serverIp, port, _)
         }
       }
