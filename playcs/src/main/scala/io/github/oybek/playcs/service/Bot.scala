@@ -71,9 +71,9 @@ object Bot:
         yield List(
           SendText(
             chatId,
-            "Your server is created " +
+            "Your server has been created " +
               s"(after ${hldsTimeout.toMinutes} minutes it will be deleted). " +
-              "Copy paste next line to game console"
+              "Copy paste the next line to the game console"
           ),
           Sleep(200.millis),
           sendConsole(chatId, hlds, pass),
@@ -81,7 +81,7 @@ object Bot:
           Receive(chatId, "/free")
         )
       } getOrElse {
-        List(SendText(chatId, "No free server left, contact t.me/turtlebots"))
+        List(SendText(chatId, "No free servers left, contact t.me/wolfodav"))
       }
 
       private def handleFreeCommand(
@@ -91,7 +91,7 @@ object Bot:
           case Some(_) =>
             hldsPool
               .free(chatId.id)
-              .as(List(SendText(chatId, "Server has been deleted")))
+              .as(List(SendText(chatId, "Your server has been deleted")))
 
           case None =>
             List(SendText(chatId, "No created servers"): Reaction).pure[IO]
