@@ -29,7 +29,6 @@ object Pool:
             case (Nil, busy) => None.pure[F]
             case (x :: xs, busy) =>
               poolRef.set((xs, (id, x) :: busy)) >>
-                reset(x) >>
                 x.some.pure[F]
           }
 
