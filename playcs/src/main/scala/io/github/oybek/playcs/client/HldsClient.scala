@@ -1,33 +1,35 @@
 package io.github.oybek.playcs.client
 
-trait HldsClient[F[_]]:
-  def map(map: String): F[Unit]
-  def svPassword(password: String): F[Unit]
-  def hostname(name: String): F[Unit]
-  def changeLevel(map: String): F[Unit]
-  def say(text: String): F[Unit]
+import cats.effect.IO
+
+trait HldsClient:
+  def map(map: String): IO[Unit]
+  def svPassword(password: String): IO[Unit]
+  def hostname(name: String): IO[Unit]
+  def changeLevel(map: String): IO[Unit]
+  def say(text: String): IO[Unit]
   def ip: String
   def port: Int
 
 object HldsClient:
-  def create[F[_]](
+  def create(
       anIp: String,
       aPort: Int,
-      consoleLow: HldsClientLow[F]
-  ): HldsClient[F] = new HldsClient[F]:
-    override def map(map: String): F[Unit] =
+      consoleLow: HldsClientLow
+  ): HldsClient = new HldsClient:
+    override def map(map: String): IO[Unit] =
       consoleLow.execute(s"map $map")
 
-    override def changeLevel(map: String): F[Unit] =
+    override def changeLevel(map: String): IO[Unit] =
       consoleLow.execute(s"changelevel $map")
 
-    override def hostname(name: String): F[Unit] =
+    override def hostname(name: String): IO[Unit] =
       consoleLow.execute(s"hostname $name")
 
-    override def svPassword(password: String): F[Unit] =
+    override def svPassword(password: String): IO[Unit] =
       consoleLow.execute(s"sv_password $password")
 
-    override def say(text: String): F[Unit] =
+    override def say(text: String): IO[Unit] =
       consoleLow.execute(s"say $text")
 
     override val ip = anIp

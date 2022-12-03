@@ -5,17 +5,14 @@ import cats.MonadThrow
 import cats.data.EitherT
 import cats.data.NonEmptyList
 import cats.data.OptionT
+import cats.effect.IO
 import cats.implicits.*
 import cats.syntax.apply
 import cats.~>
 import io.github.oybek.playcs.client.HldsClient
 import io.github.oybek.playcs.common.Pool
-import io.github.oybek.playcs.common.logger.Context
-import io.github.oybek.playcs.common.logger.ContextData
-import io.github.oybek.playcs.common.logger.ContextLogger
-import io.github.oybek.playcs.cstrike.model.Command
-import io.github.oybek.playcs.cstrike.model.Command.*
-import io.github.oybek.playcs.cstrike.parser.CommandParser
+import io.github.oybek.playcs.domain.Command.*
+import io.github.oybek.playcs.domain.Command
 import io.github.oybek.playcs.dto.Reaction
 import io.github.oybek.playcs.dto.Reaction.*
 import io.github.oybek.playcs.service.Hub
@@ -32,36 +29,34 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
 
-trait Hub[F[_]]:
+trait Hub:
   def handle(
       chatId: ChatIntId,
       text: String
-  ): Context[F[List[Reaction]]]
+  ): IO[List[Reaction]]
 
 object Hub:
-  def create[F[_]: MonadThrow: ContextLogger](
+  def create(
       hldsTimeout: FiniteDuration,
-      hldsPool: Pool[F, HldsClient[F]],
-      passwordGenerator: PasswordService[F]
-  ): Hub[F] =
-    new Hub[F]:
+      hldsPool: Pool[IO, HldsClient],
+      passwordGenerator: PasswordService
+  ): Hub =
+    new Hub:
       override def handle(
           chatId: ChatIntId,
           text: String
-      ): Context[F[List[Reaction]]] =
-        ContextLogger[F].info(s"Got message $text") >> (
-          CommandParser.parse(text) match
-            case NewCommand(map)  => handleNewCommand(chatId, map.getOrElse("de_dust2"))
-            case FreeCommand      => handleFreeCommand(chatId)
-            case HelpCommand      => handleHelpCommand(chatId)
-            case SayCommand(text) => handleSayCommand(chatId, text)
-            case _                => confusedMessage(chatId)
-        )
+      ): IO[List[Reaction]] =
+        Command.parse(text) match
+          case NewCommand(map)  => handleNewCommand(chatId, map.getOrElse("de_dust2"))
+          case FreeCommand      => handleFreeCommand(chatId)
+          case HelpCommand      => handleHelpCommand(chatId)
+          case SayCommand(text) => handleSayCommand(chatId, text)
+          case _                => confusedMessage(chatId)
 
       private def handleNewCommand(
           chatId: ChatIntId,
           map: String
-      ): Context[F[List[Reaction]]] = {
+      ): IO[List[Reaction]] = {
         for
           hlds <- hldsPool.find(chatId.id) |> (OptionT(_))
           _ <- hlds.changeLevel(map) |> (OptionT.liftF(_))
@@ -92,7 +87,7 @@ object Hub:
 
       private def handleFreeCommand(
           chatId: ChatIntId
-      ): Context[F[List[Reaction]]] =
+      ): IO[List[Reaction]] =
         hldsPool.find(chatId.id).flatMap {
           case Some(_) =>
             hldsPool
@@ -100,26 +95,26 @@ object Hub:
               .as(List(SendText(chatId, "Server has been deleted")))
 
           case None =>
-            List(SendText(chatId, "No created servers"): Reaction).pure[F]
+            List(SendText(chatId, "No created servers"): Reaction).pure[IO]
         }
 
-      private def handleHelpCommand(chatId: ChatIntId): F[List[Reaction]] =
-        List(SendText(chatId, helpText): Reaction).pure[F]
+      private def handleHelpCommand(chatId: ChatIntId): IO[List[Reaction]] =
+        List(SendText(chatId, helpText): Reaction).pure[IO]
 
       private def handleSayCommand(
           chatId: ChatIntId,
           text: String
-      ): Context[F[List[Reaction]]] =
+      ): IO[List[Reaction]] =
         hldsPool.find(chatId.id).flatMap {
           case None =>
-            List(SendText(chatId, "Create a server first (/help)")).pure[F]
+            List(SendText(chatId, "Create a server first (/help)")).pure[IO]
           case Some(console) =>
             console.say(text).as(List.empty[Reaction])
         }
 
       private def sendConsole(
           chatId: ChatIntId,
-          console: HldsClient[F],
+          console: HldsClient,
           password: String
       ): SendText =
         SendText(
@@ -128,5 +123,5 @@ object Hub:
           Markdown.some
         )
 
-      private def confusedMessage(chatId: ChatIntId): F[List[Reaction]] =
-        List(SendText(chatId, "What? /help"): Reaction).pure[F]
+      private def confusedMessage(chatId: ChatIntId): IO[List[Reaction]] =
+        List(SendText(chatId, "What? /help"): Reaction).pure[IO]

@@ -7,9 +7,6 @@ import cats.effect.Temporal
 import org.typelevel.log4cats.Logger
 import cats.implicits.*
 import cats.instances.finiteDuration
-import io.github.oybek.playcs.common.logger.Context
-import io.github.oybek.playcs.common.logger.ContextData
-import io.github.oybek.playcs.common.logger.ContextLogger
 import io.github.oybek.playcs.dto.Reaction
 import io.github.oybek.playcs.dto.Reaction.*
 import io.github.oybek.playcs.service.Hub
@@ -30,19 +27,16 @@ import scala.concurrent.duration.FiniteDuration
 import concurrent.duration.DurationInt
 
 object TgClient:
-  def create(api: Api[IO], console: Hub[IO])(using logger: ContextLogger[IO]) =
+  def create(api: Api[IO], console: Hub) =
     new LongPollBot[IO](api):
       override def onMessage(message: Message): IO[Unit] =
-        given ContextData(message.chat.id)
         (message.text, message.from)
           .mapN((text, _) =>
             val chatId = ChatIntId(message.chat.id)
             console
               .handle(chatId, text)
               .recoverWith { th =>
-                logger
-                  .info(s"Something went wrong $th")
-                  .as(List(SendText(chatId, "Что-то пошло не так"): Reaction))
+                List(SendText(chatId, s"Что-то пошло не так $th"): Reaction).pure[IO]
               }
               .flatMap(interpret)
           )
@@ -53,30 +47,26 @@ object TgClient:
       override def start(): IO[Unit] =
         super.start().void
 
-      private def interpret(reactions: List[Reaction]): Context[IO[Unit]] =
+      private def interpret(reactions: List[Reaction]): IO[Unit] =
         reactions.traverse {
           case SendText(chatId, text, parseMode) =>
-            logger.info(s"Sending message $text") >>
-              Methods
-                .sendMessage(
-                  chatId = chatId,
-                  text = text,
-                  parseMode = parseMode
-                )
-                .exec(api)
-                .void
+            Methods
+              .sendMessage(
+                chatId = chatId,
+                text = text,
+                parseMode = parseMode
+              )
+              .exec(api)
+              .void
 
           case Sleep(finiteDuration) =>
-            logger.info(s"Sleeping $finiteDuration") >>
-              Temporal[IO].sleep(finiteDuration)
+            Temporal[IO].sleep(finiteDuration)
 
           case Receive(chatId, text) =>
             console
               .handle(chatId, text)
               .recoverWith { th =>
-                logger
-                  .info(s"Something went wrong $th")
-                  .as(List(SendText(chatId, "Что-то пошло не так"): Reaction))
+                List(SendText(chatId, "Что-то пошло не так"): Reaction).pure[IO]
               }
               .flatMap(interpret)
         }.void

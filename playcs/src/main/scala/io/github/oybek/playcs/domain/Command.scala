@@ -1,27 +1,36 @@
-package io.github.oybek.playcs.cstrike.parser
+package io.github.oybek.playcs.domain
 
+import atto.*
 import atto.Atto.*
 import atto.Parser.ParserMonad
-import atto.*
 import cats.implicits.*
-import io.github.oybek.playcs.cstrike.model.Command
-import io.github.oybek.playcs.cstrike.model.Command.*
-import io.github.oybek.playcs.cstrike.parser.CommandParser
+import io.github.oybek.playcs.domain.Command.helpText
 
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
-import scala.concurrent.duration.DurationLong
-import scala.util.Try
+import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 
-trait CommandParser:
-  def parse(text: String): String | Command
+enum Command(val command: String, val description: String):
+  case NewCommand(map: Option[String]) extends Command("/new", "create a server, example: /new de_dust")
+  case FreeCommand extends Command("/free", "delete the server")
+  case HelpCommand extends Command("/help", "show this message")
+  case SayCommand(text: String) extends Command("/say", "write message to game")
 
-object CommandParser extends CommandParser:
-  override def parse(text: String): String | Command =
+object Command:
+  def parse(text: String): String | Command =
     commandParser.parseOnly(text).either match {
       case Left(error)    => error
       case Right(command) => command
     }
+
+  val visible: List[Command] = List(
+    NewCommand(None),
+    FreeCommand,
+    HelpCommand
+  )
+
+  val helpText: String = visible
+    .map(x => x.command + " - " + x.description)
+    .mkString("\n")
 
   private val mapNameParser: Parser[String] =
     stringOf(digit | letter | char('_'))

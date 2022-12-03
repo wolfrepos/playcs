@@ -12,12 +12,12 @@ import scala.io.Source
 import scala.sys.process.{Process, ProcessIO}
 import java.io.PipedInputStream
 
-trait HldsClientLow[F[_]]:
-  def execute(command: String): F[Unit]
+trait HldsClientLow:
+  def execute(command: String): IO[Unit]
   def process: Process
 
 object HldsClientLow:
-  def create(port: Int, hldsDir: File): Resource[IO, HldsClientLow[IO]] =
+  def create(port: Int, hldsDir: File): Resource[IO, HldsClientLow] =
     val processDesc = Process(
       s"./hlds_run -game cstrike +ip 0.0.0.0 +port $port +maxplayers 12 +map de_dust2 +exec server.cfg",
       hldsDir
@@ -26,7 +26,7 @@ object HldsClientLow:
     val processIO = new ProcessIO(gate.stream, _ => (), _ => ())
     Resource.make {
       IO(processDesc.run(processIO)).map { p =>
-        new HldsClientLow[IO]:
+        new HldsClientLow:
           override val process = p
           def execute(s: String): IO[Unit] =
             IO(gate.push(s)) >> IO.sleep(200.millis)

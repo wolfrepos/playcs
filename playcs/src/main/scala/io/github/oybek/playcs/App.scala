@@ -9,9 +9,7 @@ import io.github.oybek.playcs.client.HldsClient
 import io.github.oybek.playcs.client.HldsClientLow
 import io.github.oybek.playcs.client.TgClient
 import io.github.oybek.playcs.common.Pool
-import io.github.oybek.playcs.common.logger.ContextData
-import io.github.oybek.playcs.common.logger.ContextLogger
-import io.github.oybek.playcs.cstrike.model.Command
+import io.github.oybek.playcs.domain.Command
 import io.github.oybek.playcs.service.Hub
 import io.github.oybek.playcs.service.PasswordService
 import org.http4s.blaze.client.BlazeClientBuilder
@@ -42,20 +40,14 @@ object App extends IOApp:
     yield ExitCode.Success
   private val log = Slf4jLogger.getLoggerFromName[IO]("application")
 
-def assembleAndLaunch(
-    config: Config,
-    httpClient: Client[IO],
-    consoles: List[HldsClient[IO]]
-): IO[Unit] =
+def assembleAndLaunch(config: Config, httpClient: Client[IO], consoles: List[HldsClient]): IO[Unit] =
   val client = Logger(logHeaders = false, logBody = false)(httpClient)
   val api =
     BotApi[IO](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
-  val passwordGenerator = PasswordService.create[IO]
+  val passwordGenerator = PasswordService.create
   val consolePool = (consoles, Nil)
   for
-    contextLogger <- ContextLogger.create[IO]
-    given ContextLogger[IO] = contextLogger
-    consolePoolManager <- Pool.create[IO, HldsClient[IO]](
+    consolePoolManager <- Pool.create[IO, HldsClient](
       consolePool,
       hldsConsole =>
         for
@@ -64,7 +56,7 @@ def assembleAndLaunch(
           _ <- hldsConsole.map("de_dust2")
         yield ()
     )
-    hub = Hub.create[IO](
+    hub = Hub.create(
       config.hldsTimeout,
       consolePoolManager,
       passwordGenerator
@@ -74,7 +66,7 @@ def assembleAndLaunch(
     _ <- tgClient.start()
   yield ()
 
-def resources(config: Config): Resource[IO, (Client[IO], List[HldsClient[IO]])] =
+def resources(config: Config): Resource[IO, (Client[IO], List[HldsClient])] =
   val initialPort = 27015
   val telegramResponseWaitTime = 60L
   val connEc = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
@@ -89,7 +81,7 @@ def resources(config: Config): Resource[IO, (Client[IO], List[HldsClient[IO]])] 
       .traverse { offset =>
         val port = initialPort + offset
         HldsClientLow.create(port, new File(config.hldsDir)).map {
-          HldsClient.create[IO](config.serverIp, port, _)
+          HldsClient.create(config.serverIp, port, _)
         }
       }
   yield (client, consoles)

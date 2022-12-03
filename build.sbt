@@ -19,17 +19,13 @@ ThisBuild / scalacOptions ++= Seq(
 )
 
 lazy val common = module("common", file("common"))
-lazy val cstrike = module("cstrike", file("cstrike"))
-lazy val playcs = module("playcs", file("playcs"), cstrike, common)
+lazy val playcs = module("playcs", file("playcs"), common)
   .settings(assembly / assemblyJarName := "app.jar")
-lazy val scenario = module("scenario", file("scenario"), common, playcs)
 
 Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
 
 lazy val testAll = taskKey[Unit]("Run all tests")
 testAll := {
   (common / Test / test).value
-  (cstrike / Test / test).value
   (playcs / Test / test).value
-  (scenario / Test / test).value
 }
