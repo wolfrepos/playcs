@@ -9,7 +9,7 @@ import cats.implicits.*
 import cats.instances.finiteDuration
 import io.github.oybek.playcs.dto.Reaction
 import io.github.oybek.playcs.dto.Reaction.*
-import io.github.oybek.playcs.service.Hub
+import io.github.oybek.playcs.service.Bot
 import telegramium.bots.ChatIntId
 import telegramium.bots.Message
 import telegramium.bots.User
@@ -27,16 +27,16 @@ import scala.concurrent.duration.FiniteDuration
 import concurrent.duration.DurationInt
 
 object TgClient:
-  def create(api: Api[IO], console: Hub) =
+  def create(api: Api[IO], bot: Bot) =
     new LongPollBot[IO](api):
       override def onMessage(message: Message): IO[Unit] =
         (message.text, message.from)
           .mapN((text, _) =>
             val chatId = ChatIntId(message.chat.id)
-            console
+            bot
               .handle(chatId, text)
               .recoverWith { th =>
-                List(SendText(chatId, s"Что-то пошло не так $th"): Reaction).pure[IO]
+                List(SendText(chatId, s"Something has gone wrong $th"): Reaction).pure[IO]
               }
               .flatMap(interpret)
           )
@@ -63,10 +63,10 @@ object TgClient:
             Temporal[IO].sleep(finiteDuration)
 
           case Receive(chatId, text) =>
-            console
+            bot
               .handle(chatId, text)
               .recoverWith { th =>
-                List(SendText(chatId, "Что-то пошло не так"): Reaction).pure[IO]
+                List(SendText(chatId, "Something has gone wrong"): Reaction).pure[IO]
               }
               .flatMap(interpret)
         }.void

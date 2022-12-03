@@ -10,8 +10,7 @@ import io.github.oybek.playcs.client.HldsClientLow
 import io.github.oybek.playcs.client.TgClient
 import io.github.oybek.playcs.common.Pool
 import io.github.oybek.playcs.domain.Command
-import io.github.oybek.playcs.service.Hub
-import io.github.oybek.playcs.service.PasswordService
+import io.github.oybek.playcs.service.Bot
 import org.http4s.blaze.client.BlazeClientBuilder
 import org.http4s.client.Client
 import org.http4s.client.middleware.Logger
@@ -44,24 +43,22 @@ def assembleAndLaunch(config: Config, httpClient: Client[IO], consoles: List[Hld
   val client = Logger(logHeaders = false, logBody = false)(httpClient)
   val api =
     BotApi[IO](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
-  val passwordGenerator = PasswordService.create
   val consolePool = (consoles, Nil)
   for
     consolePoolManager <- Pool.create[IO, HldsClient](
       consolePool,
       hldsConsole =>
         for
-          pass <- passwordGenerator.generate
+          pass <- generatePassword
           _ <- hldsConsole.svPassword(pass)
           _ <- hldsConsole.map("de_dust2")
         yield ()
     )
-    hub = Hub.create(
+    bot = Bot.create(
       config.hldsTimeout,
-      consolePoolManager,
-      passwordGenerator
+      consolePoolManager
     )
-    tgClient = TgClient.create(api, hub)
+    tgClient = TgClient.create(api, bot)
     _ <- setCommands(api)
     _ <- tgClient.start()
   yield ()
@@ -89,3 +86,6 @@ def resources(config: Config): Resource[IO, (Client[IO], List[HldsClient])] =
 def setCommands[F[_]: Functor](api: BotApi[F]): F[Unit] =
   val commands = Command.visible.map(x => BotCommand(x.command, x.description))
   Methods.setMyCommands(commands).exec(api).void
+
+def generatePassword: IO[String] =
+  (scala.util.Random.nextInt(9000) + 1000).toString.pure[IO]

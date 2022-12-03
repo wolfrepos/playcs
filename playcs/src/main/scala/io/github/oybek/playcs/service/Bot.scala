@@ -15,8 +15,8 @@ import io.github.oybek.playcs.domain.Command.*
 import io.github.oybek.playcs.domain.Command
 import io.github.oybek.playcs.dto.Reaction
 import io.github.oybek.playcs.dto.Reaction.*
-import io.github.oybek.playcs.service.Hub
-import io.github.oybek.playcs.service.PasswordService
+import io.github.oybek.playcs.service.Bot
+import io.github.oybek.playcs.generatePassword
 import mouse.all.*
 import telegramium.bots.ChatIntId
 import telegramium.bots.Markdown
@@ -29,19 +29,18 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
 
-trait Hub:
+trait Bot:
   def handle(
       chatId: ChatIntId,
       text: String
   ): IO[List[Reaction]]
 
-object Hub:
+object Bot:
   def create(
       hldsTimeout: FiniteDuration,
-      hldsPool: Pool[IO, HldsClient],
-      passwordGenerator: PasswordService
-  ): Hub =
-    new Hub:
+      hldsPool: Pool[IO, HldsClient]
+  ): Bot =
+    new Bot:
       override def handle(
           chatId: ChatIntId,
           text: String
@@ -66,7 +65,7 @@ object Hub:
       } orElse {
         for
           hlds <- hldsPool.rent(chatId.id) |> (OptionT(_))
-          pass <- passwordGenerator.generate |> (OptionT.liftF(_))
+          pass <- generatePassword |> (OptionT.liftF(_))
           _ <- hlds.svPassword(pass) |> (OptionT.liftF(_))
           _ <- hlds.changeLevel(map) |> (OptionT.liftF(_))
         yield List(
