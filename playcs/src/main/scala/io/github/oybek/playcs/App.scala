@@ -32,17 +32,32 @@ object App extends IOApp:
   def run(args: List[String]): IO[ExitCode] =
     for
       config <- Config.create[IO].load[IO]
-      _ <- log.info(s"loaded config: $config")
-      _ <- resources(config).use { (httpClient, consoles) =>
-        assembleAndLaunch(config, httpClient, consoles)
-      }
+      logger <- Slf4jLogger.fromName[IO]("playcs")
+      _ <- logger.info(s"loaded config: $config")
+      _ <- launch(config)
     yield ExitCode.Success
-  private val log = Slf4jLogger.getLoggerFromName[IO]("application")
 
-def assembleAndLaunch(config: Config, httpClient: Client[IO], consoles: List[HldsClient]): IO[Unit] =
-  val client = Logger(logHeaders = false, logBody = false)(httpClient)
-  val api =
-    BotApi[IO](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
+def launch(config: Config): IO[Unit] = {
+  val initialPort = 27015
+  val telegramResponseWaitTime = 60L
+  val connEc = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
+  for
+    client <- BlazeClientBuilder[IO]
+      .withExecutionContext(connEc)
+      .withResponseHeaderTimeout(
+        FiniteDuration(telegramResponseWaitTime, TimeUnit.SECONDS)
+      )
+      .resource
+    consoles <- (0 until config.serverPoolSize).toList
+      .traverse { offset =>
+        val port = initialPort + offset
+        HldsDriver.create(port, new File(config.hldsDir)).map {
+          HldsClient.create(config.serverIp, port, _)
+        }
+      }
+  yield (client, consoles)
+} use { case (client, consoles) =>
+  val api = BotApi[IO](client, s"https://api.telegram.org/bot${config.tgBotApiToken}")
   val consolePool = (consoles, Nil)
   for
     consolePoolManager <- Pool.create[IO, HldsClient](
@@ -62,26 +77,7 @@ def assembleAndLaunch(config: Config, httpClient: Client[IO], consoles: List[Hld
     _ <- setCommands(api)
     _ <- tgClient.start()
   yield ()
-
-def resources(config: Config): Resource[IO, (Client[IO], List[HldsClient])] =
-  val initialPort = 27015
-  val telegramResponseWaitTime = 60L
-  val connEc = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
-  for
-    client <- BlazeClientBuilder[IO]
-      .withExecutionContext(connEc)
-      .withResponseHeaderTimeout(
-        FiniteDuration(telegramResponseWaitTime, TimeUnit.SECONDS)
-      )
-      .resource
-    consoles <- (0 until config.serverPoolSize).toList
-      .traverse { offset =>
-        val port = initialPort + offset
-        HldsDriver.create(port, new File(config.hldsDir)).map {
-          HldsClient.create(config.serverIp, port, _)
-        }
-      }
-  yield (client, consoles)
+}
 
 def setCommands[F[_]: Functor](api: BotApi[F]): F[Unit] =
   val commands = Command.visible.map(x => BotCommand(x.command, x.description))
